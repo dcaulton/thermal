@@ -1,0 +1,11 @@
+mcpi==0.1.1
+numpy==1.6.2
+picamera==1.10
+pifacecommon==4.1.2
+pifacedigitalio==3.0.4
+PIL==1.1.7
+Pillow==3.0.0
+pygame===1.9.1release
+pygobject==3.8.2
+pyserial==2.5
+RPi.GPIO==0.5.11
