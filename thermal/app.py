@@ -2,6 +2,7 @@ import datetime
 
 import cv2
 from flask import Flask
+import flaskext.couchdb
 import numpy as np
 import picamera
 from pylepton import Lepton
@@ -10,12 +11,25 @@ import sys
 
 
 app = Flask(__name__)
+app.config.from_object('config')
 
 
 @app.route('/')
 def hello():
-    return 'Hello World'
+    return 'Thermal App'
 
+@app.route('/settings2', methods=['GET'])
+def get_settings2():
+    try:
+        manager = flaskext.couchdb.CouchDBManager()
+        # ...add document types and view definitions...
+        manager.setup(app)
+        settings = {'looking': 'good'}
+    except Exception as e:
+        settings = {'pooped the bed': str(e)}
+    print settings
+    return settings
+    
 @app.route('/picam_still')
 def picam_still():
     with picamera.PiCamera() as camera:
@@ -40,4 +54,4 @@ def thermal_still():
         return e
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='strangefruit4', port=5000)
