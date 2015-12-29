@@ -112,8 +112,8 @@ def take_thermal_still(snap_uuid):
 @app.route('/both_still')
 def both_still():
     snap_uuid=uuid.uuid4()
-    picam_dict = take_picam_still(snap_uuid)
-    thermal_dict = take_thermal_still(snap_uuid)
+    picam_dict = take_picam_still(snap_uuid)[0]
+    thermal_dict = take_thermal_still(snap_uuid)[0]
     combo_dict={'picam': picam_dict, 'thermal': thermal_dict}
     return Response(json.dumps(combo_dict), status=200, mimetype='application/json')
 
