@@ -1,14 +1,14 @@
 import datetime
 
 import cv2
-from flask import Flask
-import flaskext.couchdb
+from flask import (g, Flask)
+from flaskext import couchdb
 import numpy as np
+import os
 import picamera
 from pylepton import Lepton
-import os
 import sys
-
+import uuid
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -18,18 +18,29 @@ app.config.from_object('config')
 def hello():
     return 'Thermal App'
 
-@app.route('/settings2', methods=['GET'])
-def get_settings2():
+@app.route('/settings', methods=['GET'])
+def get_settings():
     try:
-        manager = flaskext.couchdb.CouchDBManager()
-        # ...add document types and view definitions...
+        manager = couchdb.CouchDBManager()
         manager.setup(app)
+        import pdb; pdb.set_trace()
         settings = {'looking': 'good'}
+        g.couch[uuid.uuid4()] = settings
     except Exception as e:
         settings = {'pooped the bed': str(e)}
     print settings
     return settings
     
+@app.route('/settings', methods=['POST'])
+def set_settings():
+    try:
+        manager = couchdb.CouchDBManager()
+        manager.setup(app)
+    except Exception as e:
+        settings = {'pooped the bed': str(e)}
+    print settings
+    return settings
+
 @app.route('/picam_still')
 def picam_still():
     with picamera.PiCamera() as camera:
