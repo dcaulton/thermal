@@ -68,7 +68,7 @@ def picam_still():
 
 def take_picam_still(snap_uuid):
     with picamera.PiCamera() as camera:
-        pic_path = os.path.join('/home/pi', 'Pictures', str(snap_uuid)+'-picam_pic.jpg')
+        pic_path = os.path.join('/home/pi', 'Pictures', str(snap_uuid)+'-picam.jpg')
         camera.capture(pic_path)
         pic_dict = {'type': 'picture',
                     'camera_type': 'picam',
@@ -93,7 +93,7 @@ def take_thermal_still(snap_uuid):
             a,_ = l.capture()
             cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX) 
             np.right_shift(a, 8, a) 
-            pic_path = os.path.join('/home/pi', 'Pictures', str(snap_uuid)+'-thermal_pic.jpg')
+            pic_path = os.path.join('/home/pi', 'Pictures', str(snap_uuid)+'-thermal.jpg')
             cv2.imwrite(pic_path, np.uint8(a)) 
             pic_dict = {'type': 'picture',
                         'camera_type': 'thermal',
