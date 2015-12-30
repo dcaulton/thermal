@@ -1,7 +1,7 @@
 import datetime
 
 import cv2
-from flask import (g, Flask, request, Response)
+from flask import (g, Flask, request, Response, current_app)
 import couchdb
 import json
 import numpy as np
