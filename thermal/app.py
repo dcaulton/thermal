@@ -27,8 +27,13 @@ def get_settings_document():
         if (doc.type == 'settings')
             emit(doc._id, doc);
     }'''
-    settings_dict = g.db.query(map_fun).rows[0]['value']
-    return settings_dict
+    view_result = g.db.query(map_fun)
+    if view_result.total_rows:
+        return view_result.rows[0]['value']
+    else:
+        return {'_id': str(uuid.uuid4()),
+                'type': 'settings'
+               }
     
 def find_pictures():
     pictures_dict = {}
@@ -53,7 +58,6 @@ def get_settings():
 def set_settings():
     settings = get_settings_document()
     if request.headers['Content-Type'] == 'application/json':
-        print request.json
         for k in request.json.keys():
             if k != '_id':
                 settings[k] = request.json[k]
@@ -118,9 +122,17 @@ def both_still():
     return Response(json.dumps(combo_dict), status=200, mimetype='application/json')
 
 @app.route('/pictures')
-def pictures():
+def list_pictures():
     pictures = find_pictures()
     return Response(json.dumps(pictures), status=200, mimetype='application/json')
+
+@app.route('/pictures/<picture_id>')
+def get_picture(picture_id):
+    try:
+        picture_dict = g.db[picture_id]
+        return Response(json.dumps(picture_dict), status=200, mimetype='application/json')
+    except couchdb.http.ResourceNotFound as e:
+        return Response('not found', status=404)
 
 if __name__ == '__main__':
     app.debug = True
