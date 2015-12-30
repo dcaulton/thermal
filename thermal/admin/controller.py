@@ -7,8 +7,6 @@ import uuid
 
 admin = Blueprint('admin', __name__)
 
-current_group_id = uuid.uuid4()
-
 def get_settings_document():
     map_fun = '''function(doc) {
         if (doc.type == 'settings')
@@ -16,11 +14,16 @@ def get_settings_document():
     }'''
     view_result = g.db.query(map_fun)
     if view_result.total_rows:
-        return view_result.rows[0]['value']
+        settings_dict = view_result.rows[0]['value']
     else:
-        return {'_id': str(uuid.uuid4()),
-                'type': 'settings'
-               }
+        settings_id = uuid.uuid4()
+        current_group_id = uuid.uuid4()
+        settings_dict = {'_id': str(settings_id),
+                         'current_group_id': str(current_group_id),
+                         'type': 'settings'
+                        }
+        g.db[str(settings_id)] = settings_dict
+    return settings_dict
     
 @admin.route('/')
 def index():
