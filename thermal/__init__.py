@@ -19,4 +19,4 @@ app.config['HOSTNAME'] = socket.gethostname()
 def before_request():
     couch = couchdb.Server()
     db = couch['thermal']
-    g.db = couch['thermal']
+    g.db = db

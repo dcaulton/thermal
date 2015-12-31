@@ -20,6 +20,8 @@ def get_settings_document():
         current_group_id = uuid.uuid4()
         settings_dict = {'_id': str(settings_id),
                          'current_group_id': str(current_group_id),
+                         'capture_type': 'both_still',
+                         'button_active': True,
                          'type': 'settings'
                         }
         g.db[str(settings_id)] = settings_dict

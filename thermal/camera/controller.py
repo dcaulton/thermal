@@ -1,18 +1,18 @@
-import cv2
 import datetime
-from flask import g, Blueprint, Flask, request, Response, current_app
 import json
-import numpy as np
 import os
-import picamera
-from pylepton import Lepton
 import sys
 import uuid
+
+import cv2
+from flask import g, Blueprint, Flask, request, Response, current_app
+import numpy as np
+import picamera
+from pylepton import Lepton
 
 from thermal.admin.controller import get_settings_document
 
 camera = Blueprint('camera', __name__)
-
 
 @camera.route('/')
 def index():
