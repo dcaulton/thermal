@@ -1,3 +1,5 @@
+import socket
+
 import couchdb
 from flask import (g, Flask)
 
@@ -10,6 +12,8 @@ app.config.from_object('thermal.config')
 app.register_blueprint(camera, url_prefix='/camera')
 app.register_blueprint(admin, url_prefix='/admin')
 app.register_blueprint(picture, url_prefix='/pictures')
+
+app.config['HOSTNAME'] = socket.gethostname()
 
 @app.before_request
 def before_request():

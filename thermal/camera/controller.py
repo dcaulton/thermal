@@ -26,13 +26,13 @@ def picam_still():
 
 def take_picam_still(snap_id, group_id):
     with picamera.PiCamera() as camera:
-        pic_path = os.path.join('/home/pi', 'Pictures', str(snap_id)+'-picam.jpg')
+        pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], "{0}-p.jpg".format(snap_id))
         camera.capture(pic_path)
         pic_dict = {'type': 'picture',
                     'camera_type': 'picam',
                     'group_id': str(group_id),
                     'snap_id': str(snap_id),
-                    'uri': 'file://strangefruit4'+pic_path,
+                    'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
                     'created': str(datetime.datetime.now())
                    }
         save_uuid=uuid.uuid4()
@@ -52,13 +52,13 @@ def take_thermal_still(snap_id, group_id):
             a,_ = l.capture()
             cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
             np.right_shift(a, 8, a)
-            pic_path = os.path.join('/home/pi', 'Pictures', str(snap_id)+'-thermal.jpg')
+            pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], "{0}-t.jpg".format(snap_id))
             cv2.imwrite(pic_path, np.uint8(a))
             pic_dict = {'type': 'picture',
                         'camera_type': 'thermal',
                         'group_id': str(group_id),
                         'snap_id': str(snap_id),
-                        'uri': 'file://strangefruit4'+pic_path,
+                        'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
                         'created': str(datetime.datetime.now())
                        }
             save_uuid=uuid.uuid4()

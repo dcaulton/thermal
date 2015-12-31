@@ -1,4 +1,5 @@
 BREAKFAST='dogfood'
 DINNER='fishfood'
+PICTURE_SAVE_DIRECTORY='/home/pi/Pictures'
 COUCHDB_SERVER='http://localhost:5984/'
 COUCHDB_DATABASE='thermal'
