@@ -6,12 +6,14 @@ from flask import (g, Flask)
 from thermal.camera.controller import camera
 from thermal.admin.controller import admin
 from thermal.picture.controller import picture
+from thermal.crap.controller import crap
 
 app = Flask(__name__)
 app.config.from_object('thermal.config')
 app.register_blueprint(camera, url_prefix='/camera')
 app.register_blueprint(admin, url_prefix='/admin')
 app.register_blueprint(picture, url_prefix='/pictures')
+app.register_blueprint(crap, url_prefix='/crap')
 
 app.config['HOSTNAME'] = socket.gethostname()
 
