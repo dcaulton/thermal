@@ -1,4 +1,7 @@
 #!/home/pi/thermal/venv/bin/python
+
+# Invoke with 'sudo python button_listener.py', sudo is needed for GPIO
+
 # script by Alex Eames http://RasPi.tv/
 # http://raspi.tv/2013/how-to-use-interrupts-with-python-on-the-raspberry-pi-and-rpi-gpio
 import os
