@@ -10,7 +10,7 @@ import numpy as np
 import picamera
 from pylepton import Lepton
 
-from thermal.admin.controller import get_settings_document
+from admin.controller import get_settings_document
 
 camera = Blueprint('camera', __name__)
 

@@ -3,10 +3,10 @@ import socket
 import couchdb
 from flask import (g, Flask)
 
-from thermal.camera.controller import camera
-from thermal.admin.controller import admin
-from thermal.picture.controller import picture
-from thermal.crap.controller import crap
+from camera.controller import camera
+from admin.controller import admin
+from picture.controller import picture
+from crap.controller import crap
 
 app = Flask(__name__)
 app.config.from_object('thermal.config')
