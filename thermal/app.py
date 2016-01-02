@@ -1,35 +1,50 @@
 import socket
 
+from celery import Celery
 import couchdb
 from flask import g, Flask
 
-from admin.controller import admin
-from camera.controller import camera
-from crap.controller import crap
 from config import config, Config
-from picture.controller import picture
+
+celery = Celery('thermal', broker=Config.CELERY_BROKER_URL)
 
 def create_app(config_name='development'):
-    app = Flask(__name__)
+    app = Flask('thermal')
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
 
     app.config['HOSTNAME'] = socket.gethostname()
 
+#    celery.conf.update(app.config)
+    make_celery(app, celery)
+
     register_blueprints(app)
-    register_before_request(app)
 
-    return app
-
-def register_before_request(app):
     @app.before_request
     def before_request():
         couch = couchdb.Server()
         db = couch['thermal']
         g.db = db
 
+    return app
+
 def register_blueprints(app):
+    from admin.controller import admin
+    from camera.views import camera
+    from crap.controller import crap
+    from picture.controller import picture
     app.register_blueprint(camera, url_prefix='/camera')
     app.register_blueprint(admin, url_prefix='/admin')
     app.register_blueprint(picture, url_prefix='/pictures')
     app.register_blueprint(crap, url_prefix='/crap')
+
+def make_celery(app, celery):
+#    celery = Celery('thermal', broker=app.config['CELERY_BROKER_URL'])
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+    class ContextTask(TaskBase):
+        abstract = True
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+    celery.Task = ContextTask

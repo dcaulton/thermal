@@ -4,4 +4,4 @@
 
 export PATH=/home/pi/thermal/venv/bin:$PATH
 cd /home/pi/thermal
-celery -A thermal.crap.controller worker --loglevel=info
+celery -A thermal worker --loglevel=info
