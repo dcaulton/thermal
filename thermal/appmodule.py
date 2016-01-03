@@ -15,10 +15,11 @@ def create_app(config_name='development'):
 
     app.config['HOSTNAME'] = socket.gethostname()
 
-#    celery.conf.update(app.config)
-    make_celery(app, celery)
+#    celery_app.conf.update(app.config)
+#    celery = make_celery(app)
 
     register_blueprints(app)
+    register_db(app)
 
     @app.before_request
     def before_request():
@@ -27,6 +28,10 @@ def create_app(config_name='development'):
         g.db = db
 
     return app
+
+def register_db(app):
+    couch = couchdb.Server()
+    app.db = couch['thermal']
 
 def register_blueprints(app):
     from admin.controller import admin
@@ -38,8 +43,8 @@ def register_blueprints(app):
     app.register_blueprint(picture, url_prefix='/pictures')
     app.register_blueprint(crap, url_prefix='/crap')
 
-def make_celery(app, celery):
-#    celery = Celery('thermal', broker=app.config['CELERY_BROKER_URL'])
+def make_celery(app):
+    celery = Celery('thermal', broker=app.config['CELERY_BROKER_URL'])
     celery.conf.update(app.config)
     TaskBase = celery.Task
     class ContextTask(TaskBase):
@@ -48,3 +53,4 @@ def make_celery(app, celery):
             with app.app_context():
                 return TaskBase.__call__(self, *args, **kwargs)
     celery.Task = ContextTask
+    return celery

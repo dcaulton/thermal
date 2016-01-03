@@ -1,15 +1,14 @@
 import datetime
-import json
 import os
-import sys
 import uuid
 
 import cv2
-from flask import g, Blueprint, Flask, request, Response, current_app
+from flask import current_app, g
 import numpy as np
 import picamera
 from pylepton import Lepton
 
+from thermal.appmodule import celery
 
 def take_picam_still(snap_id, group_id, pic_id):
     with picamera.PiCamera() as camera:
@@ -26,6 +25,7 @@ def take_picam_still(snap_id, group_id, pic_id):
         g.db[str(pic_id)] = pic_dict
 
 
+@celery.task
 def take_thermal_still(snap_id, group_id, pic_id):
     with Lepton("/dev/spidev0.1") as l:
         a,_ = l.capture()
@@ -41,4 +41,4 @@ def take_thermal_still(snap_id, group_id, pic_id):
             'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
             'created': str(datetime.datetime.now())
         }
-        g.db[str(pic_id)] = pic_dict
+        current_app.db[str(pic_id)] = pic_dict
