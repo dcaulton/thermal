@@ -33,14 +33,12 @@ def register_db(app):
 def register_blueprints(app):
     from admin.views import admin
     from camera.views import camera
-    from crap.controller import crap
     from picture.views import picture
     from merging.views import merging
     from analysis.views import analysis
     app.register_blueprint(camera, url_prefix='/camera')
     app.register_blueprint(admin, url_prefix='/admin')
     app.register_blueprint(picture, url_prefix='/pictures')
-    app.register_blueprint(crap, url_prefix='/crap')
     app.register_blueprint(merging, url_prefix='/merging')
     app.register_blueprint(analysis, url_prefix='/analysis')
 
