@@ -1,6 +1,4 @@
-import json
-
-import couchdb
+from couchdb.http import ResourceNotFound
 from flask import current_app
 
 def find_pictures():
@@ -17,6 +15,6 @@ def find_picture(picture_id):
     picture_dict = {}
     try:
         picture_dict = current_app.db[picture_id]
-    except couchdb.http.ResourceNotFound as e:
+    except ResourceNotFound as e:
         pass
     return picture_dict
