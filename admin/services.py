@@ -20,3 +20,6 @@ def get_settings_document():
                         }
         current_app.db[str(settings_id)] = settings_dict
     return settings_dict
+
+def save_settings_document(settings_dict):
+    current_app.db[settings_dict['_id']] = settings_dict

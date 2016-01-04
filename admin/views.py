@@ -1,7 +1,7 @@
-from flask import Blueprint, request, Response, current_app
+from flask import Blueprint, request, Response
 import json
 
-from admin.services import get_settings_document
+from admin.services import get_settings_document, save_settings_document
 
 admin = Blueprint('admin', __name__)
 
@@ -21,5 +21,5 @@ def set_settings():
         for k in request.json.keys():
             if k != '_id':
                 settings[k] = request.json[k]
-        current_app.db[settings['_id']] = settings
+        save_settings_document(settings)
         return Response(json.dumps(settings), status=200, mimetype='application/json')

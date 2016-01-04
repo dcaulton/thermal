@@ -1,7 +1,7 @@
 import json
 
 import couchdb
-from flask import Blueprint, request, Response, current_app
+from flask import Blueprint, request, Response
 from picture.services import find_pictures, find_picture
 
 picture = Blueprint('picture', __name__)
