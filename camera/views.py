@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from flask import Blueprint, Response, current_app
+from flask import Blueprint, request, Response, current_app
 
 from camera.services import take_picam_still, take_thermal_still
 from admin.services import get_settings_document
@@ -17,7 +17,17 @@ def picam_still():
     snap_id = uuid.uuid4()
     pic_id = uuid.uuid4()
     current_group_id = get_settings_document()['current_group_id']
-    take_picam_still(snap_id=snap_id, group_id=current_group_id, pic_id=pic_id)
+    delay = 0
+    if request.args.has_key('delay'):
+        delay = int(request.args.get('delay'))
+    take_picam_still.apply_async(
+        kwargs={
+            'snap_id': snap_id,
+            'group_id': current_group_id, 
+            'pic_id': pic_id
+        },
+        countdown=delay
+    )
     resp_json = {
         'id': str(pic_id),
         'snap_id': str(snap_id)
@@ -29,7 +39,17 @@ def thermal_still():
     snap_id = uuid.uuid4()
     pic_id = uuid.uuid4()
     current_group_id = get_settings_document()['current_group_id']
-    take_thermal_still.delay(snap_id=snap_id, group_id=current_group_id, pic_id=pic_id)
+    delay = 0
+    if request.args.has_key('delay'):
+        delay = int(request.args.get('delay'))
+    take_thermal_still.apply_async(
+        kwargs={
+            'snap_id': snap_id,
+            'group_id': current_group_id, 
+            'pic_id': pic_id
+        },
+        countdown=delay
+    )
     resp_json = {
         'id': str(pic_id),
         'snap_id': str(snap_id)
@@ -42,7 +62,7 @@ def both_still():
     thermal_pic_id = uuid.uuid4()
     picam_pic_id = uuid.uuid4()
     current_group_id = get_settings_document()['current_group_id']
-    take_picam_still(snap_id=snap_id, group_id=current_group_id, pic_id=picam_pic_id)
+    take_picam_still.delay(snap_id=snap_id, group_id=current_group_id, pic_id=picam_pic_id)
     take_thermal_still.delay(snap_id=snap_id, group_id=current_group_id, pic_id=thermal_pic_id)
     combo_dict = {
         'picam': {
