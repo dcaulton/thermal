@@ -7,6 +7,7 @@ from flask import Blueprint, request, Response, current_app
 from admin.services import get_settings_document
 from analysis.services import scale_image
 from camera.services import take_picam_still, take_thermal_still
+from merging.services import merge_images
 
 camera = Blueprint('camera', __name__)
 
@@ -63,7 +64,8 @@ def thermal_still():
         'snap_id': str(snap_id)
     }
     time.sleep(1)
-    scale_image(pic_id)
+    scaled_image_id = uuid.uuid4()
+    scale_image(img_id_in=pic_id, img_id_out=scaled_image_id)
     return Response(json.dumps(resp_json), status=202, mimetype='application/json')
 
 @camera.route('/both_still')
@@ -86,6 +88,19 @@ def both_still():
         group_id=current_group_id,
         pic_id=thermal_pic_id
     )
+
+    time.sleep(1)
+    scaled_pic_id = uuid.uuid4()
+    scale_image(img_id_in=thermal_pic_id, img_id_out=scaled_pic_id)
+
+    time.sleep(1)
+    merged_pic_id = uuid.uuid4()
+    merge_images(
+        img1_id_in=picam_pic_id,
+        img2_id_in=scaled_pic_id,
+        img_id_out=merged_pic_id
+    )
+
     combo_dict = {
         'picam': {
             'id': str(picam_pic_id),
@@ -95,5 +110,11 @@ def both_still():
             'id': str(thermal_pic_id),
             'snap_id': str(snap_id)
         }, 
+        'scaled': {
+            'id': str(scaled_pic_id)
+        }, 
+        'merged': {
+            'id': str(merged_pic_id)
+        }
     }
     return Response(json.dumps(combo_dict), status=202, mimetype='application/json')

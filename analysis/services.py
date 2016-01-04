@@ -8,8 +8,7 @@ from PIL import Image, ImageOps
 def do_stuff():
     return {'analysis stuff': 'just got done'}
 
-def scale_image(img_id_in):
-    img_id_out = uuid.uuid4()
+def scale_image(img_id_in, img_id_out):
     img_dict_in = current_app.db[str(img_id_in)]
     img_filename_in = img_dict_in['filename']
     img_filename_out = "{0}-scaled.jpg".format(img_dict_in['_id'])
