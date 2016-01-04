@@ -10,6 +10,7 @@ from pylepton import Lepton
 
 from thermal.appmodule import celery
 
+@celery.task
 def take_picam_still(snap_id, group_id, pic_id):
     with picamera.PiCamera() as camera:
         pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], "{0}-p.jpg".format(snap_id))
@@ -22,7 +23,7 @@ def take_picam_still(snap_id, group_id, pic_id):
             'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
             'created': str(datetime.datetime.now())
         }
-        g.db[str(pic_id)] = pic_dict
+        current_app.db[str(pic_id)] = pic_dict
 
 
 @celery.task

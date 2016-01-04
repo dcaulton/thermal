@@ -15,18 +15,15 @@ def create_app(config_name='development'):
 
     app.config['HOSTNAME'] = socket.gethostname()
 
-#    celery_app.conf.update(app.config)
-#    celery = make_celery(app)
-
     register_blueprints(app)
     register_db(app)
 
-    @app.before_request
-    def before_request():
-        couch = couchdb.Server()
-        db = couch['thermal']
-        g.db = db
-
+#    @app.before_request
+#    def before_request():
+#        couch = couchdb.Server()
+#        db = couch['thermal']
+#        g.db = db
+#
     return app
 
 def register_db(app):
@@ -34,10 +31,10 @@ def register_db(app):
     app.db = couch['thermal']
 
 def register_blueprints(app):
-    from admin.controller import admin
+    from admin.views import admin
     from camera.views import camera
     from crap.controller import crap
-    from picture.controller import picture
+    from picture.views import picture
     app.register_blueprint(camera, url_prefix='/camera')
     app.register_blueprint(admin, url_prefix='/admin')
     app.register_blueprint(picture, url_prefix='/pictures')

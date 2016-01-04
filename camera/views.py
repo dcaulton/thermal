@@ -4,7 +4,7 @@ import uuid
 from flask import Blueprint, Response, current_app
 
 from camera.services import take_picam_still, take_thermal_still
-from admin.controller import get_settings_document
+from admin.services import get_settings_document
 
 camera = Blueprint('camera', __name__)
 
