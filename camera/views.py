@@ -17,9 +17,9 @@ def index():
 
 @camera.route('/picam_still')
 def picam_still():
+# this doesn't capture the potential second picture id if a long exposure is needed
     snap_id = uuid.uuid4()
     pic_id = uuid.uuid4()
-    picture_name = "{0}.jpg".format(pic_id)
     current_group_id = get_settings_document()['current_group_id']
     delay = 0
     if request.args.has_key('delay'):
@@ -27,7 +27,6 @@ def picam_still():
     task = take_picam_still.apply_async(
         kwargs={
             'snap_id': snap_id,
-            'picture_name': picture_name,
             'group_id': current_group_id, 
             'pic_id': pic_id
         },
@@ -44,7 +43,6 @@ def picam_still():
 def thermal_still():
     snap_id = uuid.uuid4()
     pic_id = uuid.uuid4()
-    picture_name = "{0}.jpg".format(pic_id)
     current_group_id = get_settings_document()['current_group_id']
     delay = 0
     if request.args.has_key('delay'):
@@ -52,7 +50,6 @@ def thermal_still():
     task = take_thermal_still.apply_async(
         kwargs={
             'snap_id': snap_id,
-            'picture_name': picture_name,
             'group_id': current_group_id, 
             'pic_id': pic_id
         },
@@ -73,18 +70,14 @@ def both_still():
     snap_id = uuid.uuid4()
     thermal_pic_id = uuid.uuid4()
     picam_pic_id = uuid.uuid4()
-    picam_picture_name = "{0}.jpg".format(picam_pic_id)
-    thermal_picture_name = "{0}.jpg".format(thermal_pic_id)
     current_group_id = get_settings_document()['current_group_id']
     take_picam_still.delay(
         snap_id=snap_id,
-        picture_name=picam_picture_name,
         group_id=current_group_id,
         pic_id=picam_pic_id
     )
     take_thermal_still.delay(
         snap_id=snap_id,
-        picture_name=thermal_picture_name,
         group_id=current_group_id,
         pic_id=thermal_pic_id
     )
