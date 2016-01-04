@@ -13,7 +13,7 @@ def merge_images(img1_id_in, img2_id_in, img_id_out):
     img1_filename_in = img1_dict_in['filename']
     img2_dict_in = current_app.db[str(img2_id_in)]
     img2_filename_in = img2_dict_in['filename']
-    img_filename_out = "{0}-merged.jpg".format(str(img_id_out))
+    img_filename_out = "{0}.jpg".format(str(img_id_out))
     pic1_path_in = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], img1_filename_in)
     pic2_path_in = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], img2_filename_in)
     pic_path_out = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], img_filename_out)

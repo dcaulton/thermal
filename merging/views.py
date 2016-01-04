@@ -1,7 +1,7 @@
 import json
 
 from flask import Blueprint, request, Response
-from merging.services import do_stuff
+from merging.services import do_stuff, merge_images
 
 merging = Blueprint('merging', __name__)
 
@@ -9,3 +9,20 @@ merging = Blueprint('merging', __name__)
 def do_merging_thing():
     the_thing = do_stuff()
     return Response(json.dumps(the_thing), status=200, mimetype='application/json')
+
+@merging.route('/merge_images')
+def call_merge_images():
+    (img1_id, img2_id, result_id) = (None, None, None)
+    if request.args.has_key('img1_id'):
+        img1_id = request.args.get('img1_id')
+    if request.args.has_key('img2_id'):
+        img2_id = request.args.get('img2_id')
+    if request.args.has_key('result_id'):
+        result_id = request.args.get('result_id')
+    if img1_id and img2_id and result_id:
+        merge_images(
+            img1_id_in=img1_id,
+            img2_id_in=img2_id,
+            img_id_out=result_id
+        )
+        return Response(json.dumps('request accepted'), status=202, mimetype='application/json')

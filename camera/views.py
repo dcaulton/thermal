@@ -18,8 +18,8 @@ def index():
 @camera.route('/picam_still')
 def picam_still():
     snap_id = uuid.uuid4()
-    picture_name = "{0}-p.jpg".format(snap_id)
     pic_id = uuid.uuid4()
+    picture_name = "{0}.jpg".format(pic_id)
     current_group_id = get_settings_document()['current_group_id']
     delay = 0
     if request.args.has_key('delay'):
@@ -43,8 +43,8 @@ def picam_still():
 @camera.route('/thermal_still')
 def thermal_still():
     snap_id = uuid.uuid4()
-    picture_name = "{0}-t.jpg".format(snap_id)
     pic_id = uuid.uuid4()
+    picture_name = "{0}.jpg".format(pic_id)
     current_group_id = get_settings_document()['current_group_id']
     delay = 0
     if request.args.has_key('delay'):
@@ -71,10 +71,10 @@ def thermal_still():
 @camera.route('/both_still')
 def both_still():
     snap_id = uuid.uuid4()
-    picam_picture_name = "{0}-p.jpg".format(snap_id)
-    thermal_picture_name = "{0}-t.jpg".format(snap_id)
     thermal_pic_id = uuid.uuid4()
     picam_pic_id = uuid.uuid4()
+    picam_picture_name = "{0}.jpg".format(picam_pic_id)
+    thermal_picture_name = "{0}.jpg".format(thermal_pic_id)
     current_group_id = get_settings_document()['current_group_id']
     take_picam_still.delay(
         snap_id=snap_id,
