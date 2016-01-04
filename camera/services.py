@@ -11,9 +11,10 @@ from pylepton import Lepton
 from thermal.appmodule import celery
 
 @celery.task
-def take_picam_still(snap_id, group_id, pic_id):
+def take_picam_still(snap_id, group_id, pic_id, picture_name):
     with picamera.PiCamera() as camera:
-        pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], "{0}-p.jpg".format(snap_id))
+        pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
+        camera.resolution = (current_app.config['STILL_IMAGE_WIDTH'], current_app.config['STILL_IMAGE_HEIGHT'])
         camera.capture(pic_path)
         pic_dict = {
             'type': 'picture',
@@ -27,12 +28,12 @@ def take_picam_still(snap_id, group_id, pic_id):
 
 
 @celery.task
-def take_thermal_still(snap_id, group_id, pic_id):
+def take_thermal_still(snap_id, group_id, pic_id, picture_name):
     with Lepton("/dev/spidev0.1") as l:
         a,_ = l.capture()
         cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
         np.right_shift(a, 8, a)
-        pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], "{0}-t.jpg".format(snap_id))
+        pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
         cv2.imwrite(pic_path, np.uint8(a))
         pic_dict = {
             'type': 'picture',

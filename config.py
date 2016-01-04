@@ -4,6 +4,8 @@ class Config:
     COUCHDB_DATABASE = 'thermal'
     CELERY_BROKER_URL = 'amqp://localhost:5672'
     CELERY_RESULT_BACKEND = 'amqp://localhost:5672'
+    STILL_IMAGE_WIDTH = 1600
+    STILL_IMAGE_HEIGHT = 1200
 
     @staticmethod
     def init_app(app):
