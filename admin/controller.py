@@ -12,7 +12,7 @@ def get_settings_document():
         if (doc.type == 'settings')
             emit(doc._id, doc);
     }'''
-    view_result = g.db.query(map_fun)
+    view_result = current_app.db.query(map_fun)
     if view_result.total_rows:
         settings_dict = view_result.rows[0]['value']
     else:
@@ -24,7 +24,7 @@ def get_settings_document():
                          'button_active': True,
                          'type': 'settings'
                         }
-        g.db[str(settings_id)] = settings_dict
+        current_app.db[str(settings_id)] = settings_dict
     return settings_dict
     
 @admin.route('/')
@@ -43,5 +43,5 @@ def set_settings():
         for k in request.json.keys():
             if k != '_id':
                 settings[k] = request.json[k]
-        g.db[settings['_id']] = settings
+        current_app.db[settings['_id']] = settings
         return Response(json.dumps(settings), status=200, mimetype='application/json')

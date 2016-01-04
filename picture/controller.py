@@ -11,7 +11,7 @@ def find_pictures():
         if (doc.type == 'picture')
             emit(doc._id, doc);
     }'''
-    for row in g.db.query(map_fun).rows:
+    for row in current_app.db.query(map_fun).rows:
         pictures_dict[row['key']] = row['value']
     return pictures_dict
     
@@ -23,7 +23,7 @@ def list_pictures():
 @picture.route('/<picture_id>')
 def get_picture(picture_id):
     try:
-        picture_dict = g.db[picture_id]
+        picture_dict = current_app.db[picture_id]
         return Response(json.dumps(picture_dict), status=200, mimetype='application/json')
     except couchdb.http.ResourceNotFound as e:
         return Response('not found', status=404)
