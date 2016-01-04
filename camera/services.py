@@ -21,6 +21,7 @@ def take_picam_still(snap_id, group_id, pic_id, picture_name):
             'camera_type': 'picam',
             'group_id': str(group_id),
             'snap_id': str(snap_id),
+            'filename': picture_name,
             'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
             'created': str(datetime.datetime.now())
         }
@@ -40,6 +41,7 @@ def take_thermal_still(snap_id, group_id, pic_id, picture_name):
             'camera_type': 'thermal',
             'group_id': str(group_id),
             'snap_id': str(snap_id),
+            'filename': picture_name,
             'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
             'created': str(datetime.datetime.now())
         }

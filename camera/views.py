@@ -1,10 +1,12 @@
 import json
+import time
 import uuid
 
 from flask import Blueprint, request, Response, current_app
 
-from camera.services import take_picam_still, take_thermal_still
 from admin.services import get_settings_document
+from analysis.services import scale_image
+from camera.services import take_picam_still, take_thermal_still
 
 camera = Blueprint('camera', __name__)
 
@@ -60,6 +62,8 @@ def thermal_still():
         'task_id': task.task_id,
         'snap_id': str(snap_id)
     }
+    time.sleep(1)
+    scale_image(pic_id)
     return Response(json.dumps(resp_json), status=202, mimetype='application/json')
 
 @camera.route('/both_still')
