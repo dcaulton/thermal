@@ -21,7 +21,7 @@ def scale_image(img_id_in, img_id_out):
 # only works on black and white images for now
     group_document = get_group_document('current')
     (colorize_range_low, colorize_range_high) = ('#000080', '#FFD700')
-    if 'colorize_range_low' in group_document:
+    if 'colorize_range_low' in group_document and 'colorize_range_high' in group_document:
         colorize_range_low = group_document['colorize_range_low']
         colorize_range_high = group_document['colorize_range_high']
     img_dict_in = current_app.db[str(img_id_in)]

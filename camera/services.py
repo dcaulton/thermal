@@ -61,8 +61,11 @@ def take_picam_still(snap_id, group_id, pic_id):
         picture_name = "{0}.jpg".format(long_exposure_pic_id)
         pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
         pic_dict['exposure_type'] = 'long'
+        pic_dict['filename'] = picture_name
+        pic_dict['uri'] = "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path)
+        pic_dict['created'] = str(datetime.datetime.now())
         take_long_exposure_picam_still(pic_path)
-        current_app.db[str(pic_id)] = pic_dict
+        current_app.db[str(long_exposure_pic_id)] = pic_dict
 
 
 @celery.task

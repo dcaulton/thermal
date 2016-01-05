@@ -5,10 +5,22 @@ import uuid
 from flask import current_app
 from PIL import Image, ImageChops
 
+from admin.services import get_group_document
+
 def do_stuff():
     return {'merging stuff': 'just got done'}
 
 def merge_images(img1_id_in, img2_id_in, img_id_out):
+    #deal with the fact that different merge methods require different parameters
+    group_document = get_group_document('current')
+    if 'merge_type' in group_document:
+        merge_type = group_document['merge_type']
+
+    if hasattr(ImageChops, merge_type):
+        merge_method = getattr(ImageChops, merge_type)
+    else:
+        merge_method = getattr(ImageChops, 'screen')
+
     img1_dict_in = current_app.db[str(img1_id_in)]
     img1_filename_in = img1_dict_in['filename']
     img2_dict_in = current_app.db[str(img2_id_in)]
@@ -19,7 +31,7 @@ def merge_images(img1_id_in, img2_id_in, img_id_out):
     pic_path_out = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], img_filename_out)
     image1_in = Image.open(pic1_path_in)
     image2_in = Image.open(pic2_path_in)
-    image_out = ImageChops.screen(image1_in.convert('RGBA'), image2_in.convert('RGBA'))
+    image_out = merge_method(image1_in.convert('RGBA'), image2_in.convert('RGBA'))
     image_out.save(pic_path_out)
 
     img_dict_out = {
