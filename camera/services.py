@@ -9,17 +9,11 @@ import cv2
 from flask import current_app, g
 import numpy as np
 import picamera
-from PIL import Image, ImageStat
+from PIL import Image
 from pylepton import Lepton
 
+from analysis.services import get_brightness
 from thermal.appmodule import celery
-
-def get_brightness(filename):
-    image = Image.open(filename).convert('L')
-    stat = ImageStat.Stat(image)
-    avg_pixel_value = stat.mean[0]
-    print "picam image brightness is {0}".format(avg_pixel_value)
-    return avg_pixel_value
 
 def take_standard_exposure_picam_still(pic_path):
     with picamera.PiCamera() as camera:

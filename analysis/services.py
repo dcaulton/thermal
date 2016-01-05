@@ -3,10 +3,17 @@ import os
 import uuid
 
 from flask import current_app
-from PIL import Image, ImageOps
+from PIL import Image, ImageStat, ImageOps
 
 def do_stuff():
     return {'analysis stuff': 'just got done'}
+
+def get_brightness(filename):
+    image = Image.open(filename).convert('L')
+    stat = ImageStat.Stat(image)
+    avg_pixel_value = stat.mean[0]
+    print "picam image brightness is {0}".format(avg_pixel_value)
+    return avg_pixel_value
 
 def scale_image(img_id_in, img_id_out):
 # only works on black and white images for now
