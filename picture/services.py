@@ -1,15 +1,12 @@
 from flask import current_app
 
 from thermal.exceptions import NotFoundError
+from thermal.utils import get_documents_from_criteria
 
-def find_pictures():
-    pictures_dict = {}
-    map_fun = '''function(doc) {
-        if (doc.type == 'picture')
-            emit(doc._id, doc);
-    }'''
-    for row in current_app.db.query(map_fun).rows:
-        pictures_dict[row['key']] = row['value']
+def find_pictures(args_dict):
+    args_dict = dict((key, args_dict.getlist(key)[0]) for key in args_dict.keys())
+    args_dict['type'] = 'picture'
+    pictures_dict = get_documents_from_criteria(args_dict=args_dict)
     return pictures_dict
     
 def find_picture(picture_id):

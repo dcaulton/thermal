@@ -45,7 +45,7 @@ def take_picam_still(snap_id, group_id, pic_id):
     pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
     pic_dict = {
         'type': 'picture',
-        'camera_type': 'picam',
+        'source': 'picam',
         'exposure_type': 'standard',
         'group_id': str(group_id),
         'snap_id': str(snap_id),
@@ -76,7 +76,7 @@ def take_thermal_still(snap_id, group_id, pic_id):
         cv2.imwrite(pic_path, np.uint8(a))
         pic_dict = {
             'type': 'picture',
-            'camera_type': 'thermal',
+            'source': 'thermal',
             'group_id': str(group_id),
             'snap_id': str(snap_id),
             'filename': picture_name,

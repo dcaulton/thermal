@@ -24,7 +24,7 @@ def merge_images(img1_id_in, img2_id_in, img_id_out):
 
     img_dict_out = {
         'type': 'picture',
-        'camera_type': 'merge',
+        'source': 'merge',
         'source_image_id_1': str(img1_id_in),
         'source_image_id_2': str(img2_id_in),
         'merge_type': 'screen',

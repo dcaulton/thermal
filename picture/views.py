@@ -2,6 +2,7 @@ import json
 
 import couchdb
 from flask import Blueprint, request, Response
+
 from picture.services import find_pictures, find_picture
 from thermal.exceptions import NotFoundError
 
@@ -9,7 +10,7 @@ picture = Blueprint('picture', __name__)
 
 @picture.route('/')
 def list_pictures():
-    pictures = find_pictures()
+    pictures = find_pictures(request.args)
     return Response(json.dumps(pictures), status=200, mimetype='application/json')
 
 @picture.route('/<picture_id>')

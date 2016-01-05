@@ -31,7 +31,7 @@ def scale_image(img_id_in, img_id_out):
     image_colorized.save(pic_path_out)
     img_dict_out = {
         'type': 'picture',
-        'camera_type': 'analysis',
+        'source': 'analysis',
         'source_image_id': str(img_id_in),
         'analysis_type': 'scale bicubic',
         'group_id': img_dict_in['group_id'],
