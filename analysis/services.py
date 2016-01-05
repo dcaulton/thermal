@@ -5,6 +5,8 @@ import uuid
 from flask import current_app
 from PIL import Image, ImageStat, ImageOps
 
+from admin.services import get_group_document
+
 def do_stuff():
     return {'analysis stuff': 'just got done'}
 
@@ -17,6 +19,11 @@ def get_brightness(filename):
 
 def scale_image(img_id_in, img_id_out):
 # only works on black and white images for now
+    group_document = get_group_document('current')
+    (colorize_range_low, colorize_range_high) = ('#000080', '#FFD700')
+    if 'colorize_range_low' in group_document:
+        colorize_range_low = group_document['colorize_range_low']
+        colorize_range_high = group_document['colorize_range_high']
     img_dict_in = current_app.db[str(img_id_in)]
     img_filename_in = img_dict_in['filename']
     img_filename_out = "{0}.jpg".format(img_id_out)
@@ -27,7 +34,7 @@ def scale_image(img_id_in, img_id_out):
                         (current_app.config['STILL_IMAGE_WIDTH'], current_app.config['STILL_IMAGE_HEIGHT']),
                         Image.BICUBIC
                    )
-    image_colorized = ImageOps.colorize(image_scaled, '#000080', '#FFD700')
+    image_colorized = ImageOps.colorize(image_scaled, colorize_range_low, colorize_range_high)
     image_colorized.save(pic_path_out)
     img_dict_out = {
         'type': 'picture',
