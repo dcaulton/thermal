@@ -1,5 +1,8 @@
-from flask import abort, current_app
 import uuid
+
+from flask import current_app
+
+from thermal.exceptions import NotFoundError
 
 def get_settings_document():
     map_fun = '''function(doc) {
@@ -23,7 +26,7 @@ def get_group_document(group_id):
     if group_id in current_app.db:
         group_dict = current_app.db[group_id]
     else:
-        abort(404)
+        raise NotFoundError('no group document found for id {0}'.format(str(group_id)))
     return group_dict
 
 def create_default_settings_and_group_documents():

@@ -2,6 +2,7 @@ from flask import Blueprint, request, Response
 import json
 
 from admin.services import get_settings_document, get_group_document, save_document
+from thermal.exceptions import NotFoundError
 
 admin = Blueprint('admin', __name__)
 
@@ -26,7 +27,10 @@ def set_settings():
 
 @admin.route('/groups/<group_id>', methods=['GET'])
 def get_group(group_id):
-    settings = get_group_document(group_id)
+    try:
+        settings = get_group_document(group_id)
+    except NotFoundError as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(settings), status=200, mimetype='application/json')
 
 @admin.route('/groups/<group_id>', methods=['POST'])
