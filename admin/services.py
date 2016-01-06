@@ -30,21 +30,29 @@ def get_group_document(group_id):
     return group_dict
 
 def create_default_settings_and_group_documents():
-    settings_id = uuid.uuid4()
-    current_group_id = uuid.uuid4()
-    settings_dict = {'_id': str(settings_id),
-                     'current_group_id': str(current_group_id),
-                     'capture_type': 'both_still',
-                     'button_active': True,
-                     'type': 'settings'
-                    }
+    group_dict = default_group_dict()
+    settings_dict = default_settings_dict(group_dict['_id'])
     save_document(settings_dict)
-    group_dict = {'_id': str(current_group_id),
+    save_document(group_dict)
+    return settings_dict
+
+def default_group_dict():
+    group_id = uuid.uuid4()
+    group_dict = {'_id': str(group_id),
                   'merge_type': 'screen',
                   'retake_picam_pics_when_dark': True,
                   'colorize_range_low': '#000080',
                   'colorize_range_high': '#FFD700',
                   'type': 'group'
-                 }
-    save_document(group_dict)
+    }
+    return group_dict
+
+def default_settings_dict(group_id):
+    settings_id = uuid.uuid4()
+    settings_dict = {'_id': str(settings_id),
+                     'current_group_id': str(group_id),
+                     'capture_type': 'both_still',
+                     'button_active': True,
+                     'type': 'settings'
+    }
     return settings_dict
