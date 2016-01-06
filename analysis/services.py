@@ -10,12 +10,14 @@ from admin.services import get_group_document
 def do_stuff():
     return {'analysis stuff': 'just got done'}
 
-def get_brightness(filename):
+def check_if_image_is_too_dark(filename):
     image = Image.open(filename).convert('L')
     stat = ImageStat.Stat(image)
     avg_pixel_value = stat.mean[0]
-    print "picam image brightness is {0}".format(avg_pixel_value)
-    return avg_pixel_value
+#    print "picam image brightness is {0}".format(avg_pixel_value)
+    if avg_pixel_value < 5.0:
+        return True
+    return False
 
 def scale_image(img_id_in, img_id_out):
 # only works on black and white images for now

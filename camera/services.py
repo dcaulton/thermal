@@ -12,7 +12,8 @@ import picamera
 from PIL import Image
 from pylepton import Lepton
 
-from analysis.services import get_brightness
+from admin.services import get_group_document
+from analysis.services import check_if_image_is_too_dark
 from thermal.appmodule import celery
 
 def take_standard_exposure_picam_still(pic_path):
@@ -39,8 +40,16 @@ def take_long_exposure_picam_still(pic_path):
         # longer than 6 seconds
         camera.capture(pic_path)
 
+def get_retake_picam_pics_when_dark_setting():
+    current_group_document = get_group_document('current')
+    if 'retake_picam_pics_when_dark' in current_group_document.keys():
+        return current_group_document['retake_picam_pics_when_dark']
+    return False
+
 @celery.task
 def take_picam_still(snap_id, group_id, pic_id):
+    retake_picam_pics_when_dark = get_retake_picam_pics_when_dark_setting()
+
     picture_name = "{0}.jpg".format(pic_id)
     pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
     pic_dict = {
@@ -55,8 +64,8 @@ def take_picam_still(snap_id, group_id, pic_id):
     }
     take_standard_exposure_picam_still(pic_path)
     current_app.db[str(pic_id)] = pic_dict
-    brightness = get_brightness(pic_path)
-    if brightness < 5.0:
+    image_is_too_dark = check_if_image_is_too_dark(pic_path)
+    if image_is_too_dark and retake_picam_pics_when_dark:
         long_exposure_pic_id = uuid.uuid4()
         picture_name = "{0}.jpg".format(long_exposure_pic_id)
         pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)

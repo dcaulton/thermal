@@ -41,6 +41,7 @@ def create_default_settings_and_group_documents():
     save_document(settings_dict)
     group_dict = {'_id': str(current_group_id),
                   'merge_type': 'screen',
+                  'retake_picam_pics_when_dark': True,
                   'colorize_range_low': '#000080',
                   'colorize_range_high': '#FFD700',
                   'type': 'group'
