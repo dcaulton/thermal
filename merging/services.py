@@ -6,10 +6,17 @@ from flask import current_app
 from PIL import Image, ImageChops
 
 from admin.services import get_group_document
+from thermal.appmodule import celery
+
 
 def do_stuff():
     return {'merging stuff': 'just got done'}
 
+@celery.task
+def merge_images_chained(_, img1_id_in, img2_id_in, img_id_out):
+    merge_images(img1_id_in, img2_id_in, img_id_out)
+
+@celery.task
 def merge_images(img1_id_in, img2_id_in, img_id_out):
     #deal with the fact that different merge methods require different parameters
     group_document = get_group_document('current')

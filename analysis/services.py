@@ -6,6 +6,7 @@ from flask import current_app
 from PIL import Image, ImageStat, ImageOps
 
 from admin.services import get_group_document
+from thermal.appmodule import celery
 
 def do_stuff():
     return {'analysis stuff': 'just got done'}
@@ -19,6 +20,11 @@ def check_if_image_is_too_dark(filename):
         return True
     return False
 
+@celery.task
+def scale_image_chained(_, img_id_in, img_id_out):
+    scale_image(img_id_in, img_id_out)
+
+@celery.task
 def scale_image(img_id_in, img_id_out):
 # only works on black and white images for now
     group_document = get_group_document('current')

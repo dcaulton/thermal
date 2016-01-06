@@ -2,12 +2,13 @@ import json
 import time
 import uuid
 
+from celery import chain
 from flask import Blueprint, request, Response, current_app
 
 from admin.services import get_settings_document
-from analysis.services import scale_image
-from camera.services import take_picam_still, take_thermal_still
-from merging.services import merge_images
+from analysis.services import scale_image, scale_image_chained
+from camera.services import take_picam_still, take_thermal_still, take_picam_still_chained
+from merging.services import merge_images, merge_images_chained
 
 camera = Blueprint('camera', __name__)
 
@@ -74,43 +75,37 @@ def both_still():
     thermal_pic_id = uuid.uuid4()
     picam_pic_id = uuid.uuid4()
     current_group_id = get_settings_document()['current_group_id']
-    take_picam_still.delay(
-        snap_id=snap_id,
-        group_id=current_group_id,
-        pic_id=picam_pic_id
-    )
-    take_thermal_still.delay(
-        snap_id=snap_id,
-        group_id=current_group_id,
-        pic_id=thermal_pic_id
-    )
 
-    time.sleep(1)
     scaled_pic_id = uuid.uuid4()
-    scale_image(img_id_in=thermal_pic_id, img_id_out=scaled_pic_id)
-
-    time.sleep(1)
     merged_pic_id = uuid.uuid4()
-    merge_images(
-        img1_id_in=picam_pic_id,
-        img2_id_in=scaled_pic_id,
-        img_id_out=merged_pic_id
-    )
+
+    chain(
+        take_thermal_still.s(
+            snap_id=snap_id,
+            group_id=current_group_id,
+            pic_id=thermal_pic_id
+        ),
+        take_picam_still_chained.s(
+            snap_id=snap_id,
+            group_id=current_group_id,
+            pic_id=picam_pic_id
+        ),
+        scale_image_chained.s(
+            img_id_in=thermal_pic_id,
+            img_id_out=scaled_pic_id
+        ),
+        merge_images_chained.s(
+            img1_id_in=picam_pic_id,
+            img2_id_in=scaled_pic_id,
+            img_id_out=merged_pic_id
+        )
+    ).apply_async()
 
     combo_dict = {
-        'picam': {
-            'id': str(picam_pic_id),
-            'snap_id': str(snap_id)
-        }, 
-        'thermal': {
-            'id': str(thermal_pic_id),
-            'snap_id': str(snap_id)
-        }, 
-        'scaled': {
-            'id': str(scaled_pic_id)
-        }, 
-        'merged': {
-            'id': str(merged_pic_id)
-        }
+        'snap_id': str(snap_id),
+        'picam_id': str(picam_pic_id),
+        'thermal_id': str(thermal_pic_id),
+        'scaled_id': str(scaled_pic_id),
+        'merged_id': str(merged_pic_id)
     }
     return Response(json.dumps(combo_dict), status=202, mimetype='application/json')

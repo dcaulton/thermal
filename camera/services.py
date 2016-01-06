@@ -47,6 +47,13 @@ def get_retake_picam_pics_when_dark_setting():
     return False
 
 @celery.task
+def take_picam_still_chained(_, snap_id, group_id, pic_id):
+    take_picam_still(snap_id, group_id, pic_id)
+    #consider passing the return value.  This camera can get jammed up due to its own firmware/software bugs, 
+    # we don't need to worry about merging and stuff if the camera is dead.  Maybe email admin/display on 
+    # status panel that we need a reboot?
+
+@celery.task
 def take_picam_still(snap_id, group_id, pic_id):
     retake_picam_pics_when_dark = get_retake_picam_pics_when_dark_setting()
 
@@ -75,7 +82,6 @@ def take_picam_still(snap_id, group_id, pic_id):
         pic_dict['created'] = str(datetime.datetime.now())
         take_long_exposure_picam_still(pic_path)
         current_app.db[str(long_exposure_pic_id)] = pic_dict
-
 
 @celery.task
 def take_thermal_still(snap_id, group_id, pic_id):

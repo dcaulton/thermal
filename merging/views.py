@@ -20,7 +20,7 @@ def call_merge_images():
     if request.args.has_key('result_id'):
         result_id = request.args.get('result_id')
     if img1_id and img2_id and result_id:
-        merge_images(
+        merge_images.delay(
             img1_id_in=img1_id,
             img2_id_in=img2_id,
             img_id_out=result_id
