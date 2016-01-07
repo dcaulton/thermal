@@ -14,7 +14,6 @@ from pylepton import Lepton
 
 from admin.services import get_group_document
 from analysis.services import check_if_image_is_too_dark
-from thermal.appmodule import celery
 
 def take_standard_exposure_picam_still(pic_path):
     with picamera.PiCamera() as camera:
@@ -46,18 +45,10 @@ def get_retake_picam_pics_when_dark_setting():
         return current_group_document['retake_picam_pics_when_dark']
     return False
 
-@celery.task
-def take_picam_still_chained(_, snap_id, group_id, pic_id):
-    take_picam_still(snap_id, group_id, pic_id)
-    #consider passing the return value.  This camera can get jammed up due to its own firmware/software bugs, 
-    # we don't need to worry about merging and stuff if the camera is dead.  Maybe email admin/display on 
-    # status panel that we need a reboot?
-
-@celery.task
-def take_picam_still(snap_id, group_id, pic_id):
+def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
     retake_picam_pics_when_dark = get_retake_picam_pics_when_dark_setting()
 
-    picture_name = "{0}.jpg".format(pic_id)
+    picture_name = "{0}.jpg".format(normal_exposure_pic_id)
     pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
     pic_dict = {
         'type': 'picture',
@@ -70,10 +61,9 @@ def take_picam_still(snap_id, group_id, pic_id):
         'created': str(datetime.datetime.now())
     }
     take_standard_exposure_picam_still(pic_path)
-    current_app.db[str(pic_id)] = pic_dict
+    current_app.db[str(normal_exposure_pic_id)] = pic_dict
     image_is_too_dark = check_if_image_is_too_dark(pic_path)
     if image_is_too_dark and retake_picam_pics_when_dark:
-        long_exposure_pic_id = uuid.uuid4()
         picture_name = "{0}.jpg".format(long_exposure_pic_id)
         pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
         pic_dict['exposure_type'] = 'long'
@@ -83,7 +73,6 @@ def take_picam_still(snap_id, group_id, pic_id):
         take_long_exposure_picam_still(pic_path)
         current_app.db[str(long_exposure_pic_id)] = pic_dict
 
-@celery.task
 def take_thermal_still(snap_id, group_id, pic_id):
     picture_name = "{0}.jpg".format(pic_id)
     with Lepton("/dev/spidev0.1") as l:
