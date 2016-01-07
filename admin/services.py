@@ -43,6 +43,7 @@ def default_group_dict():
                   'retake_picam_pics_when_dark': True,
                   'colorize_range_low': '#000080',
                   'colorize_range_high': '#FFD700',
+                  'picam_brightness_threshold': '5.0',
                   'type': 'group'
     }
     return group_dict

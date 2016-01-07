@@ -1,14 +1,10 @@
 import json
+import uuid
 
 from flask import Blueprint, request, Response
-from merging.services import do_stuff, merge_images
+from merging.services import merge_images_task
 
 merging = Blueprint('merging', __name__)
-
-@merging.route('/')
-def do_merging_thing():
-    the_thing = do_stuff()
-    return Response(json.dumps(the_thing), status=200, mimetype='application/json')
 
 @merging.route('/merge_images')
 def call_merge_images():
@@ -20,8 +16,9 @@ def call_merge_images():
     if request.args.has_key('result_id'):
         result_id = request.args.get('result_id')
     if img1_id and img2_id and result_id:
-        merge_images.delay(
-            img1_id_in=img1_id,
+        merge_images_task.delay(
+            img1_primary_id_in=img1_id,
+            img1_alternate_id_in=uuid.uuid4(),
             img2_id_in=img2_id,
             img_id_out=result_id
         )

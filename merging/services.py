@@ -13,13 +13,21 @@ def do_stuff():
     return {'merging stuff': 'just got done'}
 
 @celery.task
-def merge_images_chained(_, img1_id_in, img2_id_in, img_id_out):
-    merge_images(img1_id_in, img2_id_in, img_id_out)
+def merge_images_chained(_, img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out):
+    merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out)
 
 @celery.task
-def merge_images(img1_id_in, img2_id_in, img_id_out):
+def merge_images_task(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out):
+    merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out)
+
+def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out):
     #deal with the fact that different merge methods require different parameters
     group_document = get_group_document('current')
+
+    img1_id_in = img1_primary_id_in
+    if str(img1_alternate_id_in) in current_app.db:
+        img1_id_in = img1_alternate_id_in
+
     if 'merge_type' in group_document:
         merge_type = group_document['merge_type']
 

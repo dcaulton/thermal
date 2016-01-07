@@ -35,9 +35,6 @@ def thermal_still():
 
 @camera.route('/both_still')
 def both_still():
-#this doesn't yet use the delay functionality that picam_still and thermal_still methods have
-# this isn't aware if the picam takes a second, long exposure that will have a different pid
-#   - can be solved if we chain the tasks and have the later tasks look for all pictures associated with this snap
     snap_id = uuid.uuid4()
     group_id = get_settings_document()['current_group_id']
     delay = get_delay_parameter()

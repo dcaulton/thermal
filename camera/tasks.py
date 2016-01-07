@@ -97,12 +97,12 @@ def both_still_chain(snap_id, group_id, delay=0):
             img_id_out=scaled_pic_id
         ),
         merge_images_chained.s(
-            img1_id_in=normal_exposure_picam_pic_id,
+            img1_primary_id_in=normal_exposure_picam_pic_id,
+            img1_alternate_id_in=long_exposure_picam_pic_id,
             img2_id_in=scaled_pic_id,
             img_id_out=merged_pic_id
         )
     ).apply_async(countdown=delay)
-    # todo: make merge_images_chained smarter, so that it looks first for the long exposure pic, then the normal
 
     return {
         'snap_id': str(snap_id),

@@ -11,12 +11,11 @@ from thermal.appmodule import celery
 def do_stuff():
     return {'analysis stuff': 'just got done'}
 
-def check_if_image_is_too_dark(filename):
+def check_if_image_is_too_dark(filename, brightness_threshold):
     image = Image.open(filename).convert('L')
     stat = ImageStat.Stat(image)
     avg_pixel_value = stat.mean[0]
-#    print "picam image brightness is {0}".format(avg_pixel_value)
-    if avg_pixel_value < 5.0:
+    if avg_pixel_value < brightness_threshold:
         return True
     return False
 

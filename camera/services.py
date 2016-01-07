@@ -39,14 +39,23 @@ def take_long_exposure_picam_still(pic_path):
         # longer than 6 seconds
         camera.capture(pic_path)
 
-def get_retake_picam_pics_when_dark_setting():
-    current_group_document = get_group_document('current')
-    if 'retake_picam_pics_when_dark' in current_group_document.keys():
-        return current_group_document['retake_picam_pics_when_dark']
+def get_retake_picam_pics_when_dark_setting(group_document):
+    if 'retake_picam_pics_when_dark' in group_document.keys():
+        return group_document['retake_picam_pics_when_dark']
     return False
 
+def get_brightness_threshold(group_document):
+    try:
+        if 'picam_brightness_threshold' in group_document.keys():
+            return float(group_document['picam_brightness_threshold'])
+    except ValueError as e:
+        pass
+    return 5.0
+
 def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
-    retake_picam_pics_when_dark = get_retake_picam_pics_when_dark_setting()
+    group_document = get_group_document(str(group_id))
+    retake_picam_pics_when_dark = get_retake_picam_pics_when_dark_setting(group_document)
+    brightness_threshold = get_brightness_threshold(group_document)
 
     picture_name = "{0}.jpg".format(normal_exposure_pic_id)
     pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
@@ -62,7 +71,7 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     }
     take_standard_exposure_picam_still(pic_path)
     current_app.db[str(normal_exposure_pic_id)] = pic_dict
-    image_is_too_dark = check_if_image_is_too_dark(pic_path)
+    image_is_too_dark = check_if_image_is_too_dark(pic_path, brightness_threshold)
     if image_is_too_dark and retake_picam_pics_when_dark:
         picture_name = "{0}.jpg".format(long_exposure_pic_id)
         pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
