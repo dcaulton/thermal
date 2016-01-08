@@ -2,7 +2,8 @@ import uuid
 
 from flask import current_app
 
-from thermal.exceptions import NotFoundError
+from thermal.exceptions import DocumentConfigurationError, NotFoundError
+
 
 def get_settings_document():
     map_fun = '''function(doc) {
@@ -16,8 +17,13 @@ def get_settings_document():
         settings_dict = create_default_settings_and_group_documents()
     return settings_dict
 
-def save_document(dict_in):
-    current_app.db[dict_in['_id']] = dict_in
+def save_document(document_in):
+    the_id = document_in['_id']
+    if the_id in current_app.db:
+        existing_document = current_app.db[the_id]
+        if existing_document['type'] != document_in['type']:
+            raise DocumentConfigurationError('attempting to change the document type for document {0}'.format(str(the_id)))
+    current_app.db[the_id] = document_in
 
 def get_group_document(group_id):
     if group_id == 'current':
@@ -25,9 +31,9 @@ def get_group_document(group_id):
         group_id = settings_dict['current_group_id']
     if group_id in current_app.db:
         group_dict = current_app.db[group_id]
-    else:
-        raise NotFoundError('no group document found for id {0}'.format(str(group_id)))
-    return group_dict
+        if group_dict['type'] == 'group':
+            return group_dict
+    raise NotFoundError('no group document found for id {0}'.format(str(group_id)))
 
 def create_default_settings_and_group_documents():
     group_dict = default_group_dict()
