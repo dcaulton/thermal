@@ -10,11 +10,20 @@ from thermal.appmodule import celery
 
 @celery.task
 def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
+    '''
+    Wrapper method to handle the celery scheduling of the taking of a single Picam still, with an extra parameter to handle
+      how celery chains tasks.
+    Calls the synchronous take_picam_still method.
+    '''
     # don't call picam_still_task here.  It would cause a new celery task to be created, which would be out of 
     #  sequence with the original chain of tasks we belong to
     camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
 
 def take_picam_still(snap_id, group_id, delay=0, repeat=0):
+    '''
+    Top level handler for taking Picam pictures between the camera view and the camera service modules.
+    Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.
+    '''
     normal_exposure_pic_ids = []
     long_exposure_pic_ids = []
     snap_ids = []
@@ -43,9 +52,18 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
 
 @celery.task
 def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
+    '''
+    Wrapper method to handle the celery scheduling of the taking of a single Picam still.
+    Calls the synchronous take_picam_still method.
+    '''
     camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
 
 def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
+    '''
+    Top level handler for taking Lepton pictures between the camera view and the camera service modules.
+    Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.
+    Also optionally accepts a parameter to chain an 'enlarge and colorize' task after the Lepton still if desired
+    '''
     pic_ids = []
     scaled_pic_ids = []
     snap_ids = []
@@ -91,9 +109,22 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
 
 @celery.task
 def thermal_still_task(snap_id, group_id, pic_id):
+    '''
+    Wrapper method to handle the celery scheduling of the taking of a single Lepton still.
+    Calls the synchronous take_thermal_still method.
+    '''
     camera.services.take_thermal_still(snap_id, group_id, pic_id)
 
 def both_still_chain(snap_id, group_id, delay=0, repeat=0):
+    '''
+    Wrapper method to handle the celery scheduling of the taking of a 'both' still with standard subtasks.
+    A both still and subtasks consists of: 
+      - Lepton still
+      - Enlarge and colorize Lepton still
+      - Picam still
+      - Merge picam still and 'Enlarged and colorized Lepton still'
+    Calls the synchronous take_picam_still method.
+    '''
     thermal_pic_ids = []
     normal_exposure_picam_pic_ids = []
     long_exposure_picam_pic_ids = []

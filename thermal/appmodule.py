@@ -16,7 +16,6 @@ def create_app(config_name='development'):
     app.config['HOSTNAME'] = socket.gethostname()
 
     register_blueprints(app)
-#    register_db(app)
 
 #    @app.before_request
 #    def before_request():

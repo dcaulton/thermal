@@ -16,11 +16,18 @@ from admin.services import get_group_document
 from analysis.services import check_if_image_is_too_dark
 
 def take_standard_exposure_picam_still(pic_path):
+    '''
+    Used to interface with the Picam camera to take a standard, or automatically exposed image
+    '''
     with picamera.PiCamera() as camera:
         camera.resolution = (current_app.config['STILL_IMAGE_WIDTH'], current_app.config['STILL_IMAGE_HEIGHT'])
         camera.capture(pic_path)
 
 def take_long_exposure_picam_still(pic_path):
+    '''
+    Used to take a generic 'long exposure image' from the Picam camera if earlier logic determines that conditions warrant
+    It's currently configured to always take what seems to be the longest possible exposure
+    '''
 #TODO: tune this to adjust exposure length based on brightness from the standard exposure picam image that was just taken
     print 'taking long exposure'
     with picamera.PiCamera() as camera:
@@ -40,11 +47,23 @@ def take_long_exposure_picam_still(pic_path):
         camera.capture(pic_path)
 
 def get_retake_picam_pics_when_dark_setting(group_document):
+    '''
+    Handles getting a setting from the group document intended to reflect if a user wants to retake picam photos
+      during this session if they are too dim.  It's not a decision to be taken lightly, long exposures can 
+      take around 50 seconds and definitely affect ones workflow.
+    Has a hardcoded default value of False
+    '''
     if 'retake_picam_pics_when_dark' in group_document.keys():
         return group_document['retake_picam_pics_when_dark']
     return False
 
 def get_brightness_threshold(group_document):
+    '''
+    Handles getting a 'brightness threshold' value from the supplied group document.
+    Has a hard coded default, forces the value to be a float.
+    This information is used by the analysis service to determine if some particular picture meets a user-defined
+      limit for being too dark
+    '''
     try:
         if 'picam_brightness_threshold' in group_document.keys():
             return float(group_document['picam_brightness_threshold'])
@@ -53,6 +72,11 @@ def get_brightness_threshold(group_document):
     return 5.0
 
 def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
+    '''
+    Top level method in the camera service for taking a still image via the picam (regular raspberry pi) camera.
+    Also saves a picture record to the db
+    Depending on settings and real time conditions, may cause a second, longer exposure to be taken
+    '''
     group_document = get_group_document(str(group_id))
     retake_picam_pics_when_dark = get_retake_picam_pics_when_dark_setting(group_document)
     brightness_threshold = get_brightness_threshold(group_document)
@@ -83,6 +107,10 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
         current_app.db[str(long_exposure_pic_id)] = pic_dict
 
 def take_thermal_still(snap_id, group_id, pic_id):
+    '''
+    Top level method in the camera service for taking a still image via the Lepton camera.
+    Also saves a picture record to the db
+    '''
     picture_name = "{0}.jpg".format(pic_id)
     with Lepton("/dev/spidev0.1") as l:
         a,_ = l.capture()

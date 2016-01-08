@@ -9,12 +9,13 @@ from camera.tasks import take_picam_still, take_thermal_still, both_still_chain
 
 camera = Blueprint('camera', __name__)
 
-@camera.route('/')
-def index():
-    return "Camera"
-
 @camera.route('/picam_still')
 def picam_still():
+    '''
+    Api endpoint for taking one or a series of Picam stills.  
+    The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+    Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
+    '''
     snap_id = uuid.uuid4()
     group_id = get_settings_document()['current_group_id']
     delay = get_delay_parameter()
@@ -24,6 +25,11 @@ def picam_still():
 
 @camera.route('/thermal_still')
 def thermal_still():
+    '''
+    Api endpoint for taking one or a series of Lepton stills.  
+    The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+    Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
+    '''
     snap_id = uuid.uuid4()
     group_id = get_settings_document()['current_group_id']
     delay = get_delay_parameter()
@@ -34,6 +40,12 @@ def thermal_still():
 
 @camera.route('/both_still')
 def both_still():
+    '''
+    Api endpoint for taking one or a series of 'both' stills - that is, Picam and Lepton stills which are then post-processed
+      and merged into a single image
+    The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+    Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
+    '''
     snap_id = uuid.uuid4()
     group_id = get_settings_document()['current_group_id']
     delay = get_delay_parameter()
@@ -49,6 +61,10 @@ def both_still():
     return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
 
 def get_delay_parameter():
+    '''
+    Extracts the delay parameter from the GET parameters.
+    Has a hardcoded default of 'shoot immediately'
+    '''
     delay = 0
     try:
         if request.args.has_key('delay'):
@@ -58,6 +74,10 @@ def get_delay_parameter():
     return delay
 
 def get_repeat_parameter():
+    '''
+    Extracts the repeat parameter from the GET parameters.
+    Has a hardcoded default of 'one picture only, no repeating behavior'
+    '''
     repeat = 0
     try:
         if request.args.has_key('repeat'):
@@ -67,6 +87,11 @@ def get_repeat_parameter():
     return repeat
 
 def get_scale_image_parameter():
+    '''
+    Extracts a parameter from the GET parameters which indicates if the user wants the Lepton image, which will be coming in
+      as 80x60, to be scaled up and colorized
+    Has a hardcoded default of 'yes, scale and colorize it up'
+    '''
     scale_image = True
     if request.args.has_key('scale_image'):
         scale_image = request.args.get('scale_image')
