@@ -15,7 +15,12 @@ class DevelopmentConfig(Config):
     DEBUG = True
 
 class TestingConfig(Config):
-    a=1
+    COUCHDB_DATABASE = 'thermal_testing'
+
+    @classmethod
+    def init_app(cls, app):
+        Config.init_app(app)
+
 
 config = {
     'development': DevelopmentConfig,

@@ -16,7 +16,7 @@ def create_app(config_name='development'):
     app.config['HOSTNAME'] = socket.gethostname()
 
     register_blueprints(app)
-    register_db(app)
+#    register_db(app)
 
 #    @app.before_request
 #    def before_request():
@@ -28,7 +28,13 @@ def create_app(config_name='development'):
 
 def register_db(app):
     couch = couchdb.Server()
-    app.db = couch['thermal']
+    if hasattr(app,'config'):
+        if 'COUCHDB_DATABASE' in app.config:
+            app.db = couch[app.config['COUCHDB_DATABASE']]
+        else:
+            raise Exception('No value for COUCHDB_DATABASE in the app config')
+    else:
+        raise Exception('Trying to register db with an app has no config')
 
 def register_blueprints(app):
     from admin.views import admin
