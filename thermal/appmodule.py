@@ -29,7 +29,11 @@ def register_db(app):
     couch = couchdb.Server()
     if hasattr(app,'config'):
         if 'COUCHDB_DATABASE' in app.config:
-            app.db = couch[app.config['COUCHDB_DATABASE']]
+            try:
+                app.db = couch[app.config['COUCHDB_DATABASE']]
+            except couchdb.http.ResourceNotFound as e:
+                couch.create(app.config['COUCHDB_DATABASE'])
+                app.db = couch[app.config['COUCHDB_DATABASE']]
         else:
             raise Exception('No value for COUCHDB_DATABASE in the app config')
     else:
