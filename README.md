@@ -95,8 +95,8 @@ We will start with the following assumptions:
   - sudo reboot  
   - *Now you can get at the rabbitmq admin server at http://strangefruit4:15672/#/  with the dave/dave credentials*
 
-#enable listener for the button, celery, flask
-#we want these tasks:
-#  python /home/pi/thermal/run.py  # starts the Flask listener in dev mode
-#  ./home/pi/thermal/thermal/bin/start_celery_worker.sh  # starts the celery listener
-#  ./home/pi/thermal/thermal/bin/button_listener.py  # starts the button listener
+##enable listener for the button, celery, flask
+- These tasks get the system up and listening for button and http inputs:
+  - python /home/pi/thermal/run.py  **starts the Flask listener in dev mode
+  - sh /home/pi/thermal/thermal/bin/start_celery_worker.sh  **starts the celery listener
+  - sudo python /home/pi/thermal/thermal/bin/button_listener.py  **starts the button listener
