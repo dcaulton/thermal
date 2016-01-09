@@ -1,27 +1,24 @@
 import datetime
-from fractions import Fraction
 import io
 import os
-from time import sleep
 import uuid
 
-import cv2
-from flask import current_app, g
-import numpy as np
-import picamera
-from PIL import Image
-from pylepton import Lepton
+from flask import current_app
 
 from admin.services import get_group_document
 from analysis.services import check_if_image_is_too_dark
+from cameras import Lepton, Picam
 
 def take_standard_exposure_picam_still(pic_path):
     '''
     Used to interface with the Picam camera to take a standard, or automatically exposed image
     '''
-    with picamera.PiCamera() as camera:
-        camera.resolution = (current_app.config['STILL_IMAGE_WIDTH'], current_app.config['STILL_IMAGE_HEIGHT'])
-        camera.capture(pic_path)
+    picam = Picam()
+    picam.take_still(
+        pic_path=pic_path,
+        image_width=current_app.config['STILL_IMAGE_WIDTH'],
+        image_height=current_app.config['STILL_IMAGE_HEIGHT']
+    )
 
 def take_long_exposure_picam_still(pic_path):
     '''
@@ -30,21 +27,12 @@ def take_long_exposure_picam_still(pic_path):
     '''
 #TODO: tune this to adjust exposure length based on brightness from the standard exposure picam image that was just taken
     print 'taking long exposure'
-    with picamera.PiCamera() as camera:
-        camera.resolution = (current_app.config['STILL_IMAGE_WIDTH'], current_app.config['STILL_IMAGE_HEIGHT'])
-        # Set a framerate of 1/6fps, then set shutter
-        # speed to 6s and ISO to 800
-        camera.framerate = Fraction(1, 6)
-        camera.shutter_speed = 6000000
-        camera.exposure_mode = 'off'
-        camera.iso = 800
-        # Give the camera a good long time to measure AWB
-        # (you may wish to use fixed AWB instead)
-        sleep(2)
-        # Finally, capture an image with a 6s exposure. Due
-        # to mode switching on the still port, this will take
-        # longer than 6 seconds
-        camera.capture(pic_path)
+    picam = Picam()
+    picam.take_long_exposure_still(
+        pic_path=pic_path,
+        image_width=current_app.config['STILL_IMAGE_WIDTH'],
+        image_height=current_app.config['STILL_IMAGE_HEIGHT']
+    )
 
 def get_retake_picam_pics_when_dark_setting(group_document):
     '''
@@ -112,19 +100,17 @@ def take_thermal_still(snap_id, group_id, pic_id):
     Also saves a picture record to the db
     '''
     picture_name = "{0}.jpg".format(pic_id)
-    with Lepton("/dev/spidev0.1") as l:
-        a,_ = l.capture()
-        cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
-        np.right_shift(a, 8, a)
-        pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
-        cv2.imwrite(pic_path, np.uint8(a))
-        pic_dict = {
-            'type': 'picture',
-            'source': 'thermal',
-            'group_id': str(group_id),
-            'snap_id': str(snap_id),
-            'filename': picture_name,
-            'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
-            'created': str(datetime.datetime.now())
-        }
-        current_app.db[str(pic_id)] = pic_dict
+    pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
+    lepton = Lepton()
+    lepton.take_still(pic_path=pic_path)
+
+    pic_dict = {
+        'type': 'picture',
+        'source': 'thermal',
+        'group_id': str(group_id),
+        'snap_id': str(snap_id),
+        'filename': picture_name,
+        'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
+        'created': str(datetime.datetime.now())
+    }
+    current_app.db[str(pic_id)] = pic_dict
