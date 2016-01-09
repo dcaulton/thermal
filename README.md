@@ -1,15 +1,16 @@
 # thermal
 
-##Summary 
-This respository is for controlling a Raspberry Pi computer running the standard camera that comes with the Pi and a second thermal imaging camera
-Images are taken with both cameras and combined via Imagemagick/PIL
-It's run as a Flask application and all interaction is done with JSON and through RESTful APIs
-CouchDB is the database
-Interactions with the hardware are processed asynchronously by means of Celery.
-RabbitMQ is used as the message brokering service for Celery.
-There is also support for taking pictures by means of a button on the project box.
+#Summary 
+- This respository is for controlling a Raspberry Pi computer running the standard camera that comes with the Pi and a second thermal imaging camera
+- Images are taken with both cameras and combined via ImageMagick
+- Python is the base language in preference for anything that can't happen with system packages and command line
+- This is run as a Flask application and all interaction is done with JSON and through RESTful APIs
+- CouchDB is the database.
+- Interactions with the hardware are processed asynchronously by means of Celery.
+- RabbitMQ is used as the message brokering service for Celery.
+- There is also support for taking pictures by means of a button on the project box.
 
-##Hardware Requirements
+#Hardware Requirements
 It has been developed with the following requirements:
 - Raspberry Pi 2 B computer, 32GB SD card
 - Raspian Jessie 11.21.2015 image is the os on the RPi
@@ -17,7 +18,7 @@ It has been developed with the following requirements:
 - FLIR Lepton camera with the Pure Engineering breakout board
 - A project box with a momentary button
 
-##Installation Instructions
+#Installation Instructions
 The hostname for this Raspberry Pi will be strangefruit4.
 I'll be installing software and running it as the default pi user.
 
@@ -28,13 +29,13 @@ I'll be installing software and running it as the default pi user.
   - set it to strangefruit4
 - if you have a USB wifi dongle plugged in to the unit:
     sudo vi /etc/wpa_supplicant/wpa_supplicant.conf , add this to the bottom:
-    network={
-    ssid="YOUR_WIFI_ACCESS_POINT_NAME"
-    psk="YOUR_WIFI_PASSWORD"
-    proto=RSN
-    key_mgmt=WPA-PSK
-    pairwise=TKIP
-    auth_alg=OPEN
+    network = {
+      ssid="YOUR_WIFI_ACCESS_POINT_NAME"
+      psk="YOUR_WIFI_PASSWORD"
+      proto=RSN
+      key_mgmt=WPA-PSK
+      pairwise=TKIP
+      auth_alg=OPEN
     }
 - sudo apt-get install vim
 - sudo vim /etc/apt/sources.list , uncomment the line at the bottom
@@ -47,7 +48,7 @@ I'll be installing software and running it as the default pi user.
   - Finish
   - reboot the machine
 
-###install Linux packages
+##install Linux packages
 - ssh pi@strangefruit4
 - sudo apt-get update
 - sudo apt-get upgrade
@@ -58,7 +59,7 @@ I'll be installing software and running it as the default pi user.
 - sudo apt-get build-dep python-imaging
 - sudo apt-get install libjpeg9-dev
 
-###install python packages
+##install python packages
 - cd ~
 - git clone https://github.com/dcaulton/thermal.git
 - cd ~/thermal
@@ -72,16 +73,23 @@ I'll be installing software and running it as the default pi user.
 - add this to ~/.bashrc:  export EDITOR=/usr/bin/vim
 - ln -s /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so ~/thermal/venv/lib/python2.7/site-packages/cv2.arm-linux-gnueabihf.so
 
-###at this point the system should be able to service api calls and take pictures
+##at this point the system should be able to service api calls and take pictures
 
-###enable web admin interfaces for CouchDB and RabbitMQ
+##enable web admin interfaces for CouchDB and RabbitMQ
 - Enable the CouchDB management panel access from other computers on the local network:
   - sudo vim /etc/couchdb/default.ini , update bind_address to 0.0.0.0.
   - maybe a sudo service couchdb restart?
   - *Now you can access the couchdb web interface from other computers/browsers on the local network at http://strangefruit4:5984/_utils*
+
 - Enable the RabbitMQ management panel access from other points on the local network:
   - sudo rabbitmq-plugins enable rabbitmq_management
   - sudo rabbitmqctl add_user dave dave
   - sudo rabbitmqctl set_user_tags dave administrator 
   - sudo reboot  
   - *Now you can get at the rabbitmq admin server at http://strangefruit4:15672/#/  with the dave/dave credentials*
+
+#enable listener for the button, celery, flask
+#we want these tasks:
+#  python /home/pi/thermal/run.py  # starts the Flask listener in dev mode
+#  ./home/pi/thermal/thermal/bin/start_celery_worker.sh  # starts the celery listener
+#  ./home/pi/thermal/thermal/bin/button_listener.py  # starts the button listener
