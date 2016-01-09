@@ -27,7 +27,7 @@ I'll be installing software and running it as the default pi user.
 - sudo vi /etc/hostname     
   - set it to strangefruit4
 - if you have a USB wifi dongle plugged in to the unit:
-  - sudo vi /etc/wpa_supplicant/wpa_supplicant.conf , add this to the bottom:
+    sudo vi /etc/wpa_supplicant/wpa_supplicant.conf , add this to the bottom:
     network={
     ssid="YOUR_WIFI_ACCESS_POINT_NAME"
     psk="YOUR_WIFI_PASSWORD"
@@ -41,11 +41,13 @@ I'll be installing software and running it as the default pi user.
 - sudo raspi-config
   - Enable Camera
   - Advanced Options > SPI > Enable Spi Module, also enable the SPI kernel module to load by default
-  -Internationalization Options > set up your locale and timezone
-  -Change User Password
-  -Expand Filesystem
-  -Finish
-  -reboot the machine
+  - Internationalization Options > set up your locale and timezone
+  - Change User Password
+  - Expand Filesystem
+  - Finish
+  - reboot the machine
+
+###install Linux packages
 - ssh pi@strangefruit4
 - sudo apt-get update
 - sudo apt-get upgrade
@@ -55,20 +57,24 @@ I'll be installing software and running it as the default pi user.
 - sudo apt-get install couchdb rabbitmq-server
 - sudo apt-get build-dep python-imaging
 - sudo apt-get install libjpeg9-dev
+
+###install python packages
 - cd ~
 - git clone https://github.com/dcaulton/thermal.git
 - cd ~/thermal
 - virtualenv venv
 - source venv/bin/activate
-- pip install numpy  *** I know, shouldn't be needed but it runs long with a lot of c compiles.  
+- pip install numpy  ** I know, shouldn't be needed but it runs long with a lot of c compiles.  
 - pip install -r requirements/common.txt
 - git config --global user.email "dcaulton@gmail.com"; git config --global user.name "Dave Caulton"
 - git config --global color.ui true
 - touch ~/.vimrc; echo 'syntax on' > ~/.vimrc
 - add this to ~/.bashrc:  export EDITOR=/usr/bin/vim
 - ln -s /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so ~/thermal/venv/lib/python2.7/site-packages/cv2.arm-linux-gnueabihf.so
+
 ###at this point the system should be able to service api calls and take pictures
 
+###enable web admin interfaces for CouchDB and RabbitMQ
 - Enable the CouchDB management panel access from other computers on the local network:
   - sudo vim /etc/couchdb/default.ini , update bind_address to 0.0.0.0.
   - maybe a sudo service couchdb restart?
