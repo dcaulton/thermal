@@ -1,40 +1,47 @@
 # thermal
+This is an application to let a Raspberry Pi cameras capture thermal and regular visual information.  
+
+A range of options are available to transform and merge these images into new pictures.  Most of that logic is within the merging and analysis packages.
+
 
 #Summary 
 - This respository is for controlling a Raspberry Pi computer running the standard camera that comes with the Pi and a second thermal imaging camera
 - Images are taken with both cameras and combined via ImageMagick
-- Python is the base language in preference for anything that can't happen with system packages and command line
-- This is run as a Flask application and all interaction is done with JSON and through RESTful APIs
+- Python is the base language in preference for anything that can't happen with system packages and command line.
+- This is run as a Flask application and all interaction is done with JSON and through RESTful APIs.
 - CouchDB is the database.
 - Interactions with the hardware are processed asynchronously by means of Celery.
 - RabbitMQ is used as the message brokering service for Celery.
 - There is also support for taking pictures by means of a button on the project box.
 
 #Hardware Requirements
-It has been developed with the following requirements:
+It has been developed against the following system:
 - Raspberry Pi 2 B computer, 32GB SD card
 - Raspian Jessie 11.21.2015 image is the os on the RPi
 - Raspberry Pi standard camera
 - FLIR Lepton camera with the Pure Engineering breakout board
-- A project box with a momentary button
+- A project box with a momentary button and both cameras front mounted
 
 #Installation Instructions
-The hostname for this Raspberry Pi will be strangefruit4.
-I'll be installing software and running it as the default pi user.
+We will start with the following assumptions:
+- The hostname for this Raspberry Pi will be strangefruit4.
+- I'll be installing software and running it as the default pi user.
 
+
+#prepare the memory card and perform the initial bootup on the RPi
 - install the 11.21.15 version of Raspian Jessie (for RPi 2 B) on a 32GB micro SD card using Pi Filler on a Mac Mini.
-- put the card in a Raspberry Pi 2 B, connect the RPi to power and ethernet.  
-- ssh pi@raspberrypi
-- sudo vi /etc/hostname     
-  - set it to strangefruit4
-- if you have a USB wifi dongle plugged in to the unit:
+- put the card in the Raspberry Pi 2 B, connect the RPi to power and ethernet.  
+- after the pi has booted up:
+  - ssh pi@raspberrypi # You are now connected to the machine
+- sudo echo 'strangefruit4' > /etc/hostname
+- if you have a USB wifi dongle plugged in to the unit, this is a good time to enter your credentials:
     sudo vi /etc/wpa_supplicant/wpa_supplicant.conf , add this to the bottom:
     network = {
-      ssid="YOUR_WIFI_ACCESS_POINT_NAME"
-      psk="YOUR_WIFI_PASSWORD"
-      proto=RSN
-      key_mgmt=WPA-PSK
-      pairwise=TKIP
+      ssid="YOUR_WIFI_ACCESS_POINT_NAME",
+      psk="YOUR_WIFI_PASSWORD",
+      proto=RSN,
+      key_mgmt=WPA-PSK,
+      pairwise=TKIP,
       auth_alg=OPEN
     }
 - sudo apt-get install vim
