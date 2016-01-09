@@ -69,8 +69,8 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     retake_picam_pics_when_dark = get_retake_picam_pics_when_dark_setting(group_document)
     brightness_threshold = get_brightness_threshold(group_document)
 
-    picture_name = "{0}.jpg".format(normal_exposure_pic_id)
-    pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
+    picture_name = build_picture_name(normal_exposure_pic_id)
+    pic_path = build_pic_path(picture_name)
     pic_dict = {
         'type': 'picture',
         'source': 'picam',
@@ -85,8 +85,8 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     current_app.db[str(normal_exposure_pic_id)] = pic_dict
     image_is_too_dark = check_if_image_is_too_dark(pic_path, brightness_threshold)
     if image_is_too_dark and retake_picam_pics_when_dark:
-        picture_name = "{0}.jpg".format(long_exposure_pic_id)
-        pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
+        picture_name = build_picture_name(long_exposure_pic_id)
+        pic_path = build_pic_path(picture_name)
         pic_dict['exposure_type'] = 'long'
         pic_dict['filename'] = picture_name
         pic_dict['uri'] = "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path)
@@ -94,13 +94,19 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
         take_long_exposure_picam_still(pic_path)
         current_app.db[str(long_exposure_pic_id)] = pic_dict
 
+def build_pic_path(picture_name):
+    return os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
+
+def build_picture_name(pic_id):
+    return "{0}.jpg".format(pic_id)
+
 def take_thermal_still(snap_id, group_id, pic_id):
     '''
     Top level method in the camera service for taking a still image via the Lepton camera.
     Also saves a picture record to the db
     '''
-    picture_name = "{0}.jpg".format(pic_id)
-    pic_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
+    picture_name = build_picture_name(pic_id)
+    pic_path = build_pic_path(picture_name)
     lepton = Lepton()
     lepton.take_still(pic_path=pic_path)
 
