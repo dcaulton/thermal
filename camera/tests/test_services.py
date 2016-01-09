@@ -1,48 +1,55 @@
+from mock import ANY, Mock, patch
 import uuid
 
 from flask import current_app
 import mock
 import pytest 
 
-import conftest
 from camera.cameras import Lepton
-from camera.services import build_pic_path, build_picture_name, take_thermal_still
+import camera.services as cs
 
 
 class TestServicesUnit(object):
-    def test_thermal_still_saves_appropriate_picture_document(self):
-        Lepton.take_still = mock.Mock()
+
+    @patch('camera.services.save_picture')
+    def test_thermal_still_saves_appropriate_picture_document(self, cs_save_picture):
+        Lepton.take_still = Mock()
+        #here's how to set properties on the function we mocked out
+        #  cs_save_picture.return_value = 'haha'
         snap_id = uuid.uuid4()
         group_id = uuid.uuid4()
         pic_id = uuid.uuid4()
 
-        take_thermal_still(snap_id, group_id, pic_id)
+        cs.take_thermal_still(snap_id, group_id, pic_id)
 
-        # TODO fetching the doc from the db means this is actually integration testing.
-        #  put a wrapper around the picture save in the service, then check what it was called with.
-        #  integration tests are still good, just don't put it here, in the unit test section
-        pic_doc = current_app.db[str(pic_id)]
-        picture_name = build_picture_name(pic_id)
-        picture_path = build_pic_path(picture_name)
-        assert '_id' in pic_doc.keys()
-        assert '_rev' in pic_doc.keys()
-        assert 'created' in pic_doc.keys()
-        assert pic_doc['type'] == 'picture'
-        assert pic_doc['source'] == 'thermal'
-        assert pic_doc['group_id'] == str(group_id)
-        assert pic_doc['snap_id'] == str(snap_id)
-        assert str(pic_id) in pic_doc['filename']
-        assert str(pic_id) in pic_doc['uri']
+        picture_name = cs.build_picture_name(pic_id)
+        picture_path = cs.build_pic_path(picture_name)
+
+        cs.save_picture.assert_called_once_with(
+            {'_id': str(pic_id),
+             'type': 'picture',
+             'source': 'thermal',
+             'group_id': str(group_id),
+             'snap_id': str(snap_id),
+             'filename': picture_name,
+             'uri': ANY,
+             'created': ANY
+            }
+        )
 
     def test_thermal_still_calls_lepton_camera_class(self):
-        Lepton.take_still = mock.Mock()
+        Lepton.take_still = Mock()
         snap_id = uuid.uuid4()
         group_id = uuid.uuid4()
         pic_id = uuid.uuid4()
 
-        take_thermal_still(snap_id, group_id, pic_id)
+        cs.take_thermal_still(snap_id, group_id, pic_id)
 
         pic_doc = current_app.db[str(pic_id)]
-        picture_name = build_picture_name(pic_id)
-        picture_path = build_pic_path(picture_name)
+        picture_name = cs.build_picture_name(pic_id)
+        picture_path = cs.build_pic_path(picture_name)
         Lepton.take_still.assert_called_once_with(pic_path=picture_path)
+        #the above works because we re-declared take_still as a mock for this method
+        #  coming into this method it's already a mock because it was declared a mock earlier
+        #  in the class.  In this case it's okay, we're never gonna want to call the hardware for 
+        #  unit tests but the same behavior isn't wanted from other methods, that's where patch comes in
