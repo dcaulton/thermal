@@ -1,3 +1,4 @@
+import copy
 import datetime
 import io
 import os
@@ -89,13 +90,14 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     if image_is_too_dark and retake_picam_pics_when_dark:
         picture_name = build_picture_name(long_exposure_pic_id)
         pic_path = build_pic_path(picture_name)
-        pic_dict['exposure_type'] = 'long'
-        pic_dict['_id'] = str(long_exposure_pic_id)
-        pic_dict['filename'] = picture_name
-        pic_dict['uri'] = "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path)
-        pic_dict['created'] = str(datetime.datetime.now())
+        pic_dict2 = copy.deepcopy(pic_dict)
+        pic_dict2['exposure_type'] = 'long'
+        pic_dict2['_id'] = str(long_exposure_pic_id)
+        pic_dict2['filename'] = picture_name
+        pic_dict2['uri'] = "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path)
+        pic_dict2['created'] = str(datetime.datetime.now())
         take_long_exposure_picam_still(pic_path)
-        save_picture(pic_dict)
+        save_picture(pic_dict2)
 
 def build_pic_path(picture_name):
     return os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
