@@ -1,7 +1,7 @@
 import couchdb
 import pytest
 
-from thermal.appmodule import create_app, register_db
+from thermal.appmodule import create_app, register_db, celery, make_celery
 
 def drop_and_rebuild_test_database():
     print 'resetting test database'
@@ -20,6 +20,8 @@ def app(request):
 
     app = create_app('testing')
     register_db(app)
+    # I should be able to use make_celery below but it's not updating the celery object
+    celery.conf['CELERY_ALWAYS_EAGER'] = True
 
     ctx = app.app_context()
     ctx.push()

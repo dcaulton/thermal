@@ -16,6 +16,7 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     COUCHDB_DATABASE = 'thermal_testing'
+    CELERY_ALWAYS_EAGER = True
 
     @classmethod
     def init_app(cls, app):
