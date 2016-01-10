@@ -8,6 +8,7 @@ from flask import current_app
 from admin.services import get_group_document
 from analysis.services import check_if_image_is_too_dark
 from cameras import Lepton, Picam
+from picture.services import save_picture_document
 
 def take_standard_exposure_picam_still(pic_path):
     '''
@@ -124,9 +125,5 @@ def take_thermal_still(snap_id, group_id, pic_id):
     }
     save_picture(pic_dict)
 
-def save_picture(the_dict):
-    the_id = the_dict['_id']
-    if the_id in current_app.db:
-        raise DocumentConfigurationError('trying to save the pic with a preexisting id: {0}'.format(str(the_id)))
-    else:
-        current_app.db[the_id] = the_dict
+def save_picture(pic_dict):
+    save_picture_document(pic_dict)

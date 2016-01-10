@@ -13,6 +13,7 @@ class TestServicesUnit(object):
 
     @patch('camera.services.save_picture')
     def test_thermal_still_saves_appropriate_picture_document(self, cs_save_picture):
+
         Lepton.take_still = Mock()
         #here's how to set properties on the function we mocked out
         #  cs_save_picture.return_value = 'haha'
