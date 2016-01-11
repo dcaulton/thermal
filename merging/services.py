@@ -26,7 +26,7 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
     group_document = get_group_document('current')
 
     img1_id_in = img1_primary_id_in
-    if str(img1_alternate_id_in) in current_app.db:
+    if picture_exists(img1_alternate_id_in):
         img1_id_in = img1_alternate_id_in
 
     if 'merge_type' in group_document:
@@ -56,7 +56,7 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
         'source': 'merge',
         'source_image_id_1': str(img1_id_in),
         'source_image_id_2': str(img2_id_in),
-        'merge_type': 'screen',
+        'merge_type': merge_type,
         'group_id': img1_dict_in['group_id'],
         'snap_id': img1_dict_in['snap_id'],
         'filename': img_filename_out,
@@ -70,3 +70,8 @@ def build_picture_name(picture_id):
 
 def build_picture_path(picture_name):
     return os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
+
+def picture_exists(picture_id):
+    if str(picture_id) in current_app.db:
+        return True
+    return False
