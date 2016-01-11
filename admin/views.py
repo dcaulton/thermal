@@ -4,10 +4,6 @@ import json
 from admin.services import default_group_dict, get_settings_document, get_group_document, save_document
 from thermal.exceptions import NotFoundError
 
-#from thermal.appmodule import mail
-#from flask import current_app
-#from flask.ext.mail import Message
-
 admin = Blueprint('admin', __name__)
 
 #add a test on the service side to check the integrity of settings.current_group_id on settings save.
@@ -16,22 +12,6 @@ admin = Blueprint('admin', __name__)
 def index():
     return 'Admin'
 
-#@admin.route('/send_email', methods=['GET'])
-#def send_email():
-#    image_path = '/home/pi/smalls.jpg'
-#    subject = 'poop subject'
-#    sender = 'jackweed@sturgis.com'
-#    recipients = ['dcaulton@gmail.com']
-#    text_body = 'some text body'
-#    html_body = '<html><body><bold>THIS</bold> is an email</body></html>'
-#    msg = Message(subject, sender=sender, recipients=recipients)
-#    msg.body = text_body
-#    msg.html = html_body
-#    with current_app.open_resource(image_path) as fp:
-#        msg.attach(image_path, "image/jpeg", fp.read())
-#    mail.send(msg)
-#    return Response(json.dumps('mail sent'), status=200, mimetype='application/json')
-#    
 @admin.route('/settings', methods=['GET'])
 def get_settings():
     settings = get_settings_document()
