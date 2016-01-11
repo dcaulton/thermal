@@ -35,7 +35,7 @@ class TestServicesUnit(object):
         image_width = current_app.config['STILL_IMAGE_WIDTH']
         image_height = current_app.config['STILL_IMAGE_HEIGHT']
         img_filename_out = ans.build_picture_name(img_id_out)
-        pic_path_out = ans.build_picture_path(img_filename_out)
+        pic_path_out = ans.build_picture_path(picture_name=img_filename_out, snap_id=snap_id)
         test_img_dict_out = {
             '_id': str(img_id_out),
             'type': 'picture',
@@ -53,7 +53,7 @@ class TestServicesUnit(object):
 
         ans.get_group_document.assert_called_once_with('current')
         ans.find_picture.assert_called_once_with(str(img_id_in))
-        Image.open.assert_called_once_with(ans.build_picture_path('whatever'))
+        Image.open.assert_called_once_with(ans.build_picture_path(picture_name='whatever', snap_id=snap_id))
         MockImage.resize.assert_called_once_with((image_width, image_height), Image.BICUBIC) 
         ImageOps.colorize.assert_called_once_with(the_mock_image, 1.1, 2.2)
         MockImage.save.assert_called_once_with(pic_path_out)

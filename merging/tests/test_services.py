@@ -29,14 +29,14 @@ class TestServicesUnit(object):
         ImageChops.canine = Mock(return_value=the_mock_image)
         img1_primary_id_in = uuid.uuid4()
         img1_primary_filename_in = 'whatever'
-        img1_primary_path_in = ms.build_picture_path(img1_primary_filename_in)
+        img1_primary_path_in = ms.build_picture_path(picture_name=img1_primary_filename_in, snap_id=snap_id)
         img1_alternate_id_in = uuid.uuid4()
         img2_id_in = uuid.uuid4()
         img2_filename_in = 'whatever'
-        img2_path_in = ms.build_picture_path(img2_filename_in)
+        img2_path_in = ms.build_picture_path(picture_name=img2_filename_in, snap_id=snap_id)
         img_id_out = uuid.uuid4()
         img_filename_out = ms.build_picture_name(img_id_out)
-        pic_path_out = ms.build_picture_path(img_filename_out)
+        pic_path_out = ms.build_picture_path(picture_name=img_filename_out, snap_id=snap_id)
         test_img_dict_out = {
             '_id': str(img_id_out),
             'type': 'picture',

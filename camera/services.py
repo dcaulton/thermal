@@ -72,7 +72,7 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     brightness_threshold = get_brightness_threshold(group_document)
 
     picture_name = build_picture_name(normal_exposure_pic_id)
-    pic_path = build_picture_path(picture_name)
+    pic_path = build_picture_path(picture_name=picture_name, snap_id=snap_id)
     pic_dict = {
         '_id': str(normal_exposure_pic_id),
         'type': 'picture',
@@ -81,7 +81,7 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
         'group_id': str(group_id),
         'snap_id': str(snap_id),
         'filename': picture_name,
-        'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
+        'uri': pic_path,
         'created': str(datetime.datetime.now())
     }
     take_standard_exposure_picam_still(pic_path)
@@ -89,12 +89,12 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     image_is_too_dark = check_if_image_is_too_dark(pic_path, brightness_threshold)
     if image_is_too_dark and retake_picam_pics_when_dark:
         picture_name = build_picture_name(long_exposure_pic_id)
-        pic_path = build_picture_path(picture_name)
+        pic_path = build_picture_path(picture_name=picture_name, snap_id=snap_id)
         pic_dict2 = copy.deepcopy(pic_dict)
         pic_dict2['exposure_type'] = 'long'
         pic_dict2['_id'] = str(long_exposure_pic_id)
         pic_dict2['filename'] = picture_name
-        pic_dict2['uri'] = "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path)
+        pic_dict2['uri'] = pic_path
         pic_dict2['created'] = str(datetime.datetime.now())
         take_long_exposure_picam_still(pic_path)
         save_picture(pic_dict2)
@@ -105,7 +105,7 @@ def take_thermal_still(snap_id, group_id, pic_id):
     Also saves a picture record to the db
     '''
     picture_name = build_picture_name(pic_id)
-    pic_path = build_picture_path(picture_name)
+    pic_path = build_picture_path(picture_name=picture_name, snap_id=snap_id)
     lepton = Lepton()
     lepton.take_still(pic_path=pic_path)
 
@@ -116,10 +116,11 @@ def take_thermal_still(snap_id, group_id, pic_id):
         'group_id': str(group_id),
         'snap_id': str(snap_id),
         'filename': picture_name,
-        'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path),
+        'uri': pic_path,
         'created': str(datetime.datetime.now())
     }
     save_picture(pic_dict)
 
+# this should go away soon, it's a shim for when I didn't get something with mock.
 def save_picture(pic_dict):
     save_picture_document(pic_dict)

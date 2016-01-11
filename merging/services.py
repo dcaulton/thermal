@@ -41,9 +41,9 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
     img2_dict_in = find_picture(str(img2_id_in))
     img2_filename_in = img2_dict_in['filename']
     img_filename_out = build_picture_name(img_id_out)
-    pic1_path_in = build_picture_path(img1_filename_in)
-    pic2_path_in = build_picture_path(img2_filename_in)
-    pic_path_out = build_picture_path(img_filename_out)
+    pic1_path_in = build_picture_path(picture_name=img1_filename_in, snap_id=img1_dict_in['snap_id'])
+    pic2_path_in = build_picture_path(picture_name=img2_filename_in, snap_id=img1_dict_in['snap_id'])
+    pic_path_out = build_picture_path(picture_name=img_filename_out, snap_id=img1_dict_in['snap_id'])
     image1_in = Image.open(pic1_path_in)
     image2_in = Image.open(pic2_path_in)
     image_out = merge_method(image1_in.convert('RGBA'), image2_in.convert('RGBA'))
@@ -59,7 +59,7 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
         'group_id': img1_dict_in['group_id'],
         'snap_id': img1_dict_in['snap_id'],
         'filename': img_filename_out,
-        'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path_out),
+        'uri': pic_path_out,
         'created': str(datetime.datetime.now())
     }
     save_picture_document(img_dict_out)

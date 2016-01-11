@@ -2,7 +2,7 @@ import uuid
 
 from celery import chain
 
-from admin.services import get_group_document, send_mail_chained
+from admin.services import clean_up_files_chained, get_group_document, send_mail_chained
 from analysis.services import scale_image_chained
 import camera.services
 from merging.services import merge_images_chained
@@ -30,15 +30,17 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
     for i in [x*delay for x in range(1,repeat+2)]:
         normal_exposure_pic_id = uuid.uuid4()
         long_exposure_pic_id = uuid.uuid4()
-        task = picam_still_task.apply_async(
-            kwargs={
-                'snap_id': snap_id,
-                'group_id': group_id,
-                'normal_exposure_pic_id': normal_exposure_pic_id,
-                'long_exposure_pic_id': long_exposure_pic_id
-            },
-            countdown=i
-        )
+        chain(
+            picam_still_task.s(
+                snap_id=snap_id,
+                group_id=group_id,
+                normal_exposure_pic_id=normal_exposure_pic_id,
+                long_exposure_pic_id=long_exposure_pic_id
+            ),
+            clean_up_files_chained.s(
+                snap_id=snap_id
+            )
+        ).apply_async(countdown=i)
         normal_exposure_pic_ids.append(str(normal_exposure_pic_id))
         long_exposure_pic_ids.append(str(long_exposure_pic_id))
         snap_ids.append(str(snap_id))
@@ -80,6 +82,9 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                 scale_image_chained.s(
                     img_id_in=pic_id,
                     img_id_out=scaled_pic_id
+                ),
+                clean_up_files_chained.s(
+                    snap_id=snap_id
                 )
             ).apply_async(countdown=i)
             pic_ids.append(str(pic_id))
@@ -89,14 +94,16 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
     else:
         for i in [x*delay for x in range(1,repeat+2)]:
             pic_id = uuid.uuid4()
-            thermal_still_task.apply_async(
-                kwargs={
-                    'snap_id': snap_id,
-                    'group_id': group_id,
-                    'pic_id': pic_id
-                },
-                countdown=i
-            )
+            chain(
+                thermal_still_task.s(
+                    snap_id=snap_id,
+                    group_id=group_id,
+                    pic_id=pic_id
+                ),
+                clean_up_files_chained.s(
+                    snap_id=snap_id
+                )
+            ).apply_async(countdown=i)
             pic_ids.append(str(pic_id))
             snap_ids.append(str(snap_id))
             snap_id = uuid.uuid4()
@@ -164,6 +171,9 @@ def both_still_chain(snap_id, group_id, delay=0, repeat=0):
             send_mail_chained.s(
                 snap_id=snap_id,
                 group_id=group_id
+            ),
+            clean_up_files_chained.s(
+                snap_id=snap_id
             )
         ).apply_async(countdown=i)
         thermal_pic_ids.append(str(thermal_pic_id))

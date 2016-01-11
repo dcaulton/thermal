@@ -35,8 +35,8 @@ def scale_image(img_id_in, img_id_out):
     img_dict_in = find_picture(str(img_id_in))
     img_filename_in = img_dict_in['filename']
     img_filename_out = build_picture_name(img_id_out)
-    pic_path_in = build_picture_path(img_filename_in)
-    pic_path_out = build_picture_path(img_filename_out)
+    pic_path_in = build_picture_path(picture_name=img_filename_in, snap_id=img_dict_in['snap_id'])
+    pic_path_out = build_picture_path(picture_name=img_filename_out, snap_id=img_dict_in['snap_id'])
     image_in = Image.open(pic_path_in)
     image_scaled = image_in.resize(
                         (current_app.config['STILL_IMAGE_WIDTH'], current_app.config['STILL_IMAGE_HEIGHT']),
@@ -53,7 +53,7 @@ def scale_image(img_id_in, img_id_out):
         'group_id': img_dict_in['group_id'],
         'snap_id': img_dict_in['snap_id'],
         'filename': img_filename_out,
-        'uri': "file://{0}{1}".format(current_app.config['HOSTNAME'], pic_path_out),
+        'uri': pic_path_out,
         'created': str(datetime.datetime.now())
     }
     save_picture_document(img_dict_out)
