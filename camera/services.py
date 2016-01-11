@@ -9,7 +9,7 @@ from flask import current_app
 from admin.services import get_group_document
 from analysis.services import check_if_image_is_too_dark
 from cameras import Lepton, Picam
-from picture.services import save_picture_document
+from picture.services import build_picture_path, build_picture_name, save_picture_document
 
 def take_standard_exposure_picam_still(pic_path):
     '''
@@ -72,7 +72,7 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     brightness_threshold = get_brightness_threshold(group_document)
 
     picture_name = build_picture_name(normal_exposure_pic_id)
-    pic_path = build_pic_path(picture_name)
+    pic_path = build_picture_path(picture_name)
     pic_dict = {
         '_id': str(normal_exposure_pic_id),
         'type': 'picture',
@@ -89,7 +89,7 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     image_is_too_dark = check_if_image_is_too_dark(pic_path, brightness_threshold)
     if image_is_too_dark and retake_picam_pics_when_dark:
         picture_name = build_picture_name(long_exposure_pic_id)
-        pic_path = build_pic_path(picture_name)
+        pic_path = build_picture_path(picture_name)
         pic_dict2 = copy.deepcopy(pic_dict)
         pic_dict2['exposure_type'] = 'long'
         pic_dict2['_id'] = str(long_exposure_pic_id)
@@ -99,19 +99,13 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
         take_long_exposure_picam_still(pic_path)
         save_picture(pic_dict2)
 
-def build_pic_path(picture_name):
-    return os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
-
-def build_picture_name(pic_id):
-    return "{0}.jpg".format(pic_id)
-
 def take_thermal_still(snap_id, group_id, pic_id):
     '''
     Top level method in the camera service for taking a still image via the Lepton camera.
     Also saves a picture record to the db
     '''
     picture_name = build_picture_name(pic_id)
-    pic_path = build_pic_path(picture_name)
+    pic_path = build_picture_path(picture_name)
     lepton = Lepton()
     lepton.take_still(pic_path=pic_path)
 

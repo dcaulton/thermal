@@ -1,7 +1,10 @@
 import uuid
 
 from flask import current_app
+from flask.ext.mail import Message
 
+from picture.services import find_pictures, build_picture_path, build_picture_name
+from thermal.appmodule import celery, mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
 
@@ -47,6 +50,8 @@ def default_group_dict():
     group_dict = {'_id': str(group_id),
                   'merge_type': 'screen',
                   'retake_picam_pics_when_dark': True,
+                  'email_recipients': '',
+                  'send_email_contents': 'merge',
                   'colorize_range_low': '#000080',
                   'colorize_range_high': '#FFD700',
                   'picam_brightness_threshold': '5.0',
@@ -63,3 +68,28 @@ def default_settings_dict(group_id):
                      'type': 'settings'
     }
     return settings_dict
+
+@celery.task
+def send_mail_chained(_, snap_id, group_id):
+    group_document = get_group_document(group_id)
+    if ('email_recipients' in group_document and 
+        'send_email_contents' in group_document and
+        group_document['email_recipients'] and
+        group_document['send_email_contents']):
+
+        subject = "pictures from snap {0}".format(snap_id)
+        recipients = group_document['email_recipients'].split(',')
+        msg = Message(subject, sender='default@default.com', recipients=recipients)
+        msg.body = "this is the image for snap id {0}\n\n".format(snap_id)
+
+        pictures = find_pictures({'snap_id': str(snap_id)})
+        picture_types = group_document['send_email_contents'].split(',')
+        for pic_id in pictures.keys():
+            if pictures[pic_id]['source'] in picture_types:
+                pic_name = build_picture_name(pic_id)
+                pic_path = build_picture_path(pic_name)
+                with current_app.open_resource(pic_path) as fp:
+                    msg.attach(pic_name, "image/jpeg", fp.read())
+                    pics_have_been_attached = True
+        if pics_have_been_attached:
+            mail.send(msg)

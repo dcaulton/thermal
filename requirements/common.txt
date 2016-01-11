@@ -1,10 +1,12 @@
 amqp==1.4.8
 anyjson==0.3.3
 billiard==3.3.0.22
+blinker==1.4
 celery==3.1.19
 CouchDB==1.0
 cv2==1.0
 Flask==0.10.1
+Flask-Mail==0.9.1
 funcsigs==0.4
 itsdangerous==0.24
 Jinja2==2.8

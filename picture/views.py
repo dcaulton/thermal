@@ -10,7 +10,10 @@ picture = Blueprint('picture', __name__)
 
 @picture.route('/')
 def list_pictures():
-    pictures = find_pictures(request.args)
+    search_dict = {}
+    for key in request.args.keys():
+        search_dict[key] = request.args[key]
+    pictures = find_pictures(search_dict)
     return Response(json.dumps(pictures), status=200, mimetype='application/json')
 
 @picture.route('/<picture_id>')

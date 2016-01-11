@@ -3,10 +3,12 @@ import socket
 from celery import Celery
 import couchdb
 from flask import g, Flask
+from flask.ext.mail import Mail
 
 from config import config, Config
 
 celery = Celery('thermal', broker=Config.CELERY_BROKER_URL)
+mail = Mail()
 
 def create_app(config_name='development'):
     app = Flask('thermal')
@@ -16,6 +18,7 @@ def create_app(config_name='development'):
     app.config['HOSTNAME'] = socket.gethostname()
 
     register_blueprints(app)
+    register_mail(app)
 
 #    @app.before_request
 #    def before_request():
@@ -24,6 +27,9 @@ def create_app(config_name='development'):
 #        g.db = db
 #
     return app
+
+def register_mail(app):
+    mail = Mail(app)
 
 def register_db(app):
     couch = couchdb.Server()

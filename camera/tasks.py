@@ -2,7 +2,7 @@ import uuid
 
 from celery import chain
 
-from admin.services import get_group_document
+from admin.services import get_group_document, send_mail_chained
 from analysis.services import scale_image_chained
 import camera.services
 from merging.services import merge_images_chained
@@ -123,6 +123,7 @@ def both_still_chain(snap_id, group_id, delay=0, repeat=0):
       - Enlarge and colorize Lepton still
       - Picam still
       - Merge picam still and 'Enlarged and colorized Lepton still'
+      - Optionally email the result to recipients specified on the group file
     Calls the synchronous take_picam_still method.
     '''
     thermal_pic_ids = []
@@ -159,6 +160,10 @@ def both_still_chain(snap_id, group_id, delay=0, repeat=0):
                 img1_alternate_id_in=long_exposure_picam_pic_id,
                 img2_id_in=scaled_pic_id,
                 img_id_out=merged_pic_id
+            ),
+            send_mail_chained.s(
+                snap_id=snap_id,
+                group_id=group_id
             )
         ).apply_async(countdown=i)
         thermal_pic_ids.append(str(thermal_pic_id))

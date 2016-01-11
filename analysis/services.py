@@ -6,7 +6,7 @@ from flask import current_app
 from PIL import Image, ImageStat, ImageOps
 
 from admin.services import get_group_document
-from picture.services import find_picture, save_picture_document
+from picture.services import build_picture_path, build_picture_name, find_picture, save_picture_document
 from thermal.appmodule import celery
 
 def check_if_image_is_too_dark(filename, brightness_threshold):
@@ -57,9 +57,3 @@ def scale_image(img_id_in, img_id_out):
         'created': str(datetime.datetime.now())
     }
     save_picture_document(img_dict_out)
-
-def build_picture_name(picture_id):
-    return "{0}.jpg".format(picture_id)
-
-def build_picture_path(picture_name):
-    return os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)

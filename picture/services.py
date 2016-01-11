@@ -1,10 +1,11 @@
+import os
+
 from flask import current_app
 
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 from thermal.utils import get_documents_from_criteria
 
 def find_pictures(args_dict):
-    args_dict = dict((key, args_dict.getlist(key)[0]) for key in args_dict.keys())
     args_dict['type'] = 'picture'
     pictures_dict = get_documents_from_criteria(args_dict=args_dict)
     return pictures_dict
@@ -26,3 +27,9 @@ def save_picture_document(the_dict):
         raise DocumentConfigurationError('trying to save as a picture a document that is not of type picture: {0}'.format(str(the_id)))
     else:
         current_app.db[the_id] = the_dict
+
+def build_picture_path(picture_name):
+    return os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], picture_name)
+
+def build_picture_name(pic_id):
+    return "{0}.jpg".format(pic_id)

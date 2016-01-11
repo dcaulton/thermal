@@ -24,7 +24,7 @@ class TestServicesUnit(object):
         cs.take_thermal_still(snap_id, group_id, pic_id)
 
         picture_name = cs.build_picture_name(pic_id)
-        picture_path = cs.build_pic_path(picture_name)
+        picture_path = cs.build_picture_path(picture_name)
 
         cs.save_picture.assert_called_once_with(
             {'_id': str(pic_id),
@@ -48,7 +48,7 @@ class TestServicesUnit(object):
 
         pic_doc = current_app.db[str(pic_id)]
         picture_name = cs.build_picture_name(pic_id)
-        picture_path = cs.build_pic_path(picture_name)
+        picture_path = cs.build_picture_path(picture_name)
         Lepton.take_still.assert_called_once_with(pic_path=picture_path)
         #the above works because we re-declared take_still as a mock for this method
         #  coming into this method it's already a mock because it was declared a mock earlier
@@ -71,7 +71,7 @@ class TestServicesUnit(object):
         cs.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
 
         picture_name = cs.build_picture_name(normal_exposure_pic_id)
-        picture_path = cs.build_pic_path(picture_name)
+        picture_path = cs.build_picture_path(picture_name)
 
         cs.save_picture.assert_called_once_with(
             {'_id': str(normal_exposure_pic_id),
@@ -103,7 +103,7 @@ class TestServicesUnit(object):
         cs.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
 
         long_exposure_picture_name = cs.build_picture_name(long_exposure_pic_id)
-        long_exposure_picture_path = cs.build_pic_path(long_exposure_picture_name)
+        long_exposure_picture_path = cs.build_picture_path(long_exposure_picture_name)
 
         call_1 = call(
                       {'_id': str(normal_exposure_pic_id),
@@ -149,7 +149,7 @@ class TestServicesUnit(object):
 
         pic_doc = current_app.db[str(normal_exposure_pic_id)]
         picture_name = cs.build_picture_name(normal_exposure_pic_id)
-        picture_path = cs.build_pic_path(picture_name)
+        picture_path = cs.build_picture_path(picture_name)
         image_width = current_app.config['STILL_IMAGE_WIDTH']
         image_height = current_app.config['STILL_IMAGE_HEIGHT']
 
@@ -173,7 +173,7 @@ class TestServicesUnit(object):
         cs.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
 
         picture_name = cs.build_picture_name(long_exposure_pic_id)
-        picture_path = cs.build_pic_path(picture_name)
+        picture_path = cs.build_picture_path(picture_name)
         image_width = current_app.config['STILL_IMAGE_WIDTH']
         image_height = current_app.config['STILL_IMAGE_HEIGHT']
 
