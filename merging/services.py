@@ -5,7 +5,7 @@ from flask import current_app
 from PIL import Image, ImageChops
 
 from admin.services import get_group_document
-from picture.services import build_picture_path, build_picture_name, find_picture, save_picture_document
+from picture.services import build_picture_path, build_picture_name, find_picture, picture_exists, save_picture_document
 from thermal.appmodule import celery
 
 
@@ -63,8 +63,3 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
         'created': str(datetime.datetime.now())
     }
     save_picture_document(img_dict_out)
-
-def picture_exists(picture_id):
-    if str(picture_id) in current_app.db:
-        return True
-    return False

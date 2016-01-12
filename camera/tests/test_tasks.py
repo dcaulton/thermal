@@ -6,7 +6,7 @@ import mock
 import pytest 
 
 from admin.services import clean_up_files, get_group_document, send_mail
-from analysis.services import scale_image
+from analysis.services import edge_detect, scale_image
 from merging.services import merge_images
 import camera.tasks as ct
 from camera.services import take_picam_still, take_thermal_still
@@ -95,11 +95,13 @@ class TestTasksUnit(object):
     @patch('admin.services.clean_up_files')
     @patch('merging.services.merge_images')
     @patch('analysis.services.scale_image')
+    @patch('analysis.services.edge_detect')
     @patch('camera.services.take_thermal_still')
     @patch('camera.services.take_picam_still')
     def test_take_both_still_calls_all_chained_tasks(self,
                                                      cs_take_picam_still,
                                                      cs_take_thermal_still,
+                                                     ans_edge_detect,
                                                      ans_scale_image,
                                                      ms_merge_image,
                                                      ads_clean_up_files,
@@ -109,6 +111,7 @@ class TestTasksUnit(object):
         ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
         cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
         cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY)
+        ans_edge_detect.assert_called_once_with(ANY, ANY, ANY, ANY, ANY)
         ans_scale_image.assert_called_once_with(ANY, ANY)
         ms_merge_image.assert_called_once_with(ANY, ANY, ANY, ANY)
         ads_send_mail.assert_called_once_with(snap_id, group_id)
@@ -118,11 +121,13 @@ class TestTasksUnit(object):
     @patch('admin.services.clean_up_files')
     @patch('merging.services.merge_images')
     @patch('analysis.services.scale_image')
+    @patch('analysis.services.edge_detect')
     @patch('camera.services.take_thermal_still')
     @patch('camera.services.take_picam_still')
     def test_take_both_still_calls_all_chained_tasks_multiple_times_when_repeat_specified(self,
                                                                                           cs_take_picam_still,
                                                                                           cs_take_thermal_still,
+                                                                                          ans_edge_detect,
                                                                                           ans_scale_image,
                                                                                           ms_merge_image,
                                                                                           ads_clean_up_files,
@@ -132,6 +137,7 @@ class TestTasksUnit(object):
         ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1)
         cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY), call(ANY, group_id, ANY)])
         cs_take_picam_still.assert_has_calls([call(snap_id, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY)])
+        ans_edge_detect.assert_has_calls([call(ANY, ANY, ANY, ANY, ANY), call(ANY, ANY, ANY, ANY, ANY)])
         ans_scale_image.assert_has_calls([call(ANY, ANY), call(ANY, ANY)])
         ms_merge_image.assert_has_calls([call(ANY, ANY, ANY, ANY), call(ANY, ANY, ANY, ANY)])
         ads_send_mail.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])

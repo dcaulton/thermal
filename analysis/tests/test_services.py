@@ -58,3 +58,8 @@ class TestServicesUnit(object):
         ImageOps.colorize.assert_called_once_with(the_mock_image, 1.1, 2.2)
         MockImage.save.assert_called_once_with(pic_path_out)
         ans.save_picture_document.assert_called_once_with(test_img_dict_out)
+
+#test_scale_image_with_invalid_image_id
+#test edge_detect with invalid image_id
+#test edge_detect with a valid alternate_image_id
+#test edge_detect with just a auto_id, no wide or tight

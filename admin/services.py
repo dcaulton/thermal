@@ -93,6 +93,7 @@ def send_mail(snap_id, group_id):
         'send_email_contents' in group_document and
         group_document['email_recipients'] and
         group_document['send_email_contents']):
+        pics_have_been_attached = False
 
         subject = "pictures from snap {0}".format(snap_id)
         recipients = group_document['email_recipients'].split(',')

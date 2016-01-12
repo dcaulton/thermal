@@ -3,7 +3,7 @@ import uuid
 from celery import chain
 
 from admin.services import clean_up_files_chained, get_group_document, send_mail_chained
-from analysis.services import scale_image_chained
+from analysis.services import edge_detect_chained, scale_image_chained
 import camera.services
 from merging.services import merge_images_chained
 from thermal.appmodule import celery
@@ -150,6 +150,9 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
     long_exposure_picam_pic_ids = []
     scaled_pic_ids = []
     merged_pic_ids = []
+    picam_auto_pic_ids = []
+    picam_wide_pic_ids = []
+    picam_tight_pic_ids = []
     snap_ids = []
 
     for i in [x*delay for x in range(1,repeat+2)]:
@@ -158,6 +161,9 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
         long_exposure_picam_pic_id = uuid.uuid4()
         scaled_pic_id = uuid.uuid4()
         merged_pic_id = uuid.uuid4()
+        picam_auto_id = uuid.uuid4()
+        picam_wide_id = uuid.uuid4()
+        picam_tight_id = uuid.uuid4()
         chain(
             thermal_still_task.s(
                 snap_id=snap_id,
@@ -169,6 +175,13 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
                 group_id=group_id,
                 normal_exposure_pic_id=normal_exposure_picam_pic_id,
                 long_exposure_pic_id=long_exposure_picam_pic_id
+            ),
+            edge_detect_chained.s(
+                img_id_in=normal_exposure_picam_pic_id,
+                alternate_img_id_in=long_exposure_picam_pic_id,
+                auto_id=picam_auto_id,
+                wide_id=picam_wide_id,
+                tight_id=picam_tight_id
             ),
             scale_image_chained.s(
                 img_id_in=thermal_pic_id,
@@ -194,6 +207,9 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
         scaled_pic_ids.append(str(scaled_pic_id))
         merged_pic_ids.append(str(merged_pic_id))
         snap_ids.append(str(snap_id))
+        picam_auto_pic_ids.append(str(picam_auto_id))
+        picam_wide_pic_ids.append(str(picam_wide_id))
+        picam_tight_pic_ids.append(str(picam_tight_id))
         snap_id = uuid.uuid4()
 
     return {
@@ -203,5 +219,8 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
         'long_exposure_picam_ids': long_exposure_picam_pic_ids,
         'thermal_ids':thermal_pic_ids,
         'scaled_ids': scaled_pic_ids,
-        'merged_ids': merged_pic_ids
+        'merged_ids': merged_pic_ids,
+        'picam_auto_pic_ids': picam_auto_pic_ids,
+        'picam_wide_pic_ids': picam_wide_pic_ids,
+        'picam_tight_pic_ids': picam_tight_pic_ids
     }

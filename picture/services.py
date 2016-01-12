@@ -18,6 +18,15 @@ def find_picture(picture_id):
         raise NotFoundError("picture not found for id {0}".format(picture_id))
     return picture_dict
 
+# make some tests for this
+def picture_exists(picture_id):
+    picture_id = str(picture_id)
+    if picture_id in current_app.db:
+        picture_dict = current_app.db[picture_id]
+        if picture_dict['type'] == 'picture':
+            return True
+    return False
+
 def save_picture_document(the_dict):
     the_id = the_dict['_id']
     if the_id in current_app.db:
