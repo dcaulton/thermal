@@ -27,10 +27,14 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     COUCHDB_DATABASE = 'thermal_testing'
     CELERY_ALWAYS_EAGER = True
+    PICTURE_SAVE_DIRECTORY = '/tmp/pictures_test'
 
     @classmethod
     def init_app(cls, app):
         Config.init_app(app)
+        if not os.path.isdir(cls.PICTURE_SAVE_DIRECTORY):
+            os.mkdir(cls.PICTURE_SAVE_DIRECTORY)
+
 
 
 config = {
