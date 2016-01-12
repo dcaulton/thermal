@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from flask import current_app
@@ -5,6 +6,7 @@ import pytest
 
 import admin.services
 import conftest
+from picture.services import build_picture_name, build_picture_path, find_picture, save_picture_document
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
 
@@ -62,3 +64,45 @@ class TestSettingsIntegration(object):
         the_doc['type'] = 'something else'
         with pytest.raises(DocumentConfigurationError):
             admin.services.save_document(the_doc)
+
+    def build_three_pictures(self, snap_id):
+        pic_ids = []
+        for i in range(1,3):
+            pic_id = uuid.uuid4()
+            filename = build_picture_name(pic_id)
+            picture_path = build_picture_path(picture_name=filename, snap_id=snap_id)
+            the_doc = {
+                '_id': str(pic_id), 
+                'snap_id': str(snap_id),
+                'uri': picture_path,
+                'filename': filename, 
+                'source': 'whatever',
+                'type': 'picture'
+            }
+            save_picture_document(the_doc)
+            pic_ids.append(pic_id)
+            #touch the picture file in the temp directory
+            with open(picture_path, 'a'):
+                 os.utime(picture_path, None)
+        return pic_ids
+
+    def test_clean_up_files_cleans_pictures_from_the_snap(self):
+        snap_id = uuid.uuid4()
+        pic_ids = self.build_three_pictures(snap_id)
+        for pic_id in pic_ids:
+            pic_doc = find_picture(pic_id)
+            assert os.path.isfile(pic_doc['uri'])
+            assert str(snap_id) in pic_doc['uri']
+
+        assert os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+        admin.services.clean_up_files(snap_id)
+
+        for pic_id in pic_ids:
+            pic_doc = find_picture(pic_id)
+            filename = build_picture_name(pic_id)
+            expected_picture_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], filename)
+            assert pic_doc['uri'] == expected_picture_path
+            assert os.path.isfile(expected_picture_path)
+        assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+
+# put a 'delete_after_processing' tag on intermediate pictures, like what will be coming from edge detection

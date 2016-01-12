@@ -123,3 +123,8 @@ class TestPictureIntegration(object):
                                      'type': 'picture'}
                         }
         assert pictures_dict == expected_dict
+
+
+#test_build_picture_path_creates_directory_if_not_present
+#test_build_picture_path_does_not_create_directory_if_requested
+#test_build_picture_name_builds_picture_name_with_jpeg
