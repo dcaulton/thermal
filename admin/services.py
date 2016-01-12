@@ -73,6 +73,9 @@ def default_settings_dict(group_id):
 
 @celery.task
 def clean_up_files_chained(_, snap_id):
+    clean_up_files(snap_id)
+
+def clean_up_files(snap_id):
     pictures = find_pictures({'snap_id': str(snap_id)})
     for pic_id in pictures.keys():
         shutil.move(pictures[pic_id]['uri'], current_app.config['PICTURE_SAVE_DIRECTORY'])
@@ -82,6 +85,9 @@ def clean_up_files_chained(_, snap_id):
 
 @celery.task
 def send_mail_chained(_, snap_id, group_id):
+    send_mail(snap_id, group_id)
+
+def send_mail(snap_id, group_id):
     group_document = get_group_document(group_id)
     if ('email_recipients' in group_document and 
         'send_email_contents' in group_document and
@@ -90,7 +96,8 @@ def send_mail_chained(_, snap_id, group_id):
 
         subject = "pictures from snap {0}".format(snap_id)
         recipients = group_document['email_recipients'].split(',')
-        msg = Message(subject, sender='default@default.com', recipients=recipients)
+        sender_addr = os.environ.get('MAIL_USERNAME')
+        msg = Message(subject, sender=sender_addr, recipients=recipients)
         msg.body = "this is the image for snap id {0}\n\n".format(snap_id)
 
         pictures = find_pictures({'snap_id': str(snap_id)})

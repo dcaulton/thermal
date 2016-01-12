@@ -11,6 +11,7 @@ def find_pictures(args_dict):
     return pictures_dict
     
 def find_picture(picture_id):
+    picture_id = str(picture_id) # deal with non-stringified UUIDs coming in
     if picture_id in current_app.db:
         picture_dict = current_app.db[picture_id]
     else:
