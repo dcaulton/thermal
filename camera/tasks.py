@@ -37,6 +37,10 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
                 normal_exposure_pic_id=normal_exposure_pic_id,
                 long_exposure_pic_id=long_exposure_pic_id
             ),
+            send_mail_chained.s(
+                snap_id=snap_id,
+                group_id=group_id
+            ),
             clean_up_files_chained.s(
                 snap_id=snap_id
             )
@@ -83,6 +87,10 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                     img_id_in=pic_id,
                     img_id_out=scaled_pic_id
                 ),
+                send_mail_chained.s(
+                    snap_id=snap_id,
+                    group_id=group_id
+                ),
                 clean_up_files_chained.s(
                     snap_id=snap_id
                 )
@@ -99,6 +107,10 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                     snap_id=snap_id,
                     group_id=group_id,
                     pic_id=pic_id
+                ),
+                send_mail_chained.s(
+                    snap_id=snap_id,
+                    group_id=group_id
                 ),
                 clean_up_files_chained.s(
                     snap_id=snap_id
@@ -122,7 +134,7 @@ def thermal_still_task(snap_id, group_id, pic_id):
     '''
     camera.services.take_thermal_still(snap_id, group_id, pic_id)
 
-def both_still_chain(snap_id, group_id, delay=0, repeat=0):
+def take_both_still(snap_id, group_id, delay=0, repeat=0):
     '''
     Wrapper method to handle the celery scheduling of the taking of a 'both' still with standard subtasks.
     A both still and subtasks consists of: 

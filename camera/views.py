@@ -5,7 +5,7 @@ import uuid
 from flask import Blueprint, request, Response, current_app
 
 from admin.services import get_settings_document
-from camera.tasks import take_picam_still, take_thermal_still, both_still_chain
+from camera.tasks import take_picam_still, take_thermal_still, take_both_still
 
 camera = Blueprint('camera', __name__)
 
@@ -51,7 +51,7 @@ def both_still():
     delay = get_delay_parameter()
     repeat = get_repeat_parameter()
 
-    both_still_dict = both_still_chain(
+    both_still_dict = take_both_still(
         snap_id=snap_id,
         group_id=group_id,
         delay=delay,
