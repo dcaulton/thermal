@@ -1,3 +1,4 @@
+import os
 from mock import ANY, call, Mock, patch
 import uuid
 
@@ -64,7 +65,7 @@ class TestPictureIntegration(object):
         with pytest.raises(DocumentConfigurationError):
             ps.save_picture_document(picture_doc)
 
-    def test_find_pictures_works_with_snap_id(args_dict):
+    def test_find_pictures_works_with_snap_id(self):
         snap_id_1 = uuid.uuid4()
         snap_id_2 = uuid.uuid4()
         pic_id_1 = uuid.uuid4()
@@ -100,7 +101,7 @@ class TestPictureIntegration(object):
                          }
         assert pictures_dict == expected_dict
 
-    def test_find_pictures_only_fetches_pictures(args_dict):
+    def test_find_pictures_only_fetches_pictures(self):
         snap_id_1 = uuid.uuid4()
         id_1 = uuid.uuid4()
         id_2 = uuid.uuid4()
@@ -124,7 +125,22 @@ class TestPictureIntegration(object):
                         }
         assert pictures_dict == expected_dict
 
+    def test_build_picture_name_builds_picture_name_with_jpg(self):
+        picture_id = uuid.uuid4()
+        picture_name = ps.build_picture_name(picture_id)
+        expected_name = str(picture_id) + '.jpg'
+        assert expected_name == picture_name
 
-#test_build_picture_path_creates_directory_if_not_present
-#test_build_picture_path_does_not_create_directory_if_requested
-#test_build_picture_name_builds_picture_name_with_jpeg
+    def test_build_picture_path_creates_directory_if_not_present(self):
+        picture_name = 'whatever'
+        snap_id = uuid.uuid4()
+        assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+        picture_path = ps.build_picture_path(picture_name=picture_name, snap_id=snap_id)
+        assert os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+
+    def test_build_picture_path_does_not_create_directory_if_requested(self):
+        picture_name = 'whatever'
+        snap_id = uuid.uuid4()
+        assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+        picture_path = ps.build_picture_path(picture_name=picture_name, snap_id=snap_id, create_directory=False)
+        assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
