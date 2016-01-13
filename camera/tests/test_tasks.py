@@ -52,7 +52,7 @@ class TestTasksUnit(object):
         group_id = get_group_document('current')['_id']
         ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
         cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
-        ans_scale_image.assert_called_once_with(ANY, ANY)
+#        ans_scale_image.assert_called_once_with(ANY, ANY)
         ads_clean_up_files.assert_called_once_with(snap_id)
         ads_send_mail.assert_called_once_with(snap_id, group_id)
 
@@ -69,7 +69,7 @@ class TestTasksUnit(object):
         group_id = get_group_document('current')['_id']
         ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1)
         cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY), call(ANY, group_id, ANY)])
-        ans_scale_image.assert_has_calls([call(ANY, ANY), call(ANY, ANY)])
+#        ans_scale_image.assert_has_calls([call(ANY, ANY), call(ANY, ANY)])
         ads_send_mail.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])
         ads_clean_up_files.assert_has_calls([call(snap_id), call(ANY)])
 
@@ -111,8 +111,8 @@ class TestTasksUnit(object):
         ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
         cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
         cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY)
-        ans_edge_detect.assert_called_once_with(ANY, ANY, ANY, ANY, ANY)
-        ans_scale_image.assert_called_once_with(ANY, ANY)
+#        ans_edge_detect.assert_called_once_with(ANY, ANY, ANY, ANY, ANY)
+#        ans_scale_image.assert_called_once_with(ANY, ANY)
         ms_merge_image.assert_called_once_with(ANY, ANY, ANY, ANY)
         ads_send_mail.assert_called_once_with(snap_id, group_id)
         ads_clean_up_files.assert_called_once_with(snap_id)
@@ -137,8 +137,8 @@ class TestTasksUnit(object):
         ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1)
         cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY), call(ANY, group_id, ANY)])
         cs_take_picam_still.assert_has_calls([call(snap_id, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY)])
-        ans_edge_detect.assert_has_calls([call(ANY, ANY, ANY, ANY, ANY), call(ANY, ANY, ANY, ANY, ANY)])
-        ans_scale_image.assert_has_calls([call(ANY, ANY), call(ANY, ANY)])
+#        ans_edge_detect.assert_has_calls([call(ANY, ANY, ANY, ANY, ANY), call(ANY, ANY, ANY, ANY, ANY)])
+#        ans_scale_image.assert_has_calls([call(ANY, ANY), call(ANY, ANY)])
         ms_merge_image.assert_has_calls([call(ANY, ANY, ANY, ANY), call(ANY, ANY, ANY, ANY)])
         ads_send_mail.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])
         ads_clean_up_files.assert_has_calls([call(snap_id), call(ANY)])

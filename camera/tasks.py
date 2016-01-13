@@ -148,22 +148,34 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
     thermal_pic_ids = []
     normal_exposure_picam_pic_ids = []
     long_exposure_picam_pic_ids = []
-    scaled_pic_ids = []
+    scaled_for_thermal_merge_pic_ids = []
     merged_pic_ids = []
     picam_auto_pic_ids = []
     picam_wide_pic_ids = []
     picam_tight_pic_ids = []
+    thermal_auto_small_pic_ids = []
+    thermal_wide_small_pic_ids = []
+    thermal_tight_small_pic_ids = []
+    thermal_auto_large_pic_ids = []
+    thermal_wide_large_pic_ids = []
+    thermal_tight_large_pic_ids = []
     snap_ids = []
 
     for i in [x*delay for x in range(1,repeat+2)]:
         thermal_pic_id = uuid.uuid4()
         normal_exposure_picam_pic_id = uuid.uuid4()
         long_exposure_picam_pic_id = uuid.uuid4()
-        scaled_pic_id = uuid.uuid4()
+        scaled_for_thermal_merge_pic_id = uuid.uuid4()
         merged_pic_id = uuid.uuid4()
         picam_auto_id = uuid.uuid4()
         picam_wide_id = uuid.uuid4()
         picam_tight_id = uuid.uuid4()
+        thermal_auto_small_id = uuid.uuid4()
+        thermal_wide_small_id = uuid.uuid4()
+        thermal_tight_small_id = uuid.uuid4()
+        thermal_auto_large_id = uuid.uuid4()
+        thermal_wide_large_id = uuid.uuid4()
+        thermal_tight_large_id = uuid.uuid4()
         chain(
             thermal_still_task.s(
                 snap_id=snap_id,
@@ -183,14 +195,36 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
                 wide_id=picam_wide_id,
                 tight_id=picam_tight_id
             ),
+            edge_detect_chained.s(
+                img_id_in=thermal_pic_id,
+                alternate_img_id_in='',
+                auto_id=thermal_auto_small_id,
+                wide_id=thermal_wide_small_id,
+                tight_id=thermal_tight_small_id
+            ),
+            scale_image_chained.s(
+                img_id_in=thermal_auto_small_id,
+                img_id_out=thermal_auto_large_id,
+                scale_type='bicubic_blur'
+            ),
+            scale_image_chained.s(
+                img_id_in=thermal_wide_small_id,
+                img_id_out=thermal_wide_large_id,
+                scale_type='bicubic_blur'
+            ),
+            scale_image_chained.s(
+                img_id_in=thermal_tight_small_id,
+                img_id_out=thermal_tight_large_id,
+                scale_type='bicubic_blur'
+            ),
             scale_image_chained.s(
                 img_id_in=thermal_pic_id,
-                img_id_out=scaled_pic_id
+                img_id_out=scaled_for_thermal_merge_pic_id
             ),
             merge_images_chained.s(
                 img1_primary_id_in=normal_exposure_picam_pic_id,
                 img1_alternate_id_in=long_exposure_picam_pic_id,
-                img2_id_in=scaled_pic_id,
+                img2_id_in=scaled_for_thermal_merge_pic_id,
                 img_id_out=merged_pic_id
             ),
             send_mail_chained.s(
@@ -204,12 +238,18 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
         thermal_pic_ids.append(str(thermal_pic_id))
         normal_exposure_picam_pic_ids.append(str(normal_exposure_picam_pic_id))
         long_exposure_picam_pic_ids.append(str(long_exposure_picam_pic_id))
-        scaled_pic_ids.append(str(scaled_pic_id))
+        scaled_for_thermal_merge_pic_ids.append(str(scaled_for_thermal_merge_pic_id))
         merged_pic_ids.append(str(merged_pic_id))
         snap_ids.append(str(snap_id))
         picam_auto_pic_ids.append(str(picam_auto_id))
         picam_wide_pic_ids.append(str(picam_wide_id))
         picam_tight_pic_ids.append(str(picam_tight_id))
+        thermal_auto_small_pic_ids.append(str(thermal_auto_small_id))
+        thermal_wide_small_pic_ids.append(str(thermal_wide_small_id))
+        thermal_tight_small_pic_ids.append(str(thermal_tight_small_id))
+        thermal_auto_large_pic_ids.append(str(thermal_auto_large_id))
+        thermal_wide_large_pic_ids.append(str(thermal_wide_large_id))
+        thermal_tight_large_pic_ids.append(str(thermal_tight_large_id))
         snap_id = uuid.uuid4()
 
     return {
@@ -218,9 +258,15 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
         'normal_exposure_picam_ids': normal_exposure_picam_pic_ids,
         'long_exposure_picam_ids': long_exposure_picam_pic_ids,
         'thermal_ids':thermal_pic_ids,
-        'scaled_ids': scaled_pic_ids,
+        'scaled_for_thermal_merge_ids': scaled_for_thermal_merge_pic_ids,
         'merged_ids': merged_pic_ids,
         'picam_auto_pic_ids': picam_auto_pic_ids,
         'picam_wide_pic_ids': picam_wide_pic_ids,
-        'picam_tight_pic_ids': picam_tight_pic_ids
+        'picam_tight_pic_ids': picam_tight_pic_ids,
+        'thermal_auto_small_pic_ids': thermal_auto_small_pic_ids,
+        'thermal_wide_small_pic_ids': thermal_wide_small_pic_ids,
+        'thermal_tight_small_pic_ids': thermal_tight_small_pic_ids,
+        'thermal_auto_large_pic_ids': thermal_auto_large_pic_ids,
+        'thermal_wide_large_pic_ids': thermal_wide_large_pic_ids,
+        'thermal_tight_large_pic_ids': thermal_tight_large_pic_ids
     }

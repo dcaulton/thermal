@@ -7,7 +7,7 @@ import pytest
 
 from admin.services import get_group_document
 import analysis.services as ans
-from picture.services import find_picture, save_picture_document
+from picture.services import build_picture_path, find_picture, save_picture_document
 from thermal.appmodule import celery
 
 class TestServicesUnit(object):
@@ -19,7 +19,13 @@ class TestServicesUnit(object):
         group_id = uuid.uuid4()
         snap_id = uuid.uuid4()
         ans.save_picture_document = Mock()
-        ans.find_picture = Mock(return_value={'filename': 'whatever', 'group_id': str(group_id), 'snap_id': str(snap_id)})
+        the_picture_path = build_picture_path(picture_name='whatever', snap_id=snap_id, create_directory=False)
+        ans.find_picture = Mock(return_value={'filename': 'whatever',
+                                              'group_id': str(group_id),
+                                              'snap_id': str(snap_id),
+                                              'uri': the_picture_path
+                                             }
+                           )
         ans.get_group_document = Mock(return_value={
                                   'colorize_range_low': 1.1,
                                   'colorize_range_high': 2.2
@@ -41,7 +47,7 @@ class TestServicesUnit(object):
             'type': 'picture',
             'source': 'analysis',
             'source_image_id': str(img_id_in),
-            'analysis_type': 'scale bicubic',
+            'analysis_type': 'colorize_bicubic',
             'group_id': str(group_id),
             'snap_id': str(snap_id),
             'filename': img_filename_out,
@@ -59,6 +65,9 @@ class TestServicesUnit(object):
         MockImage.save.assert_called_once_with(pic_path_out)
         ans.save_picture_document.assert_called_once_with(test_img_dict_out)
 
+#test scale image with no colorize
+#test scale image with bilinear
+#test scale image with antialias
 #test_scale_image_with_invalid_image_id
 #test edge_detect with invalid image_id
 #test edge_detect with a valid alternate_image_id

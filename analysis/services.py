@@ -5,7 +5,7 @@ import uuid
 import cv2
 from flask import current_app
 import numpy as np
-from PIL import Image, ImageStat, ImageOps
+from PIL import Image, ImageFilter, ImageStat, ImageOps
 
 from admin.services import get_group_document
 from picture.services import build_picture_path, build_picture_name, find_picture, picture_exists, save_picture_document
@@ -37,6 +37,7 @@ def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=
     # apply Canny edge detection using a wide threshold, tight
     # threshold, and automatically determined threshold
     auto = auto_canny(blurred)
+    auto = auto_canny(image_in)
     auto_filename = build_picture_name(auto_id)
     auto_path_out = build_picture_path(picture_name=auto_filename, snap_id=pic_dict_in['snap_id'])
     cv2.imwrite(auto_path_out, auto)
@@ -90,38 +91,57 @@ def make_edge_picture_dict(pic_id, pic_filename, pic_path, snap_id, group_id, so
     return img_dict_out
 
 @celery.task
-def scale_image_chained(_, img_id_in, img_id_out):
-    scale_image(img_id_in, img_id_out)
+def scale_image_chained(_, img_id_in, img_id_out, scale_type=None):
+    scale_image(img_id_in, img_id_out, scale_type)
 
 @celery.task
-def scale_image_task(img_id_in, img_id_out):
-    scale_image(img_id_in, img_id_out)
+def scale_image_task(img_id_in, img_id_out, scale_type=None):
+    scale_image(img_id_in, img_id_out, scale_type)
 
-def scale_image(img_id_in, img_id_out):
+def scale_image(img_id_in, img_id_out, scale_type='colorize_bicubic'):
 # only works on black and white images for now
     group_document = get_group_document('current')
-    (colorize_range_low, colorize_range_high) = ('#000080', '#FFD700')
-    if 'colorize_range_low' in group_document and 'colorize_range_high' in group_document:
-        colorize_range_low = group_document['colorize_range_low']
-        colorize_range_high = group_document['colorize_range_high']
     img_dict_in = find_picture(str(img_id_in))
     img_filename_in = img_dict_in['filename']
     img_filename_out = build_picture_name(img_id_out)
-    pic_path_in = build_picture_path(picture_name=img_filename_in, snap_id=img_dict_in['snap_id'])
+    pic_path_in = img_dict_in['uri']
     pic_path_out = build_picture_path(picture_name=img_filename_out, snap_id=img_dict_in['snap_id'])
+
     image_in = Image.open(pic_path_in)
-    image_scaled = image_in.resize(
-                        (current_app.config['STILL_IMAGE_WIDTH'], current_app.config['STILL_IMAGE_HEIGHT']),
-                        Image.BICUBIC
-                   )
-    image_colorized = ImageOps.colorize(image_scaled, colorize_range_low, colorize_range_high)
-    image_colorized.save(pic_path_out)
+
+    # scale image
+    scale_method = Image.BICUBIC
+    if 'bilinear' in scale_type:
+        scale_method == Image.BILINEAR
+    if 'antialias' in scale_type:
+        scale_method == Image.ANTIALIAS
+    width = current_app.config['STILL_IMAGE_WIDTH']
+    height = current_app.config['STILL_IMAGE_HEIGHT']
+    image_scaled = image_in.resize((width, height), scale_method)
+
+    #TODO: below is terribly inefficient.  After I look at PIL internals I should be able to do better
+    #blur image
+    if 'blur' in scale_type:
+        for i in range(1,10):
+            image_scaled = image_scaled.filter(ImageFilter.BLUR)
+
+    #colorize image
+    if 'colorize' in scale_type:
+        (colorize_range_low, colorize_range_high) = ('#000080', '#FFD700')
+        if 'colorize_range_low' in group_document and 'colorize_range_high' in group_document:
+            colorize_range_low = group_document['colorize_range_low']
+            colorize_range_high = group_document['colorize_range_high']
+        image_colorized = ImageOps.colorize(image_scaled, colorize_range_low, colorize_range_high)
+        image_colorized.save(pic_path_out)
+    else:
+        image_scaled.save(pic_path_out)
+
     img_dict_out = {
         '_id': str(img_id_out),
         'type': 'picture',
         'source': 'analysis',
         'source_image_id': str(img_id_in),
-        'analysis_type': 'scale bicubic',
+        'analysis_type': scale_type,
         'group_id': img_dict_in['group_id'],
         'snap_id': img_dict_in['snap_id'],
         'filename': img_filename_out,

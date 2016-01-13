@@ -23,7 +23,7 @@ def picture_exists(picture_id):
     picture_id = str(picture_id)
     if picture_id in current_app.db:
         picture_dict = current_app.db[picture_id]
-        if picture_dict['type'] == 'picture':
+        if 'type' in picture_dict and picture_dict['type'] == 'picture':
             return True
     return False
 
