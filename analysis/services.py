@@ -111,9 +111,9 @@ def scale_image(img_id_in, img_id_out, scale_type='colorize_bicubic'):
 
     # scale image
     scale_method = Image.BICUBIC
-    if 'bilinear' in scale_type:
+    if scale_type and 'bilinear' in scale_type:
         scale_method == Image.BILINEAR
-    if 'antialias' in scale_type:
+    if scale_type and 'antialias' in scale_type:
         scale_method == Image.ANTIALIAS
     width = current_app.config['STILL_IMAGE_WIDTH']
     height = current_app.config['STILL_IMAGE_HEIGHT']
@@ -121,12 +121,12 @@ def scale_image(img_id_in, img_id_out, scale_type='colorize_bicubic'):
 
     #TODO: below is terribly inefficient.  After I look at PIL internals I should be able to do better
     #blur image
-    if 'blur' in scale_type:
+    if scale_type and 'blur' in scale_type:
         for i in range(1,10):
             image_scaled = image_scaled.filter(ImageFilter.BLUR)
 
     #colorize image
-    if 'colorize' in scale_type:
+    if scale_type and 'colorize' in scale_type:
         (colorize_range_low, colorize_range_high) = ('#000080', '#FFD700')
         if 'colorize_range_low' in group_document and 'colorize_range_high' in group_document:
             colorize_range_low = group_document['colorize_range_low']
