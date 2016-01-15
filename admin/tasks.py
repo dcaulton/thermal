@@ -5,6 +5,7 @@ import admin.services
 from thermal.appmodule import celery, mail
 
 
+#TODO add unit testing for these tasks
 @celery.task
 def upload_files_to_s3_task(snap_id, group_id):
     admin.services.upload_files_to_s3(snap_id, group_id)

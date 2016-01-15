@@ -6,7 +6,7 @@ from thermal.exceptions import NotFoundError
 
 admin = Blueprint('admin', __name__)
 
-#add a test on the service side to check the integrity of settings.current_group_id on settings save.
+#TODO add a test on the service side to check the integrity of settings.current_group_id on settings save.
 #  we don't need to worry about deletes, just updates
 @admin.route('/')
 def index():

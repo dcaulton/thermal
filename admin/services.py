@@ -59,6 +59,7 @@ def default_group_dict():
                   'colorize_range_high': '#FFD700',
                   'picam_brightness_threshold': '5.0',
                   'capture_type': 'both_still',
+                  'image_sources_to_delete': 'analysis',
                   'button_active': True,
                   'type': 'group'
     }
@@ -79,10 +80,17 @@ def upload_files_to_s3(snap_id, group_id):
 def clean_up_files(snap_id, group_id):
     print 'cleaning up files'
     group_document = get_group_document(group_id)
+    if 'image_sources_to_delete' in group_document:
+        image_sources_to_delete = group_document['image_sources_to_delete'].split(',')
     pictures = find_pictures({'snap_id': str(snap_id)})
     for pic_id in pictures.keys():
-        shutil.move(pictures[pic_id]['uri'], current_app.config['PICTURE_SAVE_DIRECTORY'])
-        pictures[pic_id]['uri'] = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], pictures[pic_id]['filename'])
+        if pictures[pic_id]['source'] in image_sources_to_delete:
+            os.remove(pictures[pic_id]['uri'])
+            pictures[pic_id]['uri'] = ''
+            pictures[pic_id]['deleted'] = True
+        else:
+            shutil.move(pictures[pic_id]['uri'], current_app.config['PICTURE_SAVE_DIRECTORY'])
+            pictures[pic_id]['uri'] = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], pictures[pic_id]['filename'])
         update_picture_document(pictures[pic_id])
     os.rmdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
 

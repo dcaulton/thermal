@@ -91,16 +91,21 @@ def make_edge_picture_dict(pic_id, pic_filename, pic_path, snap_id, group_id, so
     return img_dict_out
 
 @celery.task
-def scale_image_chained(_, img_id_in, img_id_out, group_id, scale_type=None):
-    scale_image(img_id_in, img_id_out, group_id, scale_type)
+def scale_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):
+    scale_image(img_id_in, img_id_out, group_id, **kwargs)
 
 @celery.task
-def scale_image_task(img_id_in, img_id_out, group_id, scale_type=None):
-    scale_image(img_id_in, img_id_out, group_id, scale_type)
+def scale_image_task(img_id_in, img_id_out, group_id, **kwargs):
+    scale_image(img_id_in, img_id_out, group_id, **kwargs)
 
-def scale_image(img_id_in, img_id_out, group_id, scale_type='colorize_bicubic'):
+def scale_image(img_id_in, img_id_out, group_id, **kwargs):
 # only works on black and white images for now
 # that should only be a problem for images that aren't of type 'L'.  Add this test
+    if 'scale_type' in kwargs:
+        scale_type = kwargs['colorize_bicubic']
+    else:
+        scale_type = 'colorize_bicubic'
+    #TODO add a test to show that scale_type makes it in through kwargs
     group_document = get_group_document(group_id)
     group_id = group_document['_id']
     img_dict_in = find_picture(str(img_id_in))
