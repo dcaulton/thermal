@@ -2,6 +2,7 @@ import os
 import shutil
 import uuid
 
+import boto
 from flask import current_app
 from flask.ext.mail import Message
 
@@ -60,6 +61,8 @@ def default_group_dict():
                   'picam_brightness_threshold': '5.0',
                   'capture_type': 'both_still',
                   'image_sources_to_delete': 'analysis',
+                  'use_gallery': False,
+                  'image_sources_for_gallery': 'merge',
                   'button_active': True,
                   'type': 'group'
     }
@@ -73,12 +76,31 @@ def default_settings_dict(group_id):
     }
     return settings_dict
 
+#TODO add unit tests
+#TODO reschedule if we don't have internet (actually that's better for the task to do)
 def upload_files_to_s3(snap_id, group_id):
     group_document = get_group_document(group_id)
-    print 'uploading files to s3'
+    if group_document['use_gallery']:
+        image_sources_for_gallery = group_document['image_sources_for_gallery'].split(',')
+        pictures = find_pictures({'snap_id': str(snap_id)})
+        #TODO the following assumes s3 and internet are working fine, make it more robust, with py.test tests too
+        conn = boto.connect_s3(current_app.config['S3_ACCESS_KEY_ID'], current_app.config['S3_SECRET_ACCESS_KEY'])
+        #TODO push the bucket name into config parms
+        bucket = conn.get_bucket('thermalwebapp')
+        for pic_id in pictures.keys():
+            if pictures[pic_id]['source'] in image_sources_for_gallery:
+                destination = boto.s3.key.Key(bucket)
+                destination.key = pictures[pic_id]['filename']
+                fh = open(pictures[pic_id]['uri'])
+                destination.set_contents_from_file(fh)
+                fh.close()
+                destination.make_public()
+                pic_gallery_url = destination.generate_url(expires_in=0, query_auth=False)
+                pictures[pic_id]['gallery_url'] = pic_gallery_url
+                update_picture_document(pictures[pic_id])
 
+#TODO add tests related to image_sources_to_delete
 def clean_up_files(snap_id, group_id):
-    print 'cleaning up files'
     group_document = get_group_document(group_id)
     if 'image_sources_to_delete' in group_document:
         image_sources_to_delete = group_document['image_sources_to_delete'].split(',')
@@ -94,6 +116,8 @@ def clean_up_files(snap_id, group_id):
         update_picture_document(pictures[pic_id])
     os.rmdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
 
+
+#TODO add unit tests
 def send_mail(snap_id, group_id):
     group_document = get_group_document(group_id)
     if ('email_recipients' in group_document and 

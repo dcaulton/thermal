@@ -17,6 +17,9 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
 
+    S3_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
+    S3_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
+
     @staticmethod
     def init_app(app):
         pass

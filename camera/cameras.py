@@ -68,6 +68,7 @@ class Lepton(Camera):
         pass
 
     def take_still(self, pic_path):
+        #TODO push the spi specifics into config paramters
         with pylepton.Lepton("/dev/spidev0.1") as l:
             a,_ = l.capture()
             cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)

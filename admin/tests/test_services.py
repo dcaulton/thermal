@@ -23,13 +23,15 @@ class TestSettingsUnit(object):
         expected_fields = ['_id',
                            'merge_type',
                            'retake_picam_pics_when_dark',
-                           'use_gallery',
                            'email_recipients',
                            'send_email_contents',
                            'colorize_range_low',
                            'colorize_range_high',
                            'picam_brightness_threshold',
                            'capture_type',
+                           'image_sources_to_delete',
+                           'use_gallery',
+                           'image_sources_for_gallery',
                            'button_active',
                            'type']
         for field in expected_fields:
