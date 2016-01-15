@@ -20,7 +20,7 @@ class TestServicesUnit(object):
         snap_id = uuid.uuid4()
         ms.save_picture_document = Mock()
         ms.find_picture = Mock(return_value={'filename': 'whatever', 'group_id': str(group_id), 'snap_id': str(snap_id)})
-        ms.get_group_document = Mock(return_value={'merge_type': 'canine'})
+        ms.get_group_document = Mock(return_value={'_id': str(group_id), 'merge_type': 'canine'})
         ms.picture_exists = Mock(return_value=False)
         the_mock_image = MockImage()
         Image.open = Mock(return_value=the_mock_image)
@@ -51,9 +51,9 @@ class TestServicesUnit(object):
             'created': ANY
         }
 
-        ms.merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out)
+        ms.merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id)
 
-        ms.get_group_document.assert_called_once_with('current')
+        ms.get_group_document.assert_called_once_with(group_id)
         ms.picture_exists.assert_called_once_with(img1_alternate_id_in)
         find_picture_calls = [call(str(img1_primary_id_in)), call(str(img2_id_in))]
         ms.find_picture.assert_has_calls(find_picture_calls)

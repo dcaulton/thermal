@@ -73,10 +73,16 @@ def default_settings_dict(group_id):
     return settings_dict
 
 @celery.task
-def clean_up_files_chained(_, snap_id):
-    clean_up_files(snap_id)
+def upload_files_to_s3_task(snap_id, group_id):
+    group_document = get_group_document(group_id)
 
-def clean_up_files(snap_id):
+@celery.task
+def clean_up_files_chained(_, snap_id, group_id):
+    upload_files_to_s3_task(snap_id, group_id)
+    clean_up_files(snap_id, group_id)
+
+def clean_up_files(snap_id, group_id):
+    group_document = get_group_document(group_id)
     pictures = find_pictures({'snap_id': str(snap_id)})
     for pic_id in pictures.keys():
         shutil.move(pictures[pic_id]['uri'], current_app.config['PICTURE_SAVE_DIRECTORY'])

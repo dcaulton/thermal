@@ -21,7 +21,7 @@ class TestTasksUnit(object):
         group_id = get_group_document('current')['_id']
         ct.take_picam_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
         cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY)
-        as_clean_up_files.assert_called_once_with(snap_id)
+        as_clean_up_files.assert_called_once_with(snap_id, group_id)
         as_send_mail.assert_called_once_with(snap_id, group_id)
 
     @patch('admin.services.send_mail')
@@ -35,9 +35,11 @@ class TestTasksUnit(object):
         group_id = get_group_document('current')['_id']
         ct.take_picam_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=2)
         tps_calls = [call(snap_id, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY)]
-        ascuf_calls = [call(snap_id), call(ANY), call(ANY)]
+        ascuf_calls = [call(snap_id, group_id), call(ANY, group_id), call(ANY, group_id)]
         assm_calls = [call(snap_id, group_id), call(ANY, group_id), call(ANY, group_id)]
         cs_take_picam_still.assert_has_calls(tps_calls)
+        as_clean_up_files.assert_has_calls(ascuf_calls)
+        as_send_mail.assert_has_calls(assm_calls)
 
     @patch('admin.services.send_mail')
     @patch('admin.services.clean_up_files')
@@ -52,8 +54,8 @@ class TestTasksUnit(object):
         group_id = get_group_document('current')['_id']
         ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
         cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
-        ans_scale_image.assert_called_once_with(ANY, ANY, None)
-        ads_clean_up_files.assert_called_once_with(snap_id)
+        ans_scale_image.assert_called_once_with(ANY, ANY, group_id, None)
+        ads_clean_up_files.assert_called_once_with(snap_id, group_id)
         ads_send_mail.assert_called_once_with(snap_id, group_id)
 
     @patch('admin.services.send_mail')
@@ -69,9 +71,9 @@ class TestTasksUnit(object):
         group_id = get_group_document('current')['_id']
         ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1)
         cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY), call(ANY, group_id, ANY)])
-        ans_scale_image.assert_has_calls([call(ANY, ANY, None), call(ANY, ANY, None)])
+        ans_scale_image.assert_has_calls([call(ANY, ANY, group_id, None), call(ANY, ANY, group_id, None)])
         ads_send_mail.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])
-        ads_clean_up_files.assert_has_calls([call(snap_id), call(ANY)])
+        ads_clean_up_files.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])
 
     @patch('admin.services.send_mail')
     @patch('admin.services.clean_up_files')
@@ -88,7 +90,7 @@ class TestTasksUnit(object):
         cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
         ans_scale_image.assert_not_called()
         ads_send_mail.assert_called_once_with(snap_id, group_id)
-        ads_clean_up_files.assert_called_once_with(snap_id)
+        ads_clean_up_files.assert_called_once_with(snap_id, group_id)
 
 
     @patch('admin.services.send_mail')
@@ -109,10 +111,10 @@ class TestTasksUnit(object):
         ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
         cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
         cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY)
-        ans_scale_image.assert_called_once_with(ANY, ANY, None)
-        ms_merge_image.assert_called_once_with(ANY, ANY, ANY, ANY)
+        ans_scale_image.assert_called_once_with(ANY, ANY, group_id, None)
+        ms_merge_image.assert_called_once_with(ANY, ANY, ANY, ANY, group_id)
         ads_send_mail.assert_called_once_with(snap_id, group_id)
-        ads_clean_up_files.assert_called_once_with(snap_id)
+        ads_clean_up_files.assert_called_once_with(snap_id, group_id)
 
     @patch('admin.services.send_mail')
     @patch('admin.services.clean_up_files')
@@ -132,7 +134,7 @@ class TestTasksUnit(object):
         ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1)
         cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY), call(ANY, group_id, ANY)])
         cs_take_picam_still.assert_has_calls([call(snap_id, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY)])
-        ans_scale_image.assert_has_calls([call(ANY, ANY, None), call(ANY, ANY, None)])
-        ms_merge_image.assert_has_calls([call(ANY, ANY, ANY, ANY), call(ANY, ANY, ANY, ANY)])
+        ans_scale_image.assert_has_calls([call(ANY, ANY, group_id, None), call(ANY, ANY, group_id, None)])
+        ms_merge_image.assert_has_calls([call(ANY, ANY, ANY, ANY, group_id), call(ANY, ANY, ANY, ANY, group_id)])
         ads_send_mail.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])
-        ads_clean_up_files.assert_has_calls([call(snap_id), call(ANY)])
+        ads_clean_up_files.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])

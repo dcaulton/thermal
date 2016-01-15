@@ -12,7 +12,7 @@ analysis = Blueprint('analysis', __name__)
 def call_scale_image():
     result_id = uuid.uuid4()
     find_picture(image_id)
-    scale_image_task.delay(img_id_in=image_id, img_id_out=result_id)
+    scale_image_task.delay(img_id_in=image_id, img_id_out=result_id, group_id='current')
     resp_json = {
         'scale_image_output_image_id': str(result_id)
     }

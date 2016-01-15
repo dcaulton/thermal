@@ -27,6 +27,7 @@ class TestServicesUnit(object):
                                              }
                            )
         ans.get_group_document = Mock(return_value={
+                                  '_id': str(group_id),
                                   'colorize_range_low': 1.1,
                                   'colorize_range_high': 2.2
                                   }
@@ -55,9 +56,9 @@ class TestServicesUnit(object):
             'created': ANY
         }
 
-        ans.scale_image(img_id_in, img_id_out)
+        ans.scale_image(img_id_in, img_id_out, 'whatever')
 
-        ans.get_group_document.assert_called_once_with('current')
+        ans.get_group_document.assert_called_once_with('whatever')
         ans.find_picture.assert_called_once_with(str(img_id_in))
         Image.open.assert_called_once_with(ans.build_picture_path(picture_name='whatever', snap_id=snap_id))
         MockImage.resize.assert_called_once_with((image_width, image_height), Image.BICUBIC) 

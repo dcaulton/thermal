@@ -20,6 +20,7 @@ def call_merge_images():
             img1_primary_id_in=img1_id,
             img1_alternate_id_in=uuid.uuid4(),
             img2_id_in=img2_id,
-            img_id_out=result_id
+            img_id_out=result_id,
+            group_id='current'
         )
         return Response(json.dumps('request accepted'), status=202, mimetype='application/json')

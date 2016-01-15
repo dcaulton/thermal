@@ -42,7 +42,8 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
                 group_id=group_id
             ),
             clean_up_files_chained.s(
-                snap_id=snap_id
+                snap_id=snap_id,
+                group_id=group_id
             )
         ).apply_async(countdown=i)
         normal_exposure_pic_ids.append(str(normal_exposure_pic_id))
@@ -85,14 +86,16 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                 ),
                 scale_image_chained.s(
                     img_id_in=pic_id,
-                    img_id_out=scaled_pic_id
+                    img_id_out=scaled_pic_id,
+                    group_id=group_id
                 ),
                 send_mail_chained.s(
                     snap_id=snap_id,
                     group_id=group_id
                 ),
                 clean_up_files_chained.s(
-                    snap_id=snap_id
+                    snap_id=snap_id,
+                    group_id=group_id
                 )
             ).apply_async(countdown=i)
             pic_ids.append(str(pic_id))
@@ -113,7 +116,8 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                     group_id=group_id
                 ),
                 clean_up_files_chained.s(
-                    snap_id=snap_id
+                    snap_id=snap_id,
+                    group_id=group_id
                 )
             ).apply_async(countdown=i)
             pic_ids.append(str(pic_id))
@@ -172,20 +176,23 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
             ),
             scale_image_chained.s(
                 img_id_in=thermal_pic_id,
-                img_id_out=scaled_for_thermal_merge_pic_id
+                img_id_out=scaled_for_thermal_merge_pic_id,
+                group_id=group_id
             ),
             merge_images_chained.s(
                 img1_primary_id_in=normal_exposure_picam_pic_id,
                 img1_alternate_id_in=long_exposure_picam_pic_id,
                 img2_id_in=scaled_for_thermal_merge_pic_id,
-                img_id_out=merged_pic_id
+                img_id_out=merged_pic_id,
+                group_id=group_id
             ),
             send_mail_chained.s(
                 snap_id=snap_id,
                 group_id=group_id
             ),
             clean_up_files_chained.s(
-                snap_id=snap_id
+                snap_id=snap_id,
+                group_id=group_id
             )
         ).apply_async(countdown=i)
         thermal_pic_ids.append(str(thermal_pic_id))
@@ -277,34 +284,40 @@ def take_both_still_fancy(snap_id, group_id, delay=0, repeat=0):
             scale_image_chained.s(
                 img_id_in=thermal_auto_small_id,
                 img_id_out=thermal_auto_large_id,
+                group_id=group_id,
                 scale_type='bicubic_blur'
             ),
             scale_image_chained.s(
                 img_id_in=thermal_wide_small_id,
                 img_id_out=thermal_wide_large_id,
+                group_id=group_id,
                 scale_type='bicubic_blur'
             ),
             scale_image_chained.s(
                 img_id_in=thermal_tight_small_id,
                 img_id_out=thermal_tight_large_id,
+                group_id=group_id,
                 scale_type='bicubic_blur'
             ),
             scale_image_chained.s(
                 img_id_in=thermal_pic_id,
-                img_id_out=scaled_for_thermal_merge_pic_id
+                img_id_out=scaled_for_thermal_merge_pic_id,
+                group_id=group_id,
             ),
             merge_images_chained.s(
                 img1_primary_id_in=normal_exposure_picam_pic_id,
                 img1_alternate_id_in=long_exposure_picam_pic_id,
                 img2_id_in=scaled_for_thermal_merge_pic_id,
-                img_id_out=merged_pic_id
+                img_id_out=merged_pic_id,
+                group_id=group_id
             ),
             send_mail_chained.s(
                 snap_id=snap_id,
                 group_id=group_id
             ),
             clean_up_files_chained.s(
-                snap_id=snap_id
+                snap_id=snap_id,
+                group_id=group_id
             )
         ).apply_async(countdown=i)
         thermal_pic_ids.append(str(thermal_pic_id))

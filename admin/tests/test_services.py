@@ -133,6 +133,7 @@ class TestSettingsIntegration(object):
 
     def test_clean_up_files_cleans_pictures_from_the_snap(self):
         snap_id = uuid.uuid4()
+        group_id = admin.services.get_group_document('current')['_id']
         pic_ids = self.build_three_pictures(snap_id)
         for pic_id in pic_ids:
             pic_doc = find_picture(pic_id)
@@ -140,7 +141,7 @@ class TestSettingsIntegration(object):
             assert str(snap_id) in pic_doc['uri']
 
         assert os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
-        admin.services.clean_up_files(snap_id)
+        admin.services.clean_up_files(snap_id, group_id)
 
         for pic_id in pic_ids:
             pic_doc = find_picture(pic_id)

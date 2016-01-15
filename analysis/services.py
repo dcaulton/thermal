@@ -91,16 +91,18 @@ def make_edge_picture_dict(pic_id, pic_filename, pic_path, snap_id, group_id, so
     return img_dict_out
 
 @celery.task
-def scale_image_chained(_, img_id_in, img_id_out, scale_type=None):
-    scale_image(img_id_in, img_id_out, scale_type)
+def scale_image_chained(_, img_id_in, img_id_out, group_id, scale_type=None):
+    scale_image(img_id_in, img_id_out, group_id, scale_type)
 
 @celery.task
-def scale_image_task(img_id_in, img_id_out, scale_type=None):
-    scale_image(img_id_in, img_id_out, scale_type)
+def scale_image_task(img_id_in, img_id_out, group_id, scale_type=None):
+    scale_image(img_id_in, img_id_out, group_id, scale_type)
 
-def scale_image(img_id_in, img_id_out, scale_type='colorize_bicubic'):
+def scale_image(img_id_in, img_id_out, group_id, scale_type='colorize_bicubic'):
 # only works on black and white images for now
-    group_document = get_group_document('current')
+# that should only be a problem for images that aren't of type 'L'.  Add this test
+    group_document = get_group_document(group_id)
+    group_id = group_document['_id']
     img_dict_in = find_picture(str(img_id_in))
     img_filename_in = img_dict_in['filename']
     img_filename_out = build_picture_name(img_id_out)
@@ -142,7 +144,7 @@ def scale_image(img_id_in, img_id_out, scale_type='colorize_bicubic'):
         'source': 'analysis',
         'source_image_id': str(img_id_in),
         'analysis_type': scale_type,
-        'group_id': img_dict_in['group_id'],
+        'group_id': group_id,
         'snap_id': img_dict_in['snap_id'],
         'filename': img_filename_out,
         'uri': pic_path_out,
