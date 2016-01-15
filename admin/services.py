@@ -6,7 +6,7 @@ from flask import current_app
 from flask.ext.mail import Message
 
 from picture.services import find_pictures, build_picture_path, build_picture_name, update_picture_document
-from thermal.appmodule import celery, mail
+from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
 
@@ -72,16 +72,12 @@ def default_settings_dict(group_id):
     }
     return settings_dict
 
-@celery.task
-def upload_files_to_s3_task(snap_id, group_id):
+def upload_files_to_s3(snap_id, group_id):
     group_document = get_group_document(group_id)
-
-@celery.task
-def clean_up_files_chained(_, snap_id, group_id):
-    upload_files_to_s3_task(snap_id, group_id)
-    clean_up_files(snap_id, group_id)
+    print 'uploading files to s3'
 
 def clean_up_files(snap_id, group_id):
+    print 'cleaning up files'
     group_document = get_group_document(group_id)
     pictures = find_pictures({'snap_id': str(snap_id)})
     for pic_id in pictures.keys():
@@ -89,10 +85,6 @@ def clean_up_files(snap_id, group_id):
         pictures[pic_id]['uri'] = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], pictures[pic_id]['filename'])
         update_picture_document(pictures[pic_id])
     os.rmdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
-
-@celery.task
-def send_mail_chained(_, snap_id, group_id):
-    send_mail(snap_id, group_id)
 
 def send_mail(snap_id, group_id):
     group_document = get_group_document(group_id)

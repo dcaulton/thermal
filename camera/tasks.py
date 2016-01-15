@@ -2,7 +2,8 @@ import uuid
 
 from celery import chain
 
-from admin.services import clean_up_files_chained, get_group_document, send_mail_chained
+from admin.services import get_group_document
+from admin.tasks import file_wrap_up_chained, send_mail_chained
 from analysis.services import edge_detect_chained, scale_image_chained
 import camera.services
 from merging.services import merge_images_chained
@@ -41,7 +42,7 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
                 snap_id=snap_id,
                 group_id=group_id
             ),
-            clean_up_files_chained.s(
+            file_wrap_up_chained.s(
                 snap_id=snap_id,
                 group_id=group_id
             )
@@ -93,7 +94,7 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                     snap_id=snap_id,
                     group_id=group_id
                 ),
-                clean_up_files_chained.s(
+                file_wrap_up_chained.s(
                     snap_id=snap_id,
                     group_id=group_id
                 )
@@ -115,7 +116,7 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                     snap_id=snap_id,
                     group_id=group_id
                 ),
-                clean_up_files_chained.s(
+                file_wrap_up_chained.s(
                     snap_id=snap_id,
                     group_id=group_id
                 )
@@ -190,7 +191,7 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
                 snap_id=snap_id,
                 group_id=group_id
             ),
-            clean_up_files_chained.s(
+            file_wrap_up_chained.s(
                 snap_id=snap_id,
                 group_id=group_id
             )
@@ -315,7 +316,7 @@ def take_both_still_fancy(snap_id, group_id, delay=0, repeat=0):
                 snap_id=snap_id,
                 group_id=group_id
             ),
-            clean_up_files_chained.s(
+            file_wrap_up_chained.s(
                 snap_id=snap_id,
                 group_id=group_id
             )
