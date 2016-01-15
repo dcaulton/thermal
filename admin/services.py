@@ -50,13 +50,16 @@ def create_default_settings_and_group_documents():
 def default_group_dict():
     group_id = uuid.uuid4()
     group_dict = {'_id': str(group_id),
-                  'merge_type': 'screen',
+                  'merge_type': 'colorize_screen',
                   'retake_picam_pics_when_dark': True,
+                  'use_gallery': True,
                   'email_recipients': '',
                   'send_email_contents': 'merge',
                   'colorize_range_low': '#000080',
                   'colorize_range_high': '#FFD700',
                   'picam_brightness_threshold': '5.0',
+                  'capture_type': 'both_still',
+                  'button_active': True,
                   'type': 'group'
     }
     return group_dict
@@ -65,8 +68,6 @@ def default_settings_dict(group_id):
     settings_id = uuid.uuid4()
     settings_dict = {'_id': str(settings_id),
                      'current_group_id': str(group_id),
-                     'capture_type': 'both_still',
-                     'button_active': True,
                      'type': 'settings'
     }
     return settings_dict

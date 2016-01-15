@@ -9,6 +9,51 @@ import conftest
 from picture.services import build_picture_name, build_picture_path, find_picture, save_picture_document
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
+class TestSettingsUnit(object):
+    def test_default_settings_dict_has_expected_fields(self):
+        the_group_id = uuid.uuid4()
+        settings_doc = admin.services.default_settings_dict(the_group_id)
+        expected_fields = ['_id', 'current_group_id', 'type']
+        for field in expected_fields:
+            assert field in settings_doc
+        assert len(settings_doc.keys()) == len(expected_fields)
+
+    def test_default_group_dict_has_expected_fields(self):
+        group_doc = admin.services.default_group_dict()
+        expected_fields = ['_id',
+                           'merge_type',
+                           'retake_picam_pics_when_dark',
+                           'use_gallery',
+                           'email_recipients',
+                           'send_email_contents',
+                           'colorize_range_low',
+                           'colorize_range_high',
+                           'picam_brightness_threshold',
+                           'capture_type',
+                           'button_active',
+                           'type']
+        for field in expected_fields:
+            assert field in group_doc
+        assert len(group_doc.keys()) == len(expected_fields)
+
+def default_group_dict():
+    group_id = uuid.uuid4()
+    group_dict = {'_id': str(group_id),
+                  'merge_type': 'colorize_screen',
+                  'retake_picam_pics_when_dark': True,
+                  'use_gallery': True,
+                  'email_recipients': '',
+                  'send_email_contents': 'merge',
+                  'colorize_range_low': '#000080',
+                  'colorize_range_high': '#FFD700',
+                  'picam_brightness_threshold': '5.0',
+                  'capture_type': 'both_still',
+                  'button_active': True,
+                  'type': 'group'
+    }
+    return group_dict
+
+
 
 class TestSettingsIntegration(object):
     def test_get_settings_fetches_a_real_settings_document(self):
@@ -106,3 +151,4 @@ class TestSettingsIntegration(object):
         assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
 
 # put a 'delete_after_processing' tag on intermediate pictures, like what will be coming from edge detection
+### unit tests
