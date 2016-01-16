@@ -18,7 +18,6 @@ def find_picture(picture_id):
         raise NotFoundError("picture not found for id {0}".format(picture_id))
     return picture_dict
 
-#TODO make some tests for this
 def picture_exists(picture_id):
     picture_id = str(picture_id)
     if picture_id in current_app.db:

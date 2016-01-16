@@ -48,6 +48,8 @@ def get_group_pictures(group_id):
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
+#TODO this will need a special integration test.  That gallery_url_not_null passes through picture.services.find_pictures and 
+#  passes straight through to thermal.utils
 @admin.route('/groups/<group_id>/gallery', methods=['GET'])
 def get_group_gallery(group_id):
     try:
