@@ -19,6 +19,7 @@ class Config:
 
     S3_ACCESS_KEY_ID = os.environ.get('S3_ACCESS_KEY_ID')
     S3_SECRET_ACCESS_KEY = os.environ.get('S3_SECRET_ACCESS_KEY')
+    S3_BUCKET_NAME = 'thermalwebapp'
 
     @staticmethod
     def init_app(app):

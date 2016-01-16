@@ -76,7 +76,6 @@ def default_settings_dict(group_id):
     }
     return settings_dict
 
-#TODO add unit tests
 #TODO reschedule if we don't have internet (actually that's better for the task to do)
 def upload_files_to_s3(snap_id, group_id):
     group_document = get_group_document(group_id)
@@ -85,15 +84,12 @@ def upload_files_to_s3(snap_id, group_id):
         pictures = find_pictures({'snap_id': str(snap_id)})
         #TODO the following assumes s3 and internet are working fine, make it more robust, with py.test tests too
         conn = boto.connect_s3(current_app.config['S3_ACCESS_KEY_ID'], current_app.config['S3_SECRET_ACCESS_KEY'])
-        #TODO push the bucket name into config parms
-        bucket = conn.get_bucket('thermalwebapp')
+        bucket = conn.get_bucket(current_app.config['S3_BUCKET_NAME'])
         for pic_id in pictures.keys():
             if pictures[pic_id]['source'] in image_sources_for_gallery:
                 destination = boto.s3.key.Key(bucket)
                 destination.key = pictures[pic_id]['filename']
-                fh = open(pictures[pic_id]['uri'])
-                destination.set_contents_from_file(fh)
-                fh.close()
+                destination.set_contents_from_filename(pictures[pic_id]['uri'])
                 destination.make_public()
                 pic_gallery_url = destination.generate_url(expires_in=0, query_auth=False)
                 pictures[pic_id]['gallery_url'] = pic_gallery_url

@@ -1,15 +1,82 @@
 import os
+from mock import ANY, call, Mock, patch
 import uuid
 
+import boto
 from flask import current_app
 import pytest 
 
 import admin.services
 import conftest
-from picture.services import build_picture_name, build_picture_path, find_picture, save_picture_document
+from picture.services import (build_picture_name, build_picture_path, find_picture, find_pictures, save_picture_document,
+                              update_picture_document)
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
 class TestSettingsUnit(object):
+#TODO add test case for upload_to_s3 if we don't have use_gallery in the group doc
+
+    @patch('admin.services.update_picture_document')
+    @patch('boto.connect_s3')
+    @patch('boto.s3.key.Key')
+    @patch('admin.services.find_pictures')
+    @patch('admin.services.get_group_document')
+    def test_upload_files_to_s3_calls_expected_methods(self,
+                                                       as_get_group_document,
+                                                       as_find_pictures,
+                                                       boto_s3_key_key,
+                                                       boto_connect_s3,
+                                                       as_update_picture_document):
+        class MockObject(object):
+            pass
+        the_pictures = {
+            "key_1": {
+                "uri": "uri_1",
+                "filename": "filename_1",
+                "source": "analysis"
+            },
+            "key_2": {
+                "uri": "uri_2",
+                "filename": "filename_2",
+                "source": "merge"
+            }
+        }
+        expected_updated_picture_document = {
+            "uri": "uri_2",
+            "filename": "filename_2",
+            "gallery_url": "the_generated_url",
+            "source": "merge"
+        }
+        as_get_group_document.return_value = {'use_gallery': True,
+                                              'image_sources_for_gallery': 'merge'}
+        as_find_pictures.return_value = the_pictures
+        the_mock_bucket = MockObject()
+        the_mock_connection = MockObject()
+        the_mock_connection.get_bucket = Mock(return_value=the_mock_bucket)
+        the_mock_destination = MockObject()
+        the_mock_destination.set_contents_from_filename = Mock()
+        the_mock_destination.make_public = Mock()
+        the_mock_destination.generate_url = Mock(return_value='the_generated_url')
+        boto = Mock()
+        boto_connect_s3.return_value = the_mock_connection
+        boto_s3_key_key.return_value = the_mock_destination
+
+        snap_id = uuid.uuid4()
+        group_id = uuid.uuid4()
+        admin.services.upload_files_to_s3(snap_id, group_id)
+        
+        as_get_group_document.assert_called_once_with(group_id)
+        as_find_pictures.assert_called_once_with({'snap_id': str(snap_id)})
+        connect_s3_call = call(current_app.config['S3_ACCESS_KEY_ID'], current_app.config['S3_SECRET_ACCESS_KEY'])
+        boto_s3_key_key.assert_called_once_with(the_mock_bucket)
+        boto_connect_s3.assert_has_calls([connect_s3_call])
+        the_mock_connection.get_bucket.assert_called_once_with(current_app.config['S3_BUCKET_NAME'])
+        the_mock_destination.set_contents_from_filename.assert_called_once_with("uri_2")
+        the_mock_destination.make_public.assert_called_once_with()
+        as_update_picture_document.assert_called_once_with(expected_updated_picture_document)
+
+
+class TestSettingsIntegration(object):
+
     def test_default_settings_dict_has_expected_fields(self):
         the_group_id = uuid.uuid4()
         settings_doc = admin.services.default_settings_dict(the_group_id)
@@ -38,26 +105,6 @@ class TestSettingsUnit(object):
             assert field in group_doc
         assert len(group_doc.keys()) == len(expected_fields)
 
-def default_group_dict():
-    group_id = uuid.uuid4()
-    group_dict = {'_id': str(group_id),
-                  'merge_type': 'colorize_screen',
-                  'retake_picam_pics_when_dark': True,
-                  'use_gallery': True,
-                  'email_recipients': '',
-                  'send_email_contents': 'merge',
-                  'colorize_range_low': '#000080',
-                  'colorize_range_high': '#FFD700',
-                  'picam_brightness_threshold': '5.0',
-                  'capture_type': 'both_still',
-                  'button_active': True,
-                  'type': 'group'
-    }
-    return group_dict
-
-
-
-class TestSettingsIntegration(object):
     def test_get_settings_fetches_a_real_settings_document(self):
         settings_doc = admin.services.get_settings_document()
         assert '_id' in settings_doc.keys()
@@ -152,6 +199,3 @@ class TestSettingsIntegration(object):
             assert pic_doc['uri'] == expected_picture_path
             assert os.path.isfile(expected_picture_path)
         assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
-
-# put a 'delete_after_processing' tag on intermediate pictures, like what will be coming from edge detection
-### unit tests
