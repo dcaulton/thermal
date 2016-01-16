@@ -5,11 +5,11 @@ from flask import current_app
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 from thermal.utils import get_documents_from_criteria
 
-def find_pictures(args_dict):
+def find_pictures(args_dict, **kwargs):
     args_dict['type'] = 'picture'
-    pictures_dict = get_documents_from_criteria(args_dict=args_dict)
+    pictures_dict = get_documents_from_criteria(args_dict, **kwargs)
     return pictures_dict
-    
+
 def find_picture(picture_id):
     picture_id = str(picture_id) # deal with non-stringified UUIDs coming in
     if picture_id in current_app.db:

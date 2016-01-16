@@ -1,8 +1,10 @@
 from flask import current_app
 
-def get_documents_from_criteria(args_dict):
+def get_documents_from_criteria(args_dict, **kwargs):
     documents_dict = {}
     criteria_list = []
+    if 'gallery_url_not_null' in kwargs:
+        criteria_list.append("doc.gallery_url != null")
     for key in args_dict:
         criteria_list.append("doc.{0} == '{1}'".format(key, args_dict[key]))
     criteria_string = ' && '.join(criteria_list)

@@ -2,6 +2,7 @@ from flask import Blueprint, request, Response
 import json
 
 from admin.services import default_group_dict, get_settings_document, get_group_document, save_document
+from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
 
 admin = Blueprint('admin', __name__)
@@ -12,6 +13,7 @@ admin = Blueprint('admin', __name__)
 def index():
     return 'Admin'
 
+#TODO add tests for these views
 @admin.route('/settings', methods=['GET'])
 def get_settings():
     settings = get_settings_document()
@@ -34,6 +36,28 @@ def get_group(group_id):
     except NotFoundError as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(group_dict), status=200, mimetype='application/json')
+
+@admin.route('/groups/<group_id>/pictures', methods=['GET'])
+def get_group_pictures(group_id):
+    try:
+        group_dict = get_group_document(group_id)
+        group_id = group_dict['_id']
+        args_dict = {'group_id': group_id}
+        pictures_dict = find_pictures(args_dict)
+    except NotFoundError as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
+
+@admin.route('/groups/<group_id>/gallery', methods=['GET'])
+def get_group_gallery(group_id):
+    try:
+        group_dict = get_group_document(group_id)
+        group_id = group_dict['_id']
+        args_dict = {'group_id': group_id}
+        pictures_dict = find_pictures(args_dict, gallery_url_not_null=True)
+    except NotFoundError as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
 @admin.route('/groups/<group_id>', methods=['PUT'])
 def update_group(group_id):
