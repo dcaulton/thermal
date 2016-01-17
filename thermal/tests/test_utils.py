@@ -7,7 +7,43 @@ from flask import current_app
 import pytest 
 
 import conftest
+from thermal.exceptions import DocumentConfigurationError
 import thermal.utils
+
+class TestUtilsUnit(object):
+    def test_get_paging_info_returns_ok_with_good_paging_info(self):
+        kwargs = {'page': '1', 'items_per_page': '2'}
+
+        (paging_requested, start_index, end_index) = thermal.utils.get_paging_info(**kwargs)
+        assert paging_requested == True
+        assert start_index == 0
+        assert end_index == 1
+
+    def test_get_paging_info_fails_with_nonnumeric_page_number(self):
+        kwargs = {'page': 'x', 'items_per_page': '2'}
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            (paging_requested, start_index, end_index) = thermal.utils.get_paging_info(**kwargs)
+        assert 'invalid number specified for page' in str(exception_info.value)
+
+
+    def test_get_paging_info_fails_with_negative_page_number(self):
+        kwargs = {'page': '-1', 'items_per_page': '2'}
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            (paging_requested, start_index, end_index) = thermal.utils.get_paging_info(**kwargs)
+        assert 'page number must be a number greater than zero' in str(exception_info.value)
+
+    def test_get_paging_info_fails_with_nonnumeric_items_per_page(self):
+        kwargs = {'page': '1', 'items_per_page': 'x'}
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            (paging_requested, start_index, end_index) = thermal.utils.get_paging_info(**kwargs)
+        assert 'invalid number specified for items_per_page' in str(exception_info.value)
+
+    def test_get_paging_info_fails_with_negative_items_per_page(self):
+        kwargs = {'page': '1', 'items_per_page': '-2'}
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            (paging_requested, start_index, end_index) = thermal.utils.get_paging_info(**kwargs)
+        assert 'items_per_page must be a number greater than zero' in str(exception_info.value)
+
 
 class TestUtilsIntegration(object):
 

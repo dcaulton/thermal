@@ -43,23 +43,20 @@ def get_group_pictures(group_id):
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
         args_dict = {'group_id': group_id}
-        pictures_dict = find_pictures(args_dict)
-    except NotFoundError as e:
+        (page, items_per_page) = get_paging_info_from_request(request)
+        pictures_dict = find_pictures(args_dict, page=page, items_per_page=items_per_page)
+    except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
-#TODO this will need a special integration test.  That gallery_url_not_null passes through picture.services.find_pictures and 
-#  passes straight through to thermal.utils
+#TODO this will need an integration test.
 @admin.route('/groups/<group_id>/gallery', methods=['GET'])
 def get_group_gallery(group_id):
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
         args_dict = {'group_id': group_id}
-        (page, items_per_page) = (0,0)
-        if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
-            page = request.args['page']
-            items_per_page = request.args['items_per_page']
+        (page, items_per_page) = get_paging_info_from_request(request)
         pictures_dict = find_pictures(args_dict, gallery_url_not_null=True, page=page, items_per_page=items_per_page)
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
@@ -92,3 +89,11 @@ def doc_attribute_can_be_set(key_name):
     if key_name not in ['_id', '_rev']:
         return True
     return False
+
+#TODO add testing for this
+def get_paging_info_from_request(request):
+    (page, items_per_page) = (0,0)
+    if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
+        page = request.args['page']
+        items_per_page = request.args['items_per_page']
+    return (page, items_per_page)

@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import current_app, request
 
 from thermal.exceptions import DocumentConfigurationError
 
@@ -25,10 +25,8 @@ def get_documents_from_criteria(args_dict, **kwargs):
                 documents_dict[row['value']['_id']] = row['value']
         else:
             documents_dict[row['value']['_id']] = row['value']
-#            documents_dict[row['key']] = row['value']
     return documents_dict
 
-#TODO add tests for weird arguments for paging
 def get_paging_info(**kwargs):
     paging_requested = False
     start_index = 0
