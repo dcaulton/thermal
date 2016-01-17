@@ -6,7 +6,7 @@ import mock
 import pytest 
 
 from admin.services import clean_up_files, get_group_document, send_mail
-from analysis.services import scale_image
+from analysis.services import scale_image, distort_image_shepards_fixed
 from merging.services import merge_images
 import camera.tasks as ct
 from camera.services import take_picam_still, take_thermal_still
@@ -96,6 +96,7 @@ class TestTasksUnit(object):
     @patch('admin.services.send_mail')
     @patch('admin.services.clean_up_files')
     @patch('merging.services.merge_images')
+    @patch('analysis.services.distort_image_shepards_fixed')
     @patch('analysis.services.scale_image')
     @patch('camera.services.take_thermal_still')
     @patch('camera.services.take_picam_still')
@@ -103,6 +104,7 @@ class TestTasksUnit(object):
                                                      cs_take_picam_still,
                                                      cs_take_thermal_still,
                                                      ans_scale_image,
+                                                     ans_distort_image_shepards_fixed,
                                                      ms_merge_image,
                                                      ads_clean_up_files,
                                                      ads_send_mail):
@@ -112,6 +114,7 @@ class TestTasksUnit(object):
         cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
         cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY)
         ans_scale_image.assert_called_once_with(ANY, ANY, group_id)
+        ans_distort_image_shepards_fixed.assert_called_once_with(ANY, ANY, group_id)
         ms_merge_image.assert_called_once_with(ANY, ANY, ANY, ANY, group_id)
         ads_send_mail.assert_called_once_with(snap_id, group_id)
         ads_clean_up_files.assert_called_once_with(snap_id, group_id)
@@ -119,6 +122,7 @@ class TestTasksUnit(object):
     @patch('admin.services.send_mail')
     @patch('admin.services.clean_up_files')
     @patch('merging.services.merge_images')
+    @patch('analysis.services.distort_image_shepards_fixed')
     @patch('analysis.services.scale_image')
     @patch('camera.services.take_thermal_still')
     @patch('camera.services.take_picam_still')
@@ -126,6 +130,7 @@ class TestTasksUnit(object):
                                                                                           cs_take_picam_still,
                                                                                           cs_take_thermal_still,
                                                                                           ans_scale_image,
+                                                                                          ans_distort_image_shepards_fixed,
                                                                                           ms_merge_image,
                                                                                           ads_clean_up_files,
                                                                                           ads_send_mail):
@@ -135,6 +140,7 @@ class TestTasksUnit(object):
         cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY), call(ANY, group_id, ANY)])
         cs_take_picam_still.assert_has_calls([call(snap_id, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY)])
         ans_scale_image.assert_has_calls([call(ANY, ANY, group_id), call(ANY, ANY, group_id)])
+        ans_distort_image_shepards_fixed.assert_has_calls([call(ANY, ANY, group_id), call(ANY, ANY, group_id)])
         ms_merge_image.assert_has_calls([call(ANY, ANY, ANY, ANY, group_id), call(ANY, ANY, ANY, ANY, group_id)])
         ads_send_mail.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])
         ads_clean_up_files.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])

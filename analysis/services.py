@@ -156,3 +156,33 @@ def scale_image(img_id_in, img_id_out, group_id, **kwargs):
         'created': str(datetime.datetime.now())
     }
     save_picture_document(img_dict_out)
+
+@celery.task
+def distort_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):
+    distort_image_shepards_fixed(img_id_in, img_id_out, group_id, **kwargs)
+
+def distort_image_shepards_fixed(img_id_in, img_id_out, group_id, **kwargs):
+    group_document = get_group_document(group_id)
+    group_id = group_document['_id']
+    img_dict_in = find_picture(str(img_id_in))
+    img_filename_out = build_picture_name(img_id_out)
+    pic_path_in = img_dict_in['uri']
+    pic_path_out = build_picture_path(picture_name=img_filename_out, snap_id=img_dict_in['snap_id'])
+
+    command = "convert {0} -distort Shepards '300,110 350,140  600,310 650,340' {1}".format(pic_path_in, pic_path_out)
+
+    os.system(command)
+
+    img_dict_out = {
+        '_id': str(img_id_out),
+        'type': 'picture',
+        'source': 'analysis',
+        'source_image_id': str(img_id_in),
+        'analysis_type': 'distort',
+        'group_id': group_id,
+        'snap_id': img_dict_in['snap_id'],
+        'filename': img_filename_out,
+        'uri': pic_path_out,
+        'created': str(datetime.datetime.now())
+    }
+    save_picture_document(img_dict_out)
