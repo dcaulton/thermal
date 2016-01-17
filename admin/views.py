@@ -56,8 +56,12 @@ def get_group_gallery(group_id):
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
         args_dict = {'group_id': group_id}
-        pictures_dict = find_pictures(args_dict, gallery_url_not_null=True)
-    except NotFoundError as e:
+        (page, items_per_page) = (0,0)
+        if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
+            page = request.args['page']
+            items_per_page = request.args['items_per_page']
+        pictures_dict = find_pictures(args_dict, gallery_url_not_null=True, page=page, items_per_page=items_per_page)
+    except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
