@@ -1,7 +1,7 @@
 # thermal
-This is an application to let a Raspberry Pi cameras capture thermal and regular visual information.  
+This is an application to let a Raspberry Pi use a pair of cameras to capture and post process thermal and regular visual camera information into new, blended images.  
 
-A range of options are available to transform and merge these images into new pictures.  Most of that logic is within the merging and analysis packages.
+A range of options are available to transform and merge these images into new pictures.
 
 
 #Summary 
@@ -12,7 +12,11 @@ A range of options are available to transform and merge these images into new pi
 - CouchDB is the database.
 - Interactions with the hardware are processed asynchronously by means of Celery.
 - RabbitMQ is used as the message brokering service for Celery.
-- There is also support for taking pictures by means of a button on the project box.
+- A button on the project box can be used to trigger the camera.
+- Pictures can be uploaded to Amazon S3 for integration with a gallery.
+- Galleries are supported by means of the API.
+- Images can be automatically emailed.
+- Colorization and all forms of image blending and merging are configurable, some at runtime.
 
 #Hardware Requirements
 It has been developed against the following system:
@@ -65,6 +69,7 @@ We will start with the following assumptions:
 - sudo apt-get install couchdb rabbitmq-server
 - sudo apt-get build-dep python-imaging
 - sudo apt-get install libjpeg9-dev
+- sudo apt-get install imagemagick
 
 ##install python packages
 - cd ~
@@ -77,10 +82,14 @@ We will start with the following assumptions:
 - git config --global user.email "dcaulton@gmail.com"; git config --global user.name "Dave Caulton"
 - git config --global color.ui true
 - touch ~/.vimrc; echo 'syntax on' > ~/.vimrc
-- add this to ~/.bashrc:  export EDITOR=/usr/bin/vim
-- ln -s /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so ~/thermal/venv/lib/python2.7/site-packages/cv2.arm-linux-gnueabihf.so
+- add this to ~/.bashrc:  
+  - export EDITOR=/usr/bin/vim
+  - export S3_ACCESS_KEY_ID = 'your_amazon_s3_access_key_id'
+  - export S3_SECRET_ACCESS_KEY = 'your_secret_access_key'
+  - export MAIL_USERNAME='your@email_address.com'
+  - export MAIL_PASSWORD='your_email_password'
 
-##at this point the system should be able to service api calls and take pictures
+- ln -s /usr/lib/python2.7/dist-packages/cv2.arm-linux-gnueabihf.so ~/thermal/venv/lib/python2.7/site-packages/cv2.arm-linux-gnueabihf.so
 
 ##enable web admin interfaces for CouchDB and RabbitMQ
 - Enable the CouchDB management panel access from other computers on the local network:
@@ -100,3 +109,6 @@ We will start with the following assumptions:
   - python /home/pi/thermal/run.py  **starts the Flask listener in dev mode
   - sh /home/pi/thermal/thermal/bin/start_celery_worker.sh  **starts the celery listener
   - sudo python /home/pi/thermal/thermal/bin/button_listener.py  **starts the button listener
+
+At this point the system should be able to service api calls and take pictures.  Databases will be created and default group configuration files are created on first start and url access of the Flask application.
+
