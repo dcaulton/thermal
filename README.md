@@ -6,22 +6,22 @@ A range of options are available to transform and merge these images into new pi
 
 #Summary 
 - This respository is for controlling a Raspberry Pi computer running the standard camera that comes with the Pi and a second thermal imaging camera
-- Images are taken with both cameras and combined via ImageMagick
+- Images are taken with both cameras and combined via ImageMagick.  In almost all cases that is done with its python PIL bindings.
 - Python is the base language in preference for anything that can't happen with system packages and command line.
 - This is run as a Flask application and all interaction is done with JSON and through RESTful APIs.
 - CouchDB is the database.
 - Interactions with the hardware are processed asynchronously by means of Celery.
 - RabbitMQ is used as the message brokering service for Celery.
 - A button on the project box can be used to trigger the camera.
-- Pictures can be uploaded to Amazon S3 for integration with a gallery.
 - Galleries are supported by means of the API.
+- Pictures can be uploaded to Amazon S3 for use with a gallery.
 - Images can be automatically emailed.
-- Colorization and all forms of image blending and merging are configurable, some at runtime.
+- Colorization and all forms of image blending and merging are configurable, often at runtime.
 
 #Hardware Requirements
 It has been developed against the following system:
 - Raspberry Pi 2 B computer, 32GB SD card
-- Raspian Jessie 11.21.2015 image is the os on the RPi
+- Raspian Jessie OS (11.21.2015)
 - Raspberry Pi standard camera
 - FLIR Lepton camera with the Pure Engineering breakout board
 - A project box with a momentary button and both cameras front mounted
@@ -30,7 +30,6 @@ It has been developed against the following system:
 We will start with the following assumptions:
 - The hostname for this Raspberry Pi will be strangefruit4.
 - I'll be installing software and running it as the default pi user.
-
 
 #prepare the memory card and perform the initial bootup on the RPi
 - install the 11.21.15 version of Raspian Jessie (for RPi 2 B) on a 32GB micro SD card using Pi Filler on a Mac Mini.
