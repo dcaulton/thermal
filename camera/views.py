@@ -79,6 +79,7 @@ def both_still_test():
 
     return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
 
+#TODO add tests for these three functions and what they default to
 def get_delay_parameter():
     '''
     Extracts the delay parameter from the GET parameters.

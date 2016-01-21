@@ -1,62 +1,91 @@
+import json
 from mock import ANY, call, Mock, patch
 import uuid
 
-from flask import current_app
-import mock
-import pytest 
-
-from admin.services import clean_up_files, get_group_document, send_mail
-from analysis.services import scale_image, distort_image_shepards_fixed
-from merging.services import merge_images
 import camera.views as cv
+
 
 class TestViewsUnit(object):
 
-#def picam_still():
-#    snap_id = uuid.uuid4()
-#    group_id = get_settings_document()['current_group_id']
-#    delay = get_delay_parameter()
-#    repeat = get_repeat_parameter()
-#    ret_dict = take_picam_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat)
-#    return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
-#def thermal_still():
-#    snap_id = uuid.uuid4()
-#    group_id = get_settings_document()['current_group_id']
-#    delay = get_delay_parameter()
-#    repeat = get_repeat_parameter()
-#    scale_image = get_scale_image_parameter()
-#    ret_dict = take_thermal_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat, scale_image=scale_image)
-#    return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
-#def both_still():
-#    snap_id = uuid.uuid4()
-#    group_id = get_settings_document()['current_group_id']
-#    delay = get_delay_parameter()
-#    repeat = get_repeat_parameter()
-#
-#    both_still_dict = take_both_still(
-#        snap_id=snap_id,
-#        group_id=group_id,
-#        delay=delay,
-##        repeat=repeat
-#    )
-#
-#    return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
-#
-#
-#
-#    @patch('admin.services.send_mail')
-#    @patch('admin.services.clean_up_files')
-#    @patch('analysis.services.scale_image')
-#    @patch('camera.services.take_thermal_still')
-#    def test_take_thermal_still_calls_all_chained_tasks(self,
-#                                                        cs_take_thermal_still,
-#                                                        ans_scale_image,
-#                                                        ads_clean_up_files,
-#                                                        ads_send_mail):
-#        snap_id = uuid.uuid4()
-#        group_id = get_group_document('current')['_id']
-#        ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
-#        cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
-#        ans_scale_image.assert_called_once_with(ANY, ANY, group_id)
-#        ads_clean_up_files.assert_called_once_with(snap_id, group_id)
-#        ads_send_mail.assert_called_once_with(snap_id, group_id)
+    @patch('camera.views.take_picam_still')
+    @patch('camera.views.get_repeat_parameter')
+    @patch('camera.views.get_delay_parameter')
+    @patch('camera.views.get_settings_document')
+    def test_picam_still_no_delay_or_repeat_calls_appropriate_methods(self,
+                                                                      cv_get_settings_document,
+                                                                      cv_get_delay_parameter,
+                                                                      cv_get_repeat_parameter,
+                                                                      cv_take_picam_still):
+        group_id = uuid.uuid4()
+        cv_get_settings_document.return_value = {'current_group_id': group_id}
+        cv_get_delay_parameter.return_value = 54
+        cv_get_repeat_parameter.return_value = 32
+        cv_take_picam_still.return_value = {'a': 'b'}
+
+        resp_object = cv.picam_still()
+        response_data_dict = json.loads(resp_object.data)
+    
+        cv_get_settings_document.assert_called_once_with()
+        cv_get_delay_parameter.assert_called_once_with()
+        cv_get_repeat_parameter.assert_called_once_with()
+        cv_take_picam_still.assert_called_once_with(snap_id=ANY, group_id=group_id, delay=54, repeat=32)
+        assert resp_object.status_code == 202
+        assert 'a' in response_data_dict
+        assert len(response_data_dict.keys()) == 1
+
+
+    @patch('camera.views.take_thermal_still')
+    @patch('camera.views.get_scale_image_parameter')
+    @patch('camera.views.get_repeat_parameter')
+    @patch('camera.views.get_delay_parameter')
+    @patch('camera.views.get_settings_document')
+    def test_thermal_still_no_delay_or_repeat_calls_appropriate_methods(self,
+                                                                        cv_get_settings_document,
+                                                                        cv_get_delay_parameter,
+                                                                        cv_get_repeat_parameter,
+                                                                        cv_get_scale_image_parameter,
+                                                                        cv_take_thermal_still):
+        group_id = uuid.uuid4()
+        cv_get_settings_document.return_value = {'current_group_id': group_id}
+        cv_get_delay_parameter.return_value = 28
+        cv_get_repeat_parameter.return_value = 37
+        cv_get_scale_image_parameter.return_value = True
+        cv_take_thermal_still.return_value = {'c': 'd'}
+
+        resp_object = cv.thermal_still()
+        response_data_dict = json.loads(resp_object.data)
+    
+        cv_get_settings_document.assert_called_once_with()
+        cv_get_delay_parameter.assert_called_once_with()
+        cv_get_repeat_parameter.assert_called_once_with()
+        cv_get_scale_image_parameter.assert_called_once_with()
+        cv_take_thermal_still.assert_called_once_with(snap_id=ANY, group_id=group_id, delay=28, repeat=37, scale_image=True)
+        assert resp_object.status_code == 202
+        assert 'c' in response_data_dict
+        assert len(response_data_dict.keys()) == 1
+
+    @patch('camera.views.take_both_still')
+    @patch('camera.views.get_repeat_parameter')
+    @patch('camera.views.get_delay_parameter')
+    @patch('camera.views.get_settings_document')
+    def test_both_still_no_delay_or_repeat_calls_appropriate_methods(self,
+                                                                        cv_get_settings_document,
+                                                                        cv_get_delay_parameter,
+                                                                        cv_get_repeat_parameter,
+                                                                        cv_take_both_still):
+        group_id = uuid.uuid4()
+        cv_get_settings_document.return_value = {'current_group_id': group_id}
+        cv_get_delay_parameter.return_value = 47
+        cv_get_repeat_parameter.return_value = 56
+        cv_take_both_still.return_value = {'e': 'f'}
+
+        resp_object = cv.both_still()
+        response_data_dict = json.loads(resp_object.data)
+    
+        cv_get_settings_document.assert_called_once_with()
+        cv_get_delay_parameter.assert_called_once_with()
+        cv_get_repeat_parameter.assert_called_once_with()
+        cv_take_both_still.assert_called_once_with(snap_id=ANY, group_id=group_id, delay=47, repeat=56)
+        assert resp_object.status_code == 202
+        assert 'e' in response_data_dict
+        assert len(response_data_dict.keys()) == 1
