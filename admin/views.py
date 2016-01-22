@@ -90,7 +90,7 @@ def doc_attribute_can_be_set(key_name):
         return True
     return False
 
-#TODO add testing for this
+#TODO push this 
 def get_paging_info_from_request(request):
     (page, items_per_page) = (0,0)
     if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
