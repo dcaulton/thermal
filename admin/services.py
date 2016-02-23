@@ -23,6 +23,7 @@ def get_settings_document():
         settings_dict = create_default_settings_and_group_documents()
     return settings_dict
 
+
 def save_document(document_in):
     the_id = document_in['_id']
     if the_id in current_app.db:
@@ -30,6 +31,7 @@ def save_document(document_in):
         if existing_document['type'] != document_in['type']:
             raise DocumentConfigurationError('attempting to change the document type for document {0}'.format(str(the_id)))
     current_app.db[the_id] = document_in
+
 
 def get_group_document(group_id):
     if group_id == 'current':
@@ -41,12 +43,14 @@ def get_group_document(group_id):
             return group_dict
     raise NotFoundError('no group document found for id {0}'.format(str(group_id)))
 
+
 def create_default_settings_and_group_documents():
     group_dict = default_group_dict()
     settings_dict = default_settings_dict(group_dict['_id'])
     save_document(settings_dict)
     save_document(group_dict)
     return settings_dict
+
 
 def default_group_dict():
     group_id = uuid.uuid4()
@@ -64,25 +68,25 @@ def default_group_dict():
                   'use_gallery': False,
                   'image_sources_for_gallery': 'merge',
                   'button_active': True,
-                  'type': 'group'
-    }
+                  'type': 'group'}
     return group_dict
+
 
 def default_settings_dict(group_id):
     settings_id = uuid.uuid4()
     settings_dict = {'_id': str(settings_id),
                      'current_group_id': str(group_id),
-                     'type': 'settings'
-    }
+                     'type': 'settings'}
     return settings_dict
 
-#TODO reschedule if we don't have internet (actually that's better for the task to do)
+
+# TODO reschedule if we don't have internet (actually that's better for the task to do)
 def upload_files_to_s3(snap_id, group_id):
     group_document = get_group_document(group_id)
     if group_document['use_gallery']:
         image_sources_for_gallery = group_document['image_sources_for_gallery'].split(',')
         pictures = find_pictures({'snap_id': str(snap_id)})
-        #TODO the following assumes s3 and internet are working fine, make it more robust, with py.test tests too
+        # TODO the following assumes s3 and internet are working fine, make it more robust, with py.test tests too
         conn = boto.connect_s3(current_app.config['S3_ACCESS_KEY_ID'], current_app.config['S3_SECRET_ACCESS_KEY'])
         bucket = conn.get_bucket(current_app.config['S3_BUCKET_NAME'])
         for pic_id in pictures.keys():
@@ -95,7 +99,8 @@ def upload_files_to_s3(snap_id, group_id):
                 pictures[pic_id]['gallery_url'] = pic_gallery_url
                 update_picture_document(pictures[pic_id])
 
-#TODO add tests related to image_sources_to_delete
+
+# TODO add tests related to image_sources_to_delete
 def clean_up_files(snap_id, group_id):
     group_document = get_group_document(group_id)
     if 'image_sources_to_delete' in group_document:
@@ -113,13 +118,13 @@ def clean_up_files(snap_id, group_id):
     os.rmdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
 
 
-#TODO add unit tests
+# TODO add unit tests
 def send_mail(snap_id, group_id):
     group_document = get_group_document(group_id)
-    if ('email_recipients' in group_document and 
-        'send_email_contents' in group_document and
-        group_document['email_recipients'] and
-        group_document['send_email_contents']):
+    if ('email_recipients' in group_document and
+            'send_email_contents' in group_document and
+            group_document['email_recipients'] and
+            group_document['send_email_contents']):
         pics_have_been_attached = False
 
         subject = "pictures from snap {0}".format(snap_id)

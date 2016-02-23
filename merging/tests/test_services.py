@@ -3,16 +3,18 @@ import uuid
 
 from flask import current_app
 from PIL import Image, ImageChops
-import pytest 
+import pytest
 
 from admin.services import get_group_document
 import merging.services as ms
 from picture.services import find_picture, save_picture_document
 from thermal.appmodule import celery
 
+
 class TestServicesUnit(object):
- 
+
     def test_merge_images_with_primary_image(self):
+
         class MockImage(object):
             pass
 

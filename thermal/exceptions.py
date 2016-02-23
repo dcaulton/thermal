@@ -5,12 +5,14 @@ class ThermalBaseError(Exception):
     """
     status_code = 400
 
+
 class NotFoundError(ThermalBaseError):
 
     """
     The user asked for something that doesn't exist.
     """
     status_code = 404
+
 
 class DocumentConfigurationError(ThermalBaseError):
 

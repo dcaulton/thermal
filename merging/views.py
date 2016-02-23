@@ -6,14 +6,15 @@ from merging.services import merge_images_task
 
 merging = Blueprint('merging', __name__)
 
+
 @merging.route('/merge_images')
 def call_merge_images():
     (img1_id, img2_id, result_id) = (None, None, None)
-    if request.args.has_key('img1_id'):
+    if 'img1_id' in request.args:
         img1_id = request.args.get('img1_id')
-    if request.args.has_key('img2_id'):
+    if 'img2_id' in request.args:
         img2_id = request.args.get('img2_id')
-    if request.args.has_key('result_id'):
+    if 'result_id' in request.args:
         result_id = request.args.get('result_id')
     if img1_id and img2_id and result_id:
         merge_images_task.delay(

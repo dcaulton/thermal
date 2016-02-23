@@ -3,7 +3,7 @@ import uuid
 
 from flask import current_app
 import mock
-import pytest 
+import pytest
 
 from camera.cameras import Lepton, Picam
 import camera.services as cs
@@ -15,7 +15,7 @@ class TestServicesUnit(object):
     def test_thermal_still_saves_appropriate_picture_document(self, cs_save_picture):
 
         Lepton.take_still = Mock()
-        #here's how to set properties on the function we mocked out
+        # here's how to set properties on the function we mocked out
         #  cs_save_picture.return_value = 'haha'
         snap_id = uuid.uuid4()
         group_id = uuid.uuid4()
@@ -26,17 +26,14 @@ class TestServicesUnit(object):
         picture_name = cs.build_picture_name(pic_id)
         picture_path = cs.build_picture_path(picture_name=picture_name, snap_id=snap_id)
 
-        cs.save_picture.assert_called_once_with(
-            {'_id': str(pic_id),
-             'type': 'picture',
-             'source': 'thermal',
-             'group_id': str(group_id),
-             'snap_id': str(snap_id),
-             'filename': picture_name,
-             'uri': ANY,
-             'created': ANY
-            }
-        )
+        cs.save_picture.assert_called_once_with({'_id': str(pic_id),
+                                                 'type': 'picture',
+                                                 'source': 'thermal',
+                                                 'group_id': str(group_id),
+                                                 'snap_id': str(snap_id),
+                                                 'filename': picture_name,
+                                                 'uri': ANY,
+                                                 'created': ANY})
 
     def test_thermal_still_calls_lepton_camera_class(self):
         Lepton.take_still = Mock()
@@ -50,10 +47,10 @@ class TestServicesUnit(object):
         picture_name = cs.build_picture_name(pic_id)
         picture_path = cs.build_picture_path(picture_name=picture_name, snap_id=snap_id)
         Lepton.take_still.assert_called_once_with(pic_path=picture_path)
-        #the above works because we re-declared take_still as a mock for this method
-        #  coming into this method it's already a mock because it was declared a mock earlier
-        #  in the class.  In this case it's okay, we're never gonna want to call the hardware for 
-        #  unit tests but the same behavior isn't wanted from other methods, that's where patch comes in
+        # the above works because we re-declared take_still as a mock for this method
+        #   coming into this method it's already a mock because it was declared a mock earlier
+        #   in the class.  In this case it's okay, we're never gonna want to call the hardware for
+        #   unit tests but the same behavior isn't wanted from other methods, that's where patch comes in
 
     @patch('camera.services.save_picture')
     def test_picam_still_saves_appropriate_normal_exposure_picture_document(self, cs_save_picture):
@@ -82,9 +79,7 @@ class TestServicesUnit(object):
              'snap_id': str(snap_id),
              'filename': picture_name,
              'uri': ANY,
-             'created': ANY
-            }
-        )
+             'created': ANY})
 
     @patch('camera.services.save_picture')
     def test_picam_still_saves_appropriate_long_exposure_picture_document(self, cs_save_picture):
@@ -105,8 +100,7 @@ class TestServicesUnit(object):
         long_exposure_picture_name = cs.build_picture_name(long_exposure_pic_id)
         long_exposure_picture_path = cs.build_picture_path(picture_name=long_exposure_picture_name, snap_id=snap_id)
 
-        call_1 = call(
-                      {'_id': str(normal_exposure_pic_id),
+        call_1 = call({'_id': str(normal_exposure_pic_id),
                        'type': 'picture',
                        'source': 'picam',
                        'exposure_type': 'standard',
@@ -114,11 +108,8 @@ class TestServicesUnit(object):
                        'snap_id': ANY,
                        'filename': ANY,
                        'uri': ANY,
-                       'created': ANY
-                      }
-                     )
-        call_2 = call(
-                      {'_id': str(long_exposure_pic_id),
+                       'created': ANY})
+        call_2 = call({'_id': str(long_exposure_pic_id),
                        'type': 'picture',
                        'source': 'picam',
                        'exposure_type': 'long',
@@ -126,9 +117,7 @@ class TestServicesUnit(object):
                        'snap_id': str(snap_id),
                        'filename': long_exposure_picture_name,
                        'uri': ANY,
-                       'created': ANY
-                      }
-                     )
+                       'created': ANY})
 
         calls = [call_1, call_2]
         cs_save_picture.assert_has_calls(calls)

@@ -8,6 +8,7 @@ from picture.services import find_picture
 
 analysis = Blueprint('analysis', __name__)
 
+
 @analysis.route('/scale_image/<image_id>')
 def call_scale_image():
     result_id = uuid.uuid4()
@@ -17,6 +18,7 @@ def call_scale_image():
         'scale_image_output_image_id': str(result_id)
     }
     return Response(json.dumps(resp_json), status=202, mimetype='application/json')
+
 
 @analysis.route('/edge_detect/<image_id>')
 def call_edge_detect(image_id):
@@ -32,4 +34,3 @@ def call_edge_detect(image_id):
         'tight_id': str(tight_id)
     }
     return Response(json.dumps(resp_json), status=202, mimetype='application/json')
-

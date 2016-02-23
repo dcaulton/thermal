@@ -3,13 +3,14 @@ import uuid
 
 from flask import current_app
 import mock
-import pytest 
+import pytest
 
 from admin.services import clean_up_files, get_group_document, send_mail
 from analysis.services import scale_image, distort_image_shepards_fixed
 from merging.services import merge_images
 import camera.tasks as ct
 from camera.services import take_picam_still, take_thermal_still
+
 
 class TestTasksUnit(object):
 
@@ -91,7 +92,6 @@ class TestTasksUnit(object):
         ans_scale_image.assert_not_called()
         ads_send_mail.assert_called_once_with(snap_id, group_id)
         ads_clean_up_files.assert_called_once_with(snap_id, group_id)
-
 
     @patch('admin.services.send_mail')
     @patch('admin.services.clean_up_files')

@@ -10,6 +10,7 @@ from config import config, Config
 celery = Celery('thermal', broker=Config.CELERY_BROKER_URL)
 mail = Mail()
 
+
 def create_app(config_name='development'):
     app = Flask('thermal')
     app.config.from_object(config[config_name])
@@ -28,12 +29,14 @@ def create_app(config_name='development'):
 #
     return app
 
+
 def register_mail(app):
     mail = Mail(app)
 
+
 def register_db(app):
     couch = couchdb.Server()
-    if hasattr(app,'config'):
+    if hasattr(app, 'config'):
         if 'COUCHDB_DATABASE' in app.config:
             try:
                 app.db = couch[app.config['COUCHDB_DATABASE']]
@@ -44,6 +47,7 @@ def register_db(app):
             raise Exception('No value for COUCHDB_DATABASE in the app config')
     else:
         raise Exception('Trying to register db with an app has no config')
+
 
 def register_blueprints(app):
     from admin.views import admin
@@ -59,12 +63,15 @@ def register_blueprints(app):
     app.register_blueprint(analysis, url_prefix='/analysis')
     app.register_blueprint(frontend, url_prefix='/')
 
+
 def make_celery(app):
     celery = Celery('thermal', broker=app.config['CELERY_BROKER_URL'])
     celery.conf.update(app.config)
     TaskBase = celery.Task
+
     class ContextTask(TaskBase):
         abstract = True
+
         def __call__(self, *args, **kwargs):
             with app.app_context():
                 return TaskBase.__call__(self, *args, **kwargs)

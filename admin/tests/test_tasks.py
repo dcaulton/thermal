@@ -3,7 +3,7 @@ import uuid
 
 from flask import current_app
 import mock
-import pytest 
+import pytest
 
 import admin.tasks as at
 from admin.services import clean_up_files, send_mail, upload_files_to_s3

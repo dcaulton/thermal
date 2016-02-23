@@ -8,6 +8,7 @@ from thermal.exceptions import NotFoundError
 
 picture = Blueprint('picture', __name__)
 
+
 @picture.route('/')
 def list_pictures():
     search_dict = {}
@@ -15,6 +16,7 @@ def list_pictures():
         search_dict[key] = request.args[key]
     pictures = find_pictures(search_dict)
     return Response(json.dumps(pictures), status=200, mimetype='application/json')
+
 
 @picture.route('/<picture_id>')
 def get_picture(picture_id):

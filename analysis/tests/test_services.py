@@ -3,15 +3,16 @@ import uuid
 
 from flask import current_app
 from PIL import Image, ImageStat, ImageOps
-import pytest 
+import pytest
 
 from admin.services import get_group_document
 import analysis.services as ans
 from picture.services import build_picture_path, find_picture, save_picture_document
 from thermal.appmodule import celery
 
+
 class TestServicesUnit(object):
- 
+
     def test_scale_image(self):
         class MockImage(object):
             pass
@@ -23,15 +24,10 @@ class TestServicesUnit(object):
         ans.find_picture = Mock(return_value={'filename': 'whatever',
                                               'group_id': str(group_id),
                                               'snap_id': str(snap_id),
-                                              'uri': the_picture_path
-                                             }
-                           )
-        ans.get_group_document = Mock(return_value={
-                                  '_id': str(group_id),
-                                  'colorize_range_low': 1.1,
-                                  'colorize_range_high': 2.2
-                                  }
-                                 )
+                                              'uri': the_picture_path})
+        ans.get_group_document = Mock(return_value={'_id': str(group_id),
+                                                    'colorize_range_low': 1.1,
+                                                    'colorize_range_high': 2.2})
         the_mock_image = MockImage()
         Image.open = Mock(return_value=the_mock_image)
         MockImage.resize = Mock(return_value=the_mock_image)
@@ -61,15 +57,15 @@ class TestServicesUnit(object):
         ans.get_group_document.assert_called_once_with('whatever')
         ans.find_picture.assert_called_once_with(str(img_id_in))
         Image.open.assert_called_once_with(ans.build_picture_path(picture_name='whatever', snap_id=snap_id))
-        MockImage.resize.assert_called_once_with((image_width, image_height), Image.BICUBIC) 
+        MockImage.resize.assert_called_once_with((image_width, image_height), Image.BICUBIC)
         ImageOps.colorize.assert_called_once_with(the_mock_image, 1.1, 2.2)
         MockImage.save.assert_called_once_with(pic_path_out)
         ans.save_picture_document.assert_called_once_with(test_img_dict_out)
 
-#test scale image with no colorize
-#test scale image with bilinear
-#test scale image with antialias
-#test_scale_image_with_invalid_image_id
-#test edge_detect with invalid image_id
-#test edge_detect with a valid alternate_image_id
-#test edge_detect with just a auto_id, no wide or tight
+# test scale image with no colorize
+# test scale image with bilinear
+# test scale image with antialias
+# test_scale_image_with_invalid_image_id
+# test edge_detect with invalid image_id
+# test edge_detect with a valid alternate_image_id
+# test edge_detect with just a auto_id, no wide or tight

@@ -7,18 +7,21 @@ from thermal.exceptions import NotFoundError
 
 admin = Blueprint('admin', __name__)
 
-#TODO add a test on the service side to check the integrity of settings.current_group_id on settings save.
-#  we don't need to worry about deletes, just updates
+
+# TODO add a test on the service side to check the integrity of settings.current_group_id on settings save.
+#   we don't need to worry about deletes, just updates
 @admin.route('/')
 def index():
     return 'Admin'
 
-#TODO add tests for these views
+
+# TODO add tests for these views
 @admin.route('/settings', methods=['GET'])
 def get_settings():
     settings = get_settings_document()
     return Response(json.dumps(settings), status=200, mimetype='application/json')
-    
+
+
 @admin.route('/settings', methods=['PUT'])
 def update_settings():
     settings = get_settings_document()
@@ -29,6 +32,7 @@ def update_settings():
         save_document(settings)
         return Response(json.dumps(settings), status=200, mimetype='application/json')
 
+
 @admin.route('/groups/<group_id>', methods=['GET'])
 def get_group(group_id):
     try:
@@ -36,6 +40,7 @@ def get_group(group_id):
     except NotFoundError as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(group_dict), status=200, mimetype='application/json')
+
 
 @admin.route('/groups/<group_id>/pictures', methods=['GET'])
 def get_group_pictures(group_id):
@@ -49,7 +54,8 @@ def get_group_pictures(group_id):
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
-#TODO this will need an integration test.
+
+# TODO this will need an integration test.
 @admin.route('/groups/<group_id>/gallery', methods=['GET'])
 def get_group_gallery(group_id):
     try:
@@ -62,6 +68,7 @@ def get_group_gallery(group_id):
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
+
 @admin.route('/groups/<group_id>', methods=['PUT'])
 def update_group(group_id):
     group_dict = get_group_document(group_id)
@@ -71,6 +78,7 @@ def update_group(group_id):
                 group_dict[k] = request.json[k]
         save_document(group_dict)
         return Response(json.dumps(group_dict), status=200, mimetype='application/json')
+
 
 @admin.route('/groups', methods=['POST'])
 def save_group():
@@ -85,14 +93,16 @@ def save_group():
         save_document(settings)
         return Response(json.dumps(group_dict), status=200, mimetype='application/json')
 
+
 def doc_attribute_can_be_set(key_name):
     if key_name not in ['_id', '_rev']:
         return True
     return False
 
-#TODO we need a more systematic way of dealing with expected and unexpected get/post parameters
+
+# TODO we need a more systematic way of dealing with expected and unexpected get/post parameters
 def get_paging_info_from_request(request):
-    (page, items_per_page) = (0,0)
+    (page, items_per_page) = (0, 0)
     if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
         page = request.args['page']
         items_per_page = request.args['items_per_page']

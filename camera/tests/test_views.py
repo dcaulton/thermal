@@ -24,7 +24,7 @@ class TestViewsUnit(object):
 
         resp_object = cv.picam_still()
         response_data_dict = json.loads(resp_object.data)
-    
+
         cv_get_settings_document.assert_called_once_with()
         cv_get_delay_parameter.assert_called_once_with()
         cv_get_repeat_parameter.assert_called_once_with()
@@ -32,7 +32,6 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 202
         assert 'a' in response_data_dict
         assert len(response_data_dict.keys()) == 1
-
 
     @patch('camera.views.take_thermal_still')
     @patch('camera.views.get_scale_image_parameter')
@@ -54,7 +53,7 @@ class TestViewsUnit(object):
 
         resp_object = cv.thermal_still()
         response_data_dict = json.loads(resp_object.data)
-    
+
         cv_get_settings_document.assert_called_once_with()
         cv_get_delay_parameter.assert_called_once_with()
         cv_get_repeat_parameter.assert_called_once_with()
@@ -69,10 +68,10 @@ class TestViewsUnit(object):
     @patch('camera.views.get_delay_parameter')
     @patch('camera.views.get_settings_document')
     def test_both_still_no_delay_or_repeat_calls_appropriate_methods(self,
-                                                                        cv_get_settings_document,
-                                                                        cv_get_delay_parameter,
-                                                                        cv_get_repeat_parameter,
-                                                                        cv_take_both_still):
+                                                                     cv_get_settings_document,
+                                                                     cv_get_delay_parameter,
+                                                                     cv_get_repeat_parameter,
+                                                                     cv_take_both_still):
         group_id = uuid.uuid4()
         cv_get_settings_document.return_value = {'current_group_id': group_id}
         cv_get_delay_parameter.return_value = 47
@@ -81,7 +80,7 @@ class TestViewsUnit(object):
 
         resp_object = cv.both_still()
         response_data_dict = json.loads(resp_object.data)
-    
+
         cv_get_settings_document.assert_called_once_with()
         cv_get_delay_parameter.assert_called_once_with()
         cv_get_repeat_parameter.assert_called_once_with()

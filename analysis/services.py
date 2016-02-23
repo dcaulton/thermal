@@ -11,6 +11,7 @@ from admin.services import get_group_document
 from picture.services import build_picture_path, build_picture_name, find_picture, picture_exists, save_picture_document
 from thermal.appmodule import celery
 
+
 def check_if_image_is_too_dark(filename, brightness_threshold):
     image = Image.open(filename).convert('L')
     stat = ImageStat.Stat(image)
@@ -19,13 +20,16 @@ def check_if_image_is_too_dark(filename, brightness_threshold):
         return True
     return False
 
+
 @celery.task
 def edge_detect_chained(_, img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
     edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id, tight_id)
 
+
 @celery.task
 def edge_detect_task(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
     edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id, tight_id)
+
 
 def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
     if picture_exists(alternate_img_id_in):
@@ -60,9 +64,10 @@ def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=
         tight_path_out = build_picture_path(picture_name=tight_filename, snap_id=pic_dict_in['snap_id'])
         cv2.imwrite(tight_path_out, tight)
         tight_dict_out = make_edge_picture_dict(pic_id=tight_id, pic_filename=tight_filename, pic_path=tight_path_out,
-                                               snap_id=pic_dict_in['snap_id'], group_id=pic_dict_in['group_id'],
-                                               source_pic_id=img_id_in, edge_detect_type='tight')
+                                                snap_id=pic_dict_in['snap_id'], group_id=pic_dict_in['group_id'],
+                                                source_pic_id=img_id_in, edge_detect_type='tight')
         save_picture_document(tight_dict_out)
+
 
 def auto_canny(image, sigma=0.33):
     # compute the median of the single channel pixel intensities
@@ -73,6 +78,7 @@ def auto_canny(image, sigma=0.33):
     edged = cv2.Canny(image, lower, upper)
     # return the edged image
     return edged
+
 
 def make_edge_picture_dict(pic_id, pic_filename, pic_path, snap_id, group_id, source_pic_id, edge_detect_type):
     img_dict_out = {
@@ -90,22 +96,25 @@ def make_edge_picture_dict(pic_id, pic_filename, pic_path, snap_id, group_id, so
     }
     return img_dict_out
 
+
 @celery.task
 def scale_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):
     scale_image(img_id_in, img_id_out, group_id, **kwargs)
+
 
 @celery.task
 def scale_image_task(img_id_in, img_id_out, group_id, **kwargs):
     scale_image(img_id_in, img_id_out, group_id, **kwargs)
 
+
 def scale_image(img_id_in, img_id_out, group_id, **kwargs):
-# only works on black and white images for now
-# that should only be a problem for images that aren't of type 'L'.  Add this test
+    # only works on black and white images for now
+    # that should only be a problem for images that aren't of type 'L'.  Add this test
     if 'scale_type' in kwargs:
         scale_type = kwargs['colorize_bicubic']
     else:
         scale_type = 'colorize_bicubic'
-    #TODO add a test to show that scale_type makes it in through kwargs
+    # TODO add a test to show that scale_type makes it in through kwargs
     group_document = get_group_document(group_id)
     group_id = group_document['_id']
     img_dict_in = find_picture(str(img_id_in))
@@ -126,13 +135,13 @@ def scale_image(img_id_in, img_id_out, group_id, **kwargs):
     height = current_app.config['STILL_IMAGE_HEIGHT']
     image_scaled = image_in.resize((width, height), scale_method)
 
-    #TODO: below is terribly inefficient.  After I look at PIL internals I should be able to do better
-    #blur image
+    # TODO: below is terribly inefficient.  After I look at PIL internals I should be able to do better
+    # blur image
     if scale_type and 'blur' in scale_type:
-        for i in range(1,10):
+        for i in range(1, 10):
             image_scaled = image_scaled.filter(ImageFilter.BLUR)
 
-    #colorize image
+    # colorize image
     if scale_type and 'colorize' in scale_type:
         (colorize_range_low, colorize_range_high) = ('#000080', '#FFD700')
         if 'colorize_range_low' in group_document and 'colorize_range_high' in group_document:
@@ -157,9 +166,11 @@ def scale_image(img_id_in, img_id_out, group_id, **kwargs):
     }
     save_picture_document(img_dict_out)
 
+
 @celery.task
 def distort_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):
     distort_image_shepards_fixed(img_id_in, img_id_out, group_id, **kwargs)
+
 
 def distort_image_shepards_fixed(img_id_in, img_id_out, group_id, **kwargs):
     group_document = get_group_document(group_id)

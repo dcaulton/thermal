@@ -9,6 +9,7 @@ import camera.services
 from merging.services import merge_images_chained
 from thermal.appmodule import celery
 
+
 @celery.task
 def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
     '''
@@ -16,9 +17,10 @@ def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_
       how celery chains tasks.
     Calls the synchronous take_picam_still method.
     '''
-    # don't call picam_still_task here.  It would cause a new celery task to be created, which would be out of 
+    # don't call picam_still_task here.  It would cause a new celery task to be created, which would be out of
     #  sequence with the original chain of tasks we belong to
     camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
+
 
 def take_picam_still(snap_id, group_id, delay=0, repeat=0):
     '''
@@ -28,7 +30,7 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
     normal_exposure_pic_ids = []
     long_exposure_pic_ids = []
     snap_ids = []
-    for i in [x*delay for x in range(1,repeat+2)]:
+    for i in [x * delay for x in range(1, repeat + 2)]:
         normal_exposure_pic_id = uuid.uuid4()
         long_exposure_pic_id = uuid.uuid4()
         chain(
@@ -58,6 +60,7 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
         'long_exposure_pic_ids': long_exposure_pic_ids
     }
 
+
 @celery.task
 def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
     '''
@@ -65,6 +68,7 @@ def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     Calls the synchronous take_picam_still method.
     '''
     camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
+
 
 def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
     '''
@@ -76,7 +80,7 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
     scaled_pic_ids = []
     snap_ids = []
     if scale_image:
-        for i in [x*delay for x in range(1,repeat+2)]:
+        for i in [x * delay for x in range(1, repeat + 2)]:
             pic_id = uuid.uuid4()
             scaled_pic_id = uuid.uuid4()
             chain(
@@ -104,7 +108,7 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
             scaled_pic_ids.append(str(scaled_pic_id))
             snap_id = uuid.uuid4()
     else:
-        for i in [x*delay for x in range(1,repeat+2)]:
+        for i in [x * delay for x in range(1, repeat + 2)]:
             pic_id = uuid.uuid4()
             chain(
                 thermal_still_task.s(
@@ -131,6 +135,7 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
         'group_id': group_id
     }
 
+
 @celery.task
 def thermal_still_task(snap_id, group_id, pic_id):
     '''
@@ -139,10 +144,11 @@ def thermal_still_task(snap_id, group_id, pic_id):
     '''
     camera.services.take_thermal_still(snap_id, group_id, pic_id)
 
+
 def take_both_still(snap_id, group_id, delay=0, repeat=0):
     '''
     Wrapper method to handle the celery scheduling of the taking of a 'both' still with standard subtasks.
-    A both still and subtasks consists of: 
+    A both still and subtasks consists of:
       - Lepton still
       - Enlarge and colorize Lepton still
       - Distort enlarged+colorized Lepton still to compensate for lens distortion and alignment issues
@@ -159,7 +165,7 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
     merged_pic_ids = []
     snap_ids = []
 
-    for i in [x*delay for x in range(1,repeat+2)]:
+    for i in [x * delay for x in range(1, repeat + 2)]:
         thermal_pic_id = uuid.uuid4()
         normal_exposure_picam_pic_id = uuid.uuid4()
         long_exposure_picam_pic_id = uuid.uuid4()
@@ -218,7 +224,7 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
         'group_id': group_id,
         'normal_exposure_picam_ids': normal_exposure_picam_pic_ids,
         'long_exposure_picam_ids': long_exposure_picam_pic_ids,
-        'thermal_ids':thermal_pic_ids,
+        'thermal_ids': thermal_pic_ids,
         'scaled_for_thermal_merge_ids': scaled_for_thermal_merge_pic_ids,
         'distorted_for_thermal_merge_ids': distorted_for_thermal_merge_pic_ids,
         'merged_ids': merged_pic_ids
@@ -237,7 +243,7 @@ def take_both_still_test(snap_id, group_id, delay=0, repeat=0):
     merged_pic_ids = []
     snap_ids = []
 
-    for i in [x*delay for x in range(1,repeat+2)]:
+    for i in [x * delay for x in range(1, repeat + 2)]:
         thermal_pic_id = uuid.uuid4()
         normal_exposure_picam_pic_id = uuid.uuid4()
         long_exposure_picam_pic_id = uuid.uuid4()
@@ -296,16 +302,17 @@ def take_both_still_test(snap_id, group_id, delay=0, repeat=0):
         'group_id': group_id,
         'normal_exposure_picam_ids': normal_exposure_picam_pic_ids,
         'long_exposure_picam_ids': long_exposure_picam_pic_ids,
-        'thermal_ids':thermal_pic_ids,
+        'thermal_ids': thermal_pic_ids,
         'scaled_for_thermal_merge_ids': scaled_for_thermal_merge_pic_ids,
         'distorted_for_thermal_merge_ids': distorted_for_thermal_merge_pic_ids,
         'merged_ids': merged_pic_ids
     }
 
+
 def take_both_still_edge_detect(snap_id, group_id, delay=0, repeat=0):
     '''
     Wrapper method to handle the celery scheduling of the taking of a 'both' still with standard subtasks.
-    A both still and subtasks consists of: 
+    A both still and subtasks consists of:
       - Lepton still
       - Enlarge and colorize Lepton still
       - Picam still
@@ -329,7 +336,7 @@ def take_both_still_edge_detect(snap_id, group_id, delay=0, repeat=0):
     thermal_tight_large_pic_ids = []
     snap_ids = []
 
-    for i in [x*delay for x in range(1,repeat+2)]:
+    for i in [x * delay for x in range(1, repeat + 2)]:
         thermal_pic_id = uuid.uuid4()
         normal_exposure_picam_pic_id = uuid.uuid4()
         long_exposure_picam_pic_id = uuid.uuid4()
@@ -431,7 +438,7 @@ def take_both_still_edge_detect(snap_id, group_id, delay=0, repeat=0):
         'group_id': group_id,
         'normal_exposure_picam_ids': normal_exposure_picam_pic_ids,
         'long_exposure_picam_ids': long_exposure_picam_pic_ids,
-        'thermal_ids':thermal_pic_ids,
+        'thermal_ids': thermal_pic_ids,
         'scaled_for_thermal_merge_ids': scaled_for_thermal_merge_pic_ids,
         'merged_ids': merged_pic_ids,
         'picam_auto_pic_ids': picam_auto_pic_ids,

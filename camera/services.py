@@ -11,6 +11,7 @@ from analysis.services import check_if_image_is_too_dark
 from cameras import Lepton, Picam
 from picture.services import build_picture_path, build_picture_name, save_picture_document
 
+
 def take_standard_exposure_picam_still(pic_path):
     '''
     Used to interface with the Picam camera to take a standard, or automatically exposed image
@@ -22,12 +23,13 @@ def take_standard_exposure_picam_still(pic_path):
         image_height=current_app.config['STILL_IMAGE_HEIGHT']
     )
 
+
 def take_long_exposure_picam_still(pic_path):
     '''
     Used to take a generic 'long exposure image' from the Picam camera if earlier logic determines that conditions warrant
     It's currently configured to always take what seems to be the longest possible exposure
     '''
-#TODO: tune this to adjust exposure length based on brightness from the standard exposure picam image that was just taken
+# TODO tune this to adjust exposure length based on brightness from the standard exposure picam image that was just taken
     print 'taking long exposure'
     picam = Picam()
     picam.take_long_exposure_still(
@@ -36,16 +38,18 @@ def take_long_exposure_picam_still(pic_path):
         image_height=current_app.config['STILL_IMAGE_HEIGHT']
     )
 
+
 def get_retake_picam_pics_when_dark_setting(group_document):
     '''
     Handles getting a setting from the group document intended to reflect if a user wants to retake picam photos
-      during this session if they are too dim.  It's not a decision to be taken lightly, long exposures can 
+      during this session if they are too dim.  It's not a decision to be taken lightly, long exposures can
       take around 50 seconds and definitely affect ones workflow.
     Has a hardcoded default value of False
     '''
     if 'retake_picam_pics_when_dark' in group_document.keys():
         return group_document['retake_picam_pics_when_dark']
     return False
+
 
 def get_brightness_threshold(group_document):
     '''
@@ -60,6 +64,7 @@ def get_brightness_threshold(group_document):
     except ValueError as e:
         pass
     return 5.0
+
 
 def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
     '''
@@ -99,6 +104,7 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
         take_long_exposure_picam_still(pic_path)
         save_picture(pic_dict2)
 
+
 def take_thermal_still(snap_id, group_id, pic_id):
     '''
     Top level method in the camera service for taking a still image via the Lepton camera.
@@ -120,6 +126,7 @@ def take_thermal_still(snap_id, group_id, pic_id):
         'created': str(datetime.datetime.now())
     }
     save_picture(pic_dict)
+
 
 # this should go away soon, it's a shim for when I didn't get something with mock.
 def save_picture(pic_dict):

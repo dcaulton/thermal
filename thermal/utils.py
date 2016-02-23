@@ -2,6 +2,7 @@ from flask import current_app, request
 
 from thermal.exceptions import DocumentConfigurationError
 
+
 def get_documents_from_criteria(args_dict, **kwargs):
     '''
     Takes key value pairs in an args dict and does a query against the database, testing for equality on all pairs.
@@ -27,6 +28,7 @@ def get_documents_from_criteria(args_dict, **kwargs):
             documents_dict[row['value']['_id']] = row['value']
     return documents_dict
 
+
 def get_paging_info(**kwargs):
     paging_requested = False
     start_index = 0
@@ -36,7 +38,7 @@ def get_paging_info(**kwargs):
             items_per_page = int(kwargs['items_per_page'])
         except ValueError as e:
             raise DocumentConfigurationError('invalid number specified for items_per_page: {0}'.format(kwargs['items_per_page']))
-        try:  
+        try:
             page = int(kwargs['page'])
         except ValueError as e:
             raise DocumentConfigurationError('invalid number specified for page: {0}'.format(kwargs['page']))

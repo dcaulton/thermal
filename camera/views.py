@@ -9,10 +9,11 @@ from camera.tasks import take_picam_still, take_thermal_still, take_both_still, 
 
 camera = Blueprint('camera', __name__)
 
+
 @camera.route('/picam_still')
 def picam_still():
     '''
-    Api endpoint for taking one or a series of Picam stills.  
+    Api endpoint for taking one or a series of Picam stills.
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
@@ -23,10 +24,11 @@ def picam_still():
     ret_dict = take_picam_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat)
     return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
 
+
 @camera.route('/thermal_still')
 def thermal_still():
     '''
-    Api endpoint for taking one or a series of Lepton stills.  
+    Api endpoint for taking one or a series of Lepton stills.
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
@@ -37,6 +39,7 @@ def thermal_still():
     scale_image = get_scale_image_parameter()
     ret_dict = take_thermal_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat, scale_image=scale_image)
     return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
+
 
 @camera.route('/both_still')
 def both_still():
@@ -60,6 +63,7 @@ def both_still():
 
     return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
 
+
 @camera.route('/both_still_test')
 def both_still_test():
     '''
@@ -79,7 +83,8 @@ def both_still_test():
 
     return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
 
-#TODO add tests for these three functions and what they default to
+
+# TODO add tests for these three functions and what they default to
 def get_delay_parameter():
     '''
     Extracts the delay parameter from the GET parameters.
@@ -87,11 +92,12 @@ def get_delay_parameter():
     '''
     delay = 0
     try:
-        if request.args.has_key('delay'):
+        if 'delay' in request.args:
             delay = int(request.args.get('delay'))
     except ValueError as e:
         pass
     return delay
+
 
 def get_repeat_parameter():
     '''
@@ -100,11 +106,12 @@ def get_repeat_parameter():
     '''
     repeat = 0
     try:
-        if request.args.has_key('repeat'):
+        if 'repeat' in request.args:
             repeat = int(request.args.get('repeat'))
     except ValueError as e:
         pass
     return repeat
+
 
 def get_scale_image_parameter():
     '''
@@ -113,7 +120,7 @@ def get_scale_image_parameter():
     Has a hardcoded default of 'yes, scale and colorize it up'
     '''
     scale_image = True
-    if request.args.has_key('scale_image'):
+    if 'scale_image' in request.args:
         scale_image = request.args.get('scale_image')
         # need a cleaner way to parse a boolean from a get parameter.  e.g. 'False' evaluates to True as a non-empty string
     return scale_image

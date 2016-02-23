@@ -18,6 +18,7 @@ class Camera(object):
     def take_still(self, pic_path):
         pass
 
+
 class Picam(Camera):
     '''
     Handles taking pictures with with the Picam (ambient light) camera via the software bindings from the picamera package
@@ -68,9 +69,9 @@ class Lepton(Camera):
         pass
 
     def take_still(self, pic_path):
-        #TODO push the spi specifics into config paramters
+        # TODO push the spi specifics into config paramters
         with pylepton.Lepton("/dev/spidev0.1") as l:
-            a,_ = l.capture()
+            a, _ = l.capture()
             cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
             np.right_shift(a, 8, a)
             cv2.imwrite(pic_path, np.uint8(a))

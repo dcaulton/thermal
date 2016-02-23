@@ -7,17 +7,17 @@
 import os
 import sys
 
-#hack until I figure out why the virtualenv-modified sys.path isn't working
+import RPi.GPIO as GPIO  # noqa
 sys.path.append('/home/pi/thermal/venv/local/lib/python2.7/site-packages')
+import couchdb  # noqa TODO figure out why the virtualenv-modified sys.path isn't working
 
-import RPi.GPIO as GPIO
-import couchdb
 
-capture_type='both_still'
+capture_type = 'both_still'
 button_active = False
 
+
 def get_settings_document():
-    global capture_type  #not elegant, clean up soon
+    global capture_type  # TODO not elegant, clean up soon
     global button_active
 
     couch = couchdb.Server()
@@ -44,11 +44,12 @@ def get_settings_document():
     capture_type = capture_type or 'both_still'
     button_active = button_active or True
 
+
 def initialize_gpio():
     GPIO.setmode(GPIO.BCM)
     # GPIO 18 set up as input. It is pulled up to stop false signals
     GPIO.setup(18, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    # now the program will do nothing until the signal on port 18 
+    # now the program will do nothing until the signal on port 18
     # starts to fall towards zero. This is why we used the pullup
     # to keep the signal high and prevent a false interrupt
 

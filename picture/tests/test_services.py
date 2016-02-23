@@ -3,7 +3,7 @@ from mock import ANY, call, Mock, patch
 import uuid
 
 from flask import current_app
-import pytest 
+import pytest
 
 import picture.services as ps
 import conftest
@@ -121,8 +121,7 @@ class TestPictureIntegration(object):
         expected_dict = {str(id_1): {'_id': str(id_1),
                                      '_rev': ANY,
                                      'snap_id': str(snap_id_1),
-                                     'type': 'picture'}
-                        }
+                                     'type': 'picture'}}
         assert pictures_dict == expected_dict
 
     def test_build_picture_name_builds_picture_name_with_jpg(self):
@@ -153,9 +152,9 @@ class TestPictureIntegration(object):
         }
         ps.save_picture_document(doc_1)
 
-        assert True == ps.picture_exists(pic_id)
+        assert ps.picture_exists(pic_id)
 
     def test_picture_exists_returns_false_when_picture_does_not_exist(self):
         pic_id = uuid.uuid4()
 
-        assert False == ps.picture_exists(pic_id)
+        assert not ps.picture_exists(pic_id)

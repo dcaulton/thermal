@@ -4,7 +4,7 @@ import uuid
 
 import boto
 from flask import current_app
-import pytest 
+import pytest
 
 import admin.services
 import conftest
@@ -12,8 +12,9 @@ from picture.services import (build_picture_name, build_picture_path, find_pictu
                               update_picture_document)
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
+
 class TestSettingsUnit(object):
-#TODO add test case for upload_to_s3 if we don't have use_gallery in the group doc
+    # TODO add test case for upload_to_s3 if we don't have use_gallery in the group doc
 
     @patch('admin.services.update_picture_document')
     @patch('boto.connect_s3')
@@ -63,7 +64,7 @@ class TestSettingsUnit(object):
         snap_id = uuid.uuid4()
         group_id = uuid.uuid4()
         admin.services.upload_files_to_s3(snap_id, group_id)
-        
+
         as_get_group_document.assert_called_once_with(group_id)
         as_find_pictures.assert_called_once_with({'snap_id': str(snap_id)})
         connect_s3_call = call(current_app.config['S3_ACCESS_KEY_ID'], current_app.config['S3_SECRET_ACCESS_KEY'])
@@ -161,23 +162,23 @@ class TestSettingsIntegration(object):
 
     def build_three_pictures(self, snap_id):
         pic_ids = []
-        for i in range(1,3):
+        for i in range(1, 3):
             pic_id = uuid.uuid4()
             filename = build_picture_name(pic_id)
             picture_path = build_picture_path(picture_name=filename, snap_id=snap_id)
             the_doc = {
-                '_id': str(pic_id), 
+                '_id': str(pic_id),
                 'snap_id': str(snap_id),
                 'uri': picture_path,
-                'filename': filename, 
+                'filename': filename,
                 'source': 'whatever',
                 'type': 'picture'
             }
             save_picture_document(the_doc)
             pic_ids.append(pic_id)
-            #touch the picture file in the temp directory
+            # touch the picture file in the temp directory
             with open(picture_path, 'a'):
-                 os.utime(picture_path, None)
+                os.utime(picture_path, None)
         return pic_ids
 
     def test_clean_up_files_cleans_pictures_from_the_snap(self):
