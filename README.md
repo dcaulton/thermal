@@ -81,10 +81,13 @@ We will start with the following assumptions:
 - git config --global user.email "dcaulton@gmail.com"; git config --global user.name "Dave Caulton"
 - git config --global color.ui true
 - touch ~/.vimrc; echo 'syntax on' > ~/.vimrc
-- add this to ~/.bashrc:  
+- touch ~/.vimrc; echo 'syntax on' >> ~/.vimrc; echo 'set shiftwidth=4' >> ~/.vimrc; echo 'set expandtab' >> ~/.vimrc;
+- add this to ~/.bashrc:
   - export EDITOR=/usr/bin/vim
-  - export S3_ACCESS_KEY_ID = 'your_amazon_s3_access_key_id'
-  - export S3_SECRET_ACCESS_KEY = 'your_secret_access_key'
+  - alias thermal='cd ~/thermal; source venv/bin/activate;'
+  - alias pep8thermal='cd ~/thermal; pep8 --ignore=E501 admin analysis camera merging picture thermal'
+  - export S3_ACCESS_KEY_ID='your_amazon_s3_access_key_id'
+  - export S3_SECRET_ACCESS_KEY='your_secret_access_key'
   - export MAIL_USERNAME='your@email_address.com'
   - export MAIL_PASSWORD='your_email_password'
 
