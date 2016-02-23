@@ -76,13 +76,16 @@ We will start with the following assumptions:
 - cd ~/thermal
 - virtualenv venv
 - source venv/bin/activate
+- pip install cv2
 - pip install numpy  ** I know, shouldn't be needed but it runs long with a lot of c compiles.  
 - pip install -r requirements/common.txt
 - git config --global user.email "dcaulton@gmail.com"; git config --global user.name "Dave Caulton"
 - git config --global color.ui true
-- touch ~/.vimrc; echo 'syntax on' > ~/.vimrc
+- touch ~/.vimrc; echo 'syntax on' >> ~/.vimrc; echo 'set shiftwidth=4' >> ~/.vimrc; echo 'set expandtab' >> ~/.vimrc;
 - add this to ~/.bashrc:  
   - export EDITOR=/usr/bin/vim
+  - alias thermal='cd ~/thermal; source venv/bin/activate;'
+  - alias pep8thermal='cd ~/thermal; pep8 --ignore=E501 admin analysis camera merging picture thermal'
   - export S3_ACCESS_KEY_ID = 'your_amazon_s3_access_key_id'
   - export S3_SECRET_ACCESS_KEY = 'your_secret_access_key'
   - export MAIL_USERNAME='your@email_address.com'

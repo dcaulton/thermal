@@ -4,7 +4,7 @@ import pytest
 from thermal.appmodule import create_app, register_db, celery, make_celery
 
 def drop_and_rebuild_test_database():
-    print 'resetting test database'
+    print('resetting test database')
     from config import TestingConfig
     test_database_name = TestingConfig.COUCHDB_DATABASE
     couch = couchdb.Server()
@@ -27,7 +27,7 @@ def app(request):
     ctx.push()
 
     def teardown():
-        print 'tearing down app'
+        print('tearing down app')
         ctx.pop()
 
     request.addfinalizer(teardown)

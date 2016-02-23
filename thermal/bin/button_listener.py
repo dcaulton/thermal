@@ -60,7 +60,7 @@ try:
         GPIO.wait_for_edge(18, GPIO.FALLING)
         get_settings_document()
         if button_active:
-            print 'taking a picture'
+            print('taking a picture')
             os.system("curl 'http://127.0.0.1:5000/camera/{0}'".format(capture_type))
 except Exception as e:
     GPIO.cleanup()       # clean up GPIO on CTRL+C exit

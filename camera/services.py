@@ -28,7 +28,7 @@ def take_long_exposure_picam_still(pic_path):
     It's currently configured to always take what seems to be the longest possible exposure
     '''
 #TODO: tune this to adjust exposure length based on brightness from the standard exposure picam image that was just taken
-    print 'taking long exposure'
+    print('taking long exposure')
     picam = Picam()
     picam.take_long_exposure_still(
         pic_path=pic_path,
