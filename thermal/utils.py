@@ -50,3 +50,6 @@ def get_paging_info(**kwargs):
             raise DocumentConfigurationError('items_per_page must be a number greater than zero')
         paging_requested = True
     return (paging_requested, start_index, end_index)
+
+def get_url_base():
+    return request.environ['wsgi.url_scheme'] + '://' + request.environ['HTTP_HOST'] + '/'

@@ -6,13 +6,20 @@ from flask import Blueprint, request, Response, current_app
 
 from admin.services import get_settings_document
 from camera.tasks import take_picam_still, take_thermal_still, take_both_still, take_both_still_test
+from thermal.utils import get_url_base
 
 camera = Blueprint('camera', __name__)
 
 
 @camera.route('/')
 def index():
-    return 'camera'
+    url_base = get_url_base()
+    top_level_links = {
+        'picam_still': url_base + 'camera/picam_still',
+        'thermal_still': url_base + 'camera/thermal_still',
+        'both_still': url_base + 'camera/both_still',
+    }
+    return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
 
 
 @camera.route('/picam_still')

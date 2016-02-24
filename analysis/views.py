@@ -16,6 +16,9 @@ def index():
 
 @analysis.route('/scale_image/<image_id>')
 def call_scale_image():
+    # TODO handle the case with no image_id gracefully, do the same in other endpoints here and in merging
+    #  I think that means find_picture should 404 if it doesn't find anything, right now it just throws NotFoundError
+    #  This probably means we should have try/except logic for all our view endpoints where we hit the db at all
     result_id = uuid.uuid4()
     find_picture(image_id)
     scale_image_task.delay(img_id_in=image_id, img_id_out=result_id, group_id='current')
