@@ -5,13 +5,19 @@ from flask import Blueprint, request, Response
 
 from analysis.services import edge_detect_task, scale_image_task
 from picture.services import find_picture
+from thermal.utils import get_url_base
 
 analysis = Blueprint('analysis', __name__)
 
 
 @analysis.route('/')
 def index():
-    return 'analysis'
+    url_base = get_url_base()
+    top_level_links = { 
+        'scale_image': url_base + 'analysis/scale_image',
+        'edge_detect': url_base + 'analysis/edge_detect',
+    }
+    return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
 
 
 @analysis.route('/scale_image/<image_id>')

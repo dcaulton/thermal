@@ -4,17 +4,23 @@ import json
 from admin.services import default_group_dict, get_settings_document, get_group_document, save_document
 from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
+from thermal.utils import get_url_base
 
 admin = Blueprint('admin', __name__)
 
 
-# TODO add a test on the service side to check the integrity of settings.current_group_id on settings save.
-#   we don't need to worry about deletes, just updates
 @admin.route('/')
 def index():
-    return 'Admin'
+    url_base = get_url_base()
+    top_level_links = {
+        'settings': url_base + 'admin/settings',
+        'groups': url_base + 'admin/groups',
+    }
+    return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
 
 
+# TODO add a test on the service side to check the integrity of settings.current_group_id on settings save.
+#   we don't need to worry about deletes, just updates
 # TODO add tests for these views
 @admin.route('/settings', methods=['GET'])
 def get_settings():
@@ -33,6 +39,7 @@ def update_settings():
         return Response(json.dumps(settings), status=200, mimetype='application/json')
 
 
+# TODO add list groups endpoint
 @admin.route('/groups/<group_id>', methods=['GET'])
 def get_group(group_id):
     try:

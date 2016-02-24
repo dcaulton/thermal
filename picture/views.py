@@ -9,6 +9,8 @@ from thermal.exceptions import NotFoundError
 picture = Blueprint('picture', __name__)
 
 
+# TODO add a meta object to the response which indicates paging info
+#  That should be pretty high level, it will be a wrapper around all our 'return Response' calls
 @picture.route('/')
 def list_pictures():
     search_dict = {}

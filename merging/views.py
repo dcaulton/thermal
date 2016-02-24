@@ -3,15 +3,21 @@ import uuid
 
 from flask import Blueprint, request, Response
 from merging.services import merge_images_task
+from thermal.utils import get_url_base
 
 merging = Blueprint('merging', __name__)
 
 
 @merging.route('/')
 def index():
-    return 'merging'
+    url_base = get_url_base()
+    top_level_links = {
+        'merge_images': url_base + 'merging/merge_images',
+    }
+    return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
 
 
+# TODO  return an error indicating required parameters if any are missing
 @merging.route('/merge_images')
 def call_merge_images():
     (img1_id, img2_id, result_id) = (None, None, None)
