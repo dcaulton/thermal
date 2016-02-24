@@ -9,6 +9,11 @@ from picture.services import find_picture
 analysis = Blueprint('analysis', __name__)
 
 
+@analysis.route('/')
+def index():
+    return 'analysis'
+
+
 @analysis.route('/scale_image/<image_id>')
 def call_scale_image():
     result_id = uuid.uuid4()

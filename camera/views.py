@@ -10,6 +10,11 @@ from camera.tasks import take_picam_still, take_thermal_still, take_both_still, 
 camera = Blueprint('camera', __name__)
 
 
+@camera.route('/')
+def index():
+    return 'camera'
+
+
 @camera.route('/picam_still')
 def picam_still():
     '''

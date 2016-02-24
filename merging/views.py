@@ -7,6 +7,11 @@ from merging.services import merge_images_task
 merging = Blueprint('merging', __name__)
 
 
+@merging.route('/')
+def index():
+    return 'merging'
+
+
 @merging.route('/merge_images')
 def call_merge_images():
     (img1_id, img2_id, result_id) = (None, None, None)

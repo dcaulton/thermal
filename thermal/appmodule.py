@@ -52,7 +52,7 @@ def register_db(app):
 def register_blueprints(app):
     from admin.views import admin
     from camera.views import camera
-    from frontend.views import frontend
+    from thermal.views import thermal
     from picture.views import picture
     from merging.views import merging
     from analysis.views import analysis
@@ -61,7 +61,7 @@ def register_blueprints(app):
     app.register_blueprint(picture, url_prefix='/pictures')
     app.register_blueprint(merging, url_prefix='/merging')
     app.register_blueprint(analysis, url_prefix='/analysis')
-    app.register_blueprint(frontend, url_prefix='/')
+    app.register_blueprint(thermal, url_prefix='/')
 
 
 def make_celery(app):
