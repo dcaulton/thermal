@@ -9,6 +9,7 @@ from flask.ext.mail import Message
 from picture.services import find_pictures, build_picture_path, build_picture_name, update_picture_document
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
+from thermal.utils import get_documents_from_criteria
 
 
 def get_settings_document():
@@ -144,3 +145,10 @@ def send_mail(snap_id, group_id):
                     pics_have_been_attached = True
         if pics_have_been_attached:
             mail.send(msg)
+
+
+# TODO add tests
+def find_groups(args_dict, **kwargs):
+    args_dict['type'] = 'group'
+    groups_dict = get_documents_from_criteria(args_dict, **kwargs)
+    return groups_dict

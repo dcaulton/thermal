@@ -1,7 +1,11 @@
 from flask import Blueprint, request, Response
 import json
 
-from admin.services import default_group_dict, get_settings_document, get_group_document, save_document
+from admin.services import (default_group_dict,
+                            find_groups,
+                            get_settings_document,
+                            get_group_document,
+                            save_document)
 from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
 from thermal.utils import get_url_base
@@ -37,6 +41,15 @@ def update_settings():
                 settings[k] = request.json[k]
         save_document(settings)
         return Response(json.dumps(settings), status=200, mimetype='application/json')
+
+# TODO add tests
+@admin.route('/groups')
+def list_pictures():
+    search_dict = {}
+    for key in request.args.keys():
+        search_dict[key] = request.args[key]
+    groups = find_groups(search_dict)
+    return Response(json.dumps(groups), status=200, mimetype='application/json')
 
 
 # TODO add list groups endpoint
