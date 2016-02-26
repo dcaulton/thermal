@@ -3,6 +3,9 @@ from flask import current_app, request
 from thermal.exceptions import DocumentConfigurationError
 
 
+virtual_properties = ['current_group_link', 'picture_links', 'group_expanded_link']
+
+
 def get_documents_from_criteria(args_dict, **kwargs):
     '''
     Takes key value pairs in an args dict and does a query against the database, testing for equality on all pairs.

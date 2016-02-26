@@ -3,13 +3,13 @@ import shutil
 import uuid
 
 import boto
-from flask import current_app
+from flask import current_app, url_for
 from flask.ext.mail import Message
 
 from picture.services import find_pictures, build_picture_path, build_picture_name, update_picture_document
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import get_documents_from_criteria
+from thermal.utils import get_documents_from_criteria, get_url_base, virtual_properties
 
 
 def get_settings_document():
@@ -22,6 +22,9 @@ def get_settings_document():
         settings_dict = view_result.rows[0]['value']
     else:
         settings_dict = create_default_settings_and_group_documents()
+    if 'current_group_id' in settings_dict:  # add virtual entries for links
+        url_base = get_url_base()
+        settings_dict['current_group_link'] = url_base + url_for('admin.get_group', group_id=settings_dict['current_group_id'])
     return settings_dict
 
 
@@ -31,6 +34,8 @@ def save_document(document_in):
         existing_document = current_app.db[the_id]
         if existing_document['type'] != document_in['type']:
             raise DocumentConfigurationError('attempting to change the document type for document {0}'.format(str(the_id)))
+    for vp in virtual_properties:  # remove virtual properties, they are generated on the fly every retrieve
+        del document_in[vp]
     current_app.db[the_id] = document_in
 
 
@@ -38,11 +43,31 @@ def get_group_document(group_id):
     if group_id == 'current':
         settings_dict = get_settings_document()
         group_id = settings_dict['current_group_id']
-    if group_id in current_app.db:
+    if group_id in current_app.db:  # TODO this is fragile, make into one if using item_exists and get_documents_by_criteria
         group_dict = current_app.db[group_id]
         if group_dict['type'] == 'group':
             return group_dict
     raise NotFoundError('no group document found for id {0}'.format(str(group_id)))
+
+
+def get_group_document_with_child_links(group_id):
+    group_dict = get_group_document(group_id)
+    group_dict['picture_links'] = get_picture_links_for_group(group_id)
+    return group_dict
+
+
+def get_picture_links_for_group(group_id):  # TODO add testing
+    # TODO sort these ascending on time
+    url_base = get_url_base()
+    picture_links = []
+    args_dict = {}
+    args_dict['type'] = 'picture'
+    args_dict['group_id'] = group_id
+    pictures_dict = get_documents_from_criteria(args_dict)
+    for picture_id in pictures_dict:
+        picture_link = url_base + url_for('picture.get_picture', picture_id=picture_id)
+        picture_links.append(picture_link)
+    return picture_links
 
 
 def create_default_settings_and_group_documents():

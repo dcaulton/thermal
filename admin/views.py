@@ -5,6 +5,7 @@ from admin.services import (default_group_dict,
                             find_groups,
                             get_settings_document,
                             get_group_document,
+                            get_group_document_with_child_links,
                             save_document)
 from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
@@ -55,8 +56,16 @@ def list_groups():
 
 @admin.route('/groups/<group_id>', methods=['GET'])
 def get_group(group_id):
+    # TODO support four levels of fetch eventually.
+    #  - group dict only
+    #  - links to children
+    #  - nest full child objects, bin photos by 'snap' (a virtual object) with snap time also included
+    #  - nest full child objects and recurse their child objects (WATCH OUT FOR INFINITE LOOPS)
     try:
-        group_dict = get_group_document(group_id)
+        if 'child_links' in request.args:  # TODO add testing and documentation in sphinx
+            group_dict = get_group_document_with_child_links(group_id)
+        else:
+            group_dict = get_group_document(group_id)
     except NotFoundError as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(group_dict), status=200, mimetype='application/json')
