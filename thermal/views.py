@@ -20,5 +20,6 @@ def index():
         'pictures': url_base + 'pictures/',
         'merging': url_base + 'merging/',
         'analysis': url_base + 'analysis/',
+        'docs': url_base + 'docs/build/html',
     }
     return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
