@@ -1,6 +1,6 @@
 import json
 
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, url_for
 
 from thermal.utils import get_url_base
 
@@ -15,11 +15,11 @@ def index():
     #  TODO determine hostname and protocol automatically too
     url_base = get_url_base()
     top_level_links = {
-        'admin': url_base + 'admin/',
-        'camera': url_base + 'camera/',
-        'pictures': url_base + 'pictures/',
-        'merging': url_base + 'merging/',
-        'analysis': url_base + 'analysis/',
-        'docs': url_base + 'docs/build/html',
+        'admin': url_base + url_for('admin.index'),
+        'camera': url_base + url_for('camera.index'),
+        'pictures': url_base + url_for('picture.list_pictures'),
+        'merging': url_base + url_for('merging.index'),
+        'analysis': url_base + url_for('analysis.index'),
+        'docs': url_base + '/docs/build/html',
     }
     return Response(json.dumps(top_level_links), status=200, mimetype='application/json')

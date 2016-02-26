@@ -52,4 +52,11 @@ def get_paging_info(**kwargs):
     return (paging_requested, start_index, end_index)
 
 def get_url_base():
-    return request.environ['wsgi.url_scheme'] + '://' + request.environ['HTTP_HOST'] + '/'
+    return request.environ['wsgi.url_scheme'] + '://' + request.environ['HTTP_HOST']
+
+def item_exists(item_id, item_type):
+    if item_id and item_id in current_app.db:
+        item_dict = current_app.db[item_id]
+        if group_dict['type'] == item_type:
+            return True
+    return False

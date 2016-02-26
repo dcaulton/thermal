@@ -1,4 +1,4 @@
-from flask import Blueprint, request, Response
+from flask import Blueprint, request, Response, url_for
 import json
 
 from admin.services import (default_group_dict,
@@ -17,8 +17,8 @@ admin = Blueprint('admin', __name__)
 def index():
     url_base = get_url_base()
     top_level_links = {
-        'settings': url_base + 'admin/settings',
-        'groups': url_base + 'admin/groups',
+        'settings': url_base + url_for('admin.get_settings'),
+        'groups': url_base + url_for('admin.list_groups'),
     }
     return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
 
@@ -42,9 +42,10 @@ def update_settings():
         save_document(settings)
         return Response(json.dumps(settings), status=200, mimetype='application/json')
 
+
 # TODO add tests
 @admin.route('/groups')
-def list_pictures():
+def list_groups():
     search_dict = {}
     for key in request.args.keys():
         search_dict[key] = request.args[key]
@@ -52,7 +53,6 @@ def list_pictures():
     return Response(json.dumps(groups), status=200, mimetype='application/json')
 
 
-# TODO add list groups endpoint
 @admin.route('/groups/<group_id>', methods=['GET'])
 def get_group(group_id):
     try:

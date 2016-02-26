@@ -2,7 +2,7 @@ import json
 import time
 import uuid
 
-from flask import Blueprint, request, Response, current_app
+from flask import current_app, Blueprint, request, Response, url_for
 
 from admin.services import get_settings_document
 from camera.tasks import take_picam_still, take_thermal_still, take_both_still, take_both_still_test
@@ -15,9 +15,9 @@ camera = Blueprint('camera', __name__)
 def index():
     url_base = get_url_base()
     top_level_links = {
-        'picam_still': url_base + 'camera/picam_still',
-        'thermal_still': url_base + 'camera/thermal_still',
-        'both_still': url_base + 'camera/both_still',
+        'picam_still': url_base + url_for('camera.picam_still'),
+        'thermal_still': url_base + url_for('camera.thermal_still'),
+        'both_still': url_base + url_for('camera.both_still'),
     }
     return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
 
