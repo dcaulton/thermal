@@ -9,6 +9,7 @@ A range of options are available to transform and merge these images into new pi
 - Images are taken with both cameras and combined via ImageMagick.  In almost all cases that is done with its python PIL bindings.
 - Python is the base language in preference for anything that can't happen with system packages and command line.
 - This is run as a Flask application and all interaction is done with JSON and through RESTful APIs.
+- The API will be discoverable as much as possible by HATEOAS conventions.
 - CouchDB is the database.
 - Interactions with the hardware are processed asynchronously by means of Celery.
 - RabbitMQ is used as the message brokering service for Celery.
