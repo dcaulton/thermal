@@ -50,6 +50,35 @@ def get_group_document(group_id):
     raise NotFoundError('no group document found for id {0}'.format(str(group_id)))
 
 
+def get_group_document_with_child_objects(group_id):
+    group_dict = get_group_document(group_id)
+    group_dict['snap_list'] = get_picture_objects_for_group(group_id)
+    return group_dict
+
+
+def get_picture_objects_for_group(group_id):  # TODO add testing
+    url_base = get_url_base()
+    picture_links = []
+    args_dict = {}
+    snaps_dict = {}
+    snaps = []
+    args_dict['type'] = 'picture'
+    args_dict['group_id'] = group_id
+    pictures_dict = get_documents_from_criteria(args_dict)
+    for picture_id in pictures_dict:
+        picture_link = url_base + url_for('picture.get_picture', picture_id=picture_id)
+        snap_id =  pictures_dict[picture_id]['snap_id']
+        if snap_id in snaps_dict:
+            snaps_dict[snap_id]['picture_objects'].append(pictures_dict[picture_id])
+        else:
+            snaps_dict[snap_id] = {'created': pictures_dict[picture_id]['created'],
+                                   'id': snap_id,
+                                   'picture_objects': [pictures_dict[picture_id]]}
+    snaps_array = snaps_dict.values()
+    snaps_array.sort(key=lambda x: x['created'])
+    return snaps_array
+
+
 def get_group_document_with_child_links(group_id):
     group_dict = get_group_document(group_id)
     group_dict['picture_links'] = get_picture_links_for_group(group_id)

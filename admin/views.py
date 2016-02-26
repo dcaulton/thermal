@@ -6,10 +6,11 @@ from admin.services import (default_group_dict,
                             get_settings_document,
                             get_group_document,
                             get_group_document_with_child_links,
+                            get_group_document_with_child_objects,
                             save_document)
 from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
-from thermal.utils import get_url_base
+from thermal.utils import get_url_base, virtual_properties
 
 admin = Blueprint('admin', __name__)
 
@@ -59,11 +60,12 @@ def get_group(group_id):
     # TODO support four levels of fetch eventually.
     #  - group dict only
     #  - links to children
-    #  - nest full child objects, bin photos by 'snap' (a virtual object) with snap time also included
-    #  - nest full child objects and recurse their child objects (WATCH OUT FOR INFINITE LOOPS)
+    #  - nest full child photo objects, bin photos by 'snap' (a virtual object) with snap id and time also included
     try:
         if 'child_links' in request.args:  # TODO add testing and documentation in sphinx
             group_dict = get_group_document_with_child_links(group_id)
+        elif 'child_objects' in request.args:  # TODO add testing and documentation in sphinx
+            group_dict = get_group_document_with_child_objects(group_id)
         else:
             group_dict = get_group_document(group_id)
     except NotFoundError as e:
@@ -124,7 +126,8 @@ def save_group():
 
 
 def doc_attribute_can_be_set(key_name):
-    if key_name not in ['_id', '_rev']:
+    # TODO it feels like there is some overlap with this functionality and what is in admin.services.save_document
+    if key_name not in ['_id', '_rev'] and key_name not in virtual_properties:
         return True
     return False
 

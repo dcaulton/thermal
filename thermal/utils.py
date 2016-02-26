@@ -3,7 +3,7 @@ from flask import current_app, request
 from thermal.exceptions import DocumentConfigurationError
 
 
-virtual_properties = ['current_group_link', 'picture_links', 'group_expanded_link']
+virtual_properties = ['current_group_link', 'picture_links', 'snap_list']
 
 
 def get_documents_from_criteria(args_dict, **kwargs):
@@ -11,6 +11,7 @@ def get_documents_from_criteria(args_dict, **kwargs):
     Takes key value pairs in an args dict and does a query against the database, testing for equality on all pairs.
     Also supports a few special kwargs to handle things like testing for a key not being null, or paging
     '''
+    # TODO have this add virtual properties
     documents_dict = {}
     criteria_list = []
     if 'gallery_url_not_null' in kwargs:
