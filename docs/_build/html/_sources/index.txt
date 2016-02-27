@@ -1,5 +1,5 @@
 .. thermal documentation master file, created by
-   sphinx-quickstart on Mon Feb 22 21:34:33 2016.
+   sphinx-quickstart on Fri Feb 26 21:33:20 2016.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
