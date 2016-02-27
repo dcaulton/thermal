@@ -56,11 +56,11 @@ def register_blueprints(app):
     from picture.views import picture
     from merging.views import merging
     from analysis.views import analysis
-    app.register_blueprint(camera, url_prefix='/camera')
-    app.register_blueprint(admin, url_prefix='/admin')
-    app.register_blueprint(picture, url_prefix='/pictures')
-    app.register_blueprint(merging, url_prefix='/merging')
-    app.register_blueprint(analysis, url_prefix='/analysis')
+    app.register_blueprint(camera, url_prefix='/api/v1/camera')
+    app.register_blueprint(admin, url_prefix='/api/v1/admin')
+    app.register_blueprint(picture, url_prefix='/api/v1/pictures')
+    app.register_blueprint(merging, url_prefix='/api/v1/merging')
+    app.register_blueprint(analysis, url_prefix='/api/v1/analysis')
     app.register_blueprint(thermal, url_prefix='/')
 
 

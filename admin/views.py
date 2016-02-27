@@ -17,6 +17,9 @@ admin = Blueprint('admin', __name__)
 
 @admin.route('/')
 def index():
+    """
+    Some docstring
+    """
     url_base = get_url_base()
     top_level_links = {
         'settings': url_base + url_for('admin.get_settings'),
