@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>config &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for config</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../config.html#config.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+    <span class="n">PICTURE_SAVE_DIRECTORY</span> <span class="o">=</span> <span class="s1">&#39;/home/pi/Pictures&#39;</span>
+    <span class="n">COUCHDB_SERVER</span> <span class="o">=</span> <span class="s1">&#39;http://localhost:5984/&#39;</span>
+    <span class="n">COUCHDB_DATABASE</span> <span class="o">=</span> <span class="s1">&#39;thermal&#39;</span>
+    <span class="n">CELERY_BROKER_URL</span> <span class="o">=</span> <span class="s1">&#39;amqp://localhost:5672&#39;</span>
+    <span class="n">CELERY_RESULT_BACKEND</span> <span class="o">=</span> <span class="s1">&#39;amqp://localhost:5672&#39;</span>
+    <span class="n">STILL_IMAGE_WIDTH</span> <span class="o">=</span> <span class="mi">1600</span>
+    <span class="n">STILL_IMAGE_HEIGHT</span> <span class="o">=</span> <span class="mi">1200</span>
+
+
+    <span class="n">MAIL_SERVER</span> <span class="o">=</span> <span class="s1">&#39;smtp.mail.yahoo.com&#39;</span>
+    <span class="n">MAIL_PORT</span> <span class="o">=</span> <span class="mi">465</span>
+    <span class="n">MAIL_USE_TLS</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">MAIL_USE_SSL</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">MAIL_USERNAME</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MAIL_USERNAME&#39;</span><span class="p">)</span>
+    <span class="n">MAIL_PASSWORD</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MAIL_PASSWORD&#39;</span><span class="p">)</span>
+
+    <span class="n">S3_ACCESS_KEY_ID</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;S3_ACCESS_KEY_ID&#39;</span><span class="p">)</span>
+    <span class="n">S3_SECRET_ACCESS_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;S3_SECRET_ACCESS_KEY&#39;</span><span class="p">)</span>
+    <span class="n">S3_BUCKET_NAME</span> <span class="o">=</span> <span class="s1">&#39;thermalwebapp&#39;</span>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Config.init_app"><a class="viewcode-back" href="../config.html#config.Config.init_app">[docs]</a>    <span class="k">def</span> <span class="nf">init_app</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+<div class="viewcode-block" id="DevelopmentConfig"><a class="viewcode-back" href="../config.html#config.DevelopmentConfig">[docs]</a><span class="k">class</span> <span class="nc">DevelopmentConfig</span><span class="p">(</span><span class="n">Config</span><span class="p">):</span>
+    <span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="TestingConfig"><a class="viewcode-back" href="../config.html#config.TestingConfig">[docs]</a><span class="k">class</span> <span class="nc">TestingConfig</span><span class="p">(</span><span class="n">Config</span><span class="p">):</span>
+    <span class="n">COUCHDB_DATABASE</span> <span class="o">=</span> <span class="s1">&#39;thermal_testing&#39;</span>
+    <span class="n">CELERY_ALWAYS_EAGER</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">PICTURE_SAVE_DIRECTORY</span> <span class="o">=</span> <span class="s1">&#39;/tmp/pictures_test&#39;</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="TestingConfig.init_app"><a class="viewcode-back" href="../config.html#config.TestingConfig.init_app">[docs]</a>    <span class="k">def</span> <span class="nf">init_app</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+        <span class="n">Config</span><span class="o">.</span><span class="n">init_app</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">PICTURE_SAVE_DIRECTORY</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">PICTURE_SAVE_DIRECTORY</span><span class="p">)</span></div></div>
+
+
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;development&#39;</span><span class="p">:</span> <span class="n">DevelopmentConfig</span><span class="p">,</span>
+    <span class="s1">&#39;testing&#39;</span><span class="p">:</span> <span class="n">TestingConfig</span><span class="p">,</span>
+    <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="n">DevelopmentConfig</span>
+<span class="p">}</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

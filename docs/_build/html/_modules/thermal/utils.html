@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>thermal.utils &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for thermal.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">current_app</span><span class="p">,</span> <span class="n">request</span>
+
+<span class="kn">from</span> <span class="nn">thermal.exceptions</span> <span class="kn">import</span> <span class="n">DocumentConfigurationError</span>
+
+
+<span class="n">virtual_properties</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current_group_link&#39;</span><span class="p">,</span> <span class="s1">&#39;picture_links&#39;</span><span class="p">,</span> <span class="s1">&#39;snap_list&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="get_documents_from_criteria"><a class="viewcode-back" href="../../thermal.html#thermal.utils.get_documents_from_criteria">[docs]</a><span class="k">def</span> <span class="nf">get_documents_from_criteria</span><span class="p">(</span><span class="n">args_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Takes key value pairs in an args dict and does a query against the database, testing for equality on all pairs.</span>
+<span class="sd">    Also supports a few special kwargs to handle things like testing for a key not being null, or paging</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># TODO have this add virtual properties</span>
+    <span class="n">documents_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">criteria_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="s1">&#39;gallery_url_not_null&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">criteria_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;doc.gallery_url != null&quot;</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">paging_requested</span><span class="p">,</span> <span class="n">start_index</span><span class="p">,</span> <span class="n">end_index</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_paging_info</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">args_dict</span><span class="p">:</span>
+        <span class="n">criteria_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;doc.{0} == &#39;{1}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">args_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+    <span class="n">criteria_string</span> <span class="o">=</span> <span class="s1">&#39; &amp;&amp; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">criteria_list</span><span class="p">)</span>
+    <span class="n">map_fun</span> <span class="o">=</span> <span class="s2">&quot;function(doc) {{if (&quot;</span>
+    <span class="n">map_fun</span> <span class="o">=</span> <span class="n">map_fun</span> <span class="o">+</span> <span class="n">criteria_string</span>
+    <span class="n">map_fun</span> <span class="o">=</span> <span class="n">map_fun</span> <span class="o">+</span> <span class="s2">&quot;) {{emit(doc.created, doc);}}}}&quot;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">row_number</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">map_fun</span><span class="p">)</span><span class="o">.</span><span class="n">rows</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">paging_requested</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">row_number</span> <span class="o">&gt;=</span> <span class="n">start_index</span> <span class="ow">and</span> <span class="n">row_number</span> <span class="o">&lt;=</span> <span class="n">end_index</span><span class="p">:</span>
+                <span class="n">documents_dict</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">][</span><span class="s1">&#39;_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">documents_dict</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">][</span><span class="s1">&#39;_id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">documents_dict</span></div>
+
+
+<div class="viewcode-block" id="get_paging_info"><a class="viewcode-back" href="../../thermal.html#thermal.utils.get_paging_info">[docs]</a><span class="k">def</span> <span class="nf">get_paging_info</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">paging_requested</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">start_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">end_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="s1">&#39;page&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="s1">&#39;items_per_page&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;items_per_page&#39;</span><span class="p">]:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">items_per_page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;items_per_page&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DocumentConfigurationError</span><span class="p">(</span><span class="s1">&#39;invalid number specified for items_per_page: {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;items_per_page&#39;</span><span class="p">]))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DocumentConfigurationError</span><span class="p">(</span><span class="s1">&#39;invalid number specified for page: {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]))</span>
+        <span class="n">start_index</span> <span class="o">=</span> <span class="p">(</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">items_per_page</span>
+        <span class="n">end_index</span> <span class="o">=</span> <span class="n">start_index</span> <span class="o">+</span> <span class="n">items_per_page</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">page</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DocumentConfigurationError</span><span class="p">(</span><span class="s1">&#39;page number must be a number greater than zero&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">items_per_page</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DocumentConfigurationError</span><span class="p">(</span><span class="s1">&#39;items_per_page must be a number greater than zero&#39;</span><span class="p">)</span>
+        <span class="n">paging_requested</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">paging_requested</span><span class="p">,</span> <span class="n">start_index</span><span class="p">,</span> <span class="n">end_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_url_base"><a class="viewcode-back" href="../../thermal.html#thermal.utils.get_url_base">[docs]</a><span class="k">def</span> <span class="nf">get_url_base</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;wsgi.url_scheme&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;://&#39;</span> <span class="o">+</span> <span class="n">request</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;HTTP_HOST&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="item_exists"><a class="viewcode-back" href="../../thermal.html#thermal.utils.item_exists">[docs]</a><span class="k">def</span> <span class="nf">item_exists</span><span class="p">(</span><span class="n">item_id</span><span class="p">,</span> <span class="n">item_type</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">item_id</span> <span class="ow">and</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">:</span>
+        <span class="n">item_dict</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">item_type</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

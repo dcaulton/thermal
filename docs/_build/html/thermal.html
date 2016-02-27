@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>thermal package &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="index.html" />
+    <link rel="up" title="thermal" href="modules.html" />
+    <link rel="prev" title="run_uwsgi module" href="run_uwsgi.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="thermal-package">
+<h1>thermal package<a class="headerlink" href="#thermal-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-thermal.appmodule">
+<span id="thermal-appmodule-module"></span><h2>thermal.appmodule module<a class="headerlink" href="#module-thermal.appmodule" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="thermal.appmodule.create_app">
+<code class="descclassname">thermal.appmodule.</code><code class="descname">create_app</code><span class="sig-paren">(</span><em>config_name='development'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/appmodule.html#create_app"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.appmodule.create_app" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="thermal.appmodule.make_celery">
+<code class="descclassname">thermal.appmodule.</code><code class="descname">make_celery</code><span class="sig-paren">(</span><em>app</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/appmodule.html#make_celery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.appmodule.make_celery" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="thermal.appmodule.register_blueprints">
+<code class="descclassname">thermal.appmodule.</code><code class="descname">register_blueprints</code><span class="sig-paren">(</span><em>app</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/appmodule.html#register_blueprints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.appmodule.register_blueprints" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="thermal.appmodule.register_db">
+<code class="descclassname">thermal.appmodule.</code><code class="descname">register_db</code><span class="sig-paren">(</span><em>app</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/appmodule.html#register_db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.appmodule.register_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="thermal.appmodule.register_mail">
+<code class="descclassname">thermal.appmodule.</code><code class="descname">register_mail</code><span class="sig-paren">(</span><em>app</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/appmodule.html#register_mail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.appmodule.register_mail" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-thermal.exceptions">
+<span id="thermal-exceptions-module"></span><h2>thermal.exceptions module<a class="headerlink" href="#module-thermal.exceptions" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="thermal.exceptions.DocumentConfigurationError">
+<em class="property">exception </em><code class="descclassname">thermal.exceptions.</code><code class="descname">DocumentConfigurationError</code><a class="reference internal" href="_modules/thermal/exceptions.html#DocumentConfigurationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.exceptions.DocumentConfigurationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thermal.exceptions.ThermalBaseError" title="thermal.exceptions.ThermalBaseError"><code class="xref py py-class docutils literal"><span class="pre">thermal.exceptions.ThermalBaseError</span></code></a></p>
+<p>The user is trying to do something with a document which will break referential integrity, change
+the type of a document, or something else which will cause havoc in our db and system.</p>
+<dl class="attribute">
+<dt id="thermal.exceptions.DocumentConfigurationError.status_code">
+<code class="descname">status_code</code><em class="property"> = 409</em><a class="headerlink" href="#thermal.exceptions.DocumentConfigurationError.status_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="thermal.exceptions.NotFoundError">
+<em class="property">exception </em><code class="descclassname">thermal.exceptions.</code><code class="descname">NotFoundError</code><a class="reference internal" href="_modules/thermal/exceptions.html#NotFoundError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.exceptions.NotFoundError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#thermal.exceptions.ThermalBaseError" title="thermal.exceptions.ThermalBaseError"><code class="xref py py-class docutils literal"><span class="pre">thermal.exceptions.ThermalBaseError</span></code></a></p>
+<p>The user asked for something that doesn&#8217;t exist.</p>
+<dl class="attribute">
+<dt id="thermal.exceptions.NotFoundError.status_code">
+<code class="descname">status_code</code><em class="property"> = 404</em><a class="headerlink" href="#thermal.exceptions.NotFoundError.status_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="thermal.exceptions.ThermalBaseError">
+<em class="property">exception </em><code class="descclassname">thermal.exceptions.</code><code class="descname">ThermalBaseError</code><a class="reference internal" href="_modules/thermal/exceptions.html#ThermalBaseError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.exceptions.ThermalBaseError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+<p>Invalid request at the resource or parameter level; the client is using the API wrong.</p>
+<dl class="attribute">
+<dt id="thermal.exceptions.ThermalBaseError.status_code">
+<code class="descname">status_code</code><em class="property"> = 400</em><a class="headerlink" href="#thermal.exceptions.ThermalBaseError.status_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-thermal.utils">
+<span id="thermal-utils-module"></span><h2>thermal.utils module<a class="headerlink" href="#module-thermal.utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="thermal.utils.get_documents_from_criteria">
+<code class="descclassname">thermal.utils.</code><code class="descname">get_documents_from_criteria</code><span class="sig-paren">(</span><em>args_dict</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/utils.html#get_documents_from_criteria"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.utils.get_documents_from_criteria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes key value pairs in an args dict and does a query against the database, testing for equality on all pairs.
+Also supports a few special kwargs to handle things like testing for a key not being null, or paging</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="thermal.utils.get_paging_info">
+<code class="descclassname">thermal.utils.</code><code class="descname">get_paging_info</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/utils.html#get_paging_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.utils.get_paging_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="thermal.utils.get_url_base">
+<code class="descclassname">thermal.utils.</code><code class="descname">get_url_base</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/utils.html#get_url_base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.utils.get_url_base" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="thermal.utils.item_exists">
+<code class="descclassname">thermal.utils.</code><code class="descname">item_exists</code><span class="sig-paren">(</span><em>item_id</em>, <em>item_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/utils.html#item_exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.utils.item_exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-thermal.views">
+<span id="thermal-views-module"></span><h2>thermal.views module<a class="headerlink" href="#module-thermal.views" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="thermal.views.index">
+<code class="descclassname">thermal.views.</code><code class="descname">index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/thermal/views.html#index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#thermal.views.index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-thermal">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-thermal" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">thermal package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-thermal.appmodule">thermal.appmodule module</a></li>
+<li><a class="reference internal" href="#module-thermal.exceptions">thermal.exceptions module</a></li>
+<li><a class="reference internal" href="#module-thermal.utils">thermal.utils module</a></li>
+<li><a class="reference internal" href="#module-thermal.views">thermal.views module</a></li>
+<li><a class="reference internal" href="#module-thermal">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">thermal</a><ul>
+      <li>Previous: <a href="run_uwsgi.html" title="previous chapter">run_uwsgi module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/thermal.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/thermal.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

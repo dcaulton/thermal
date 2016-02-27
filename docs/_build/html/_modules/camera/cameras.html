@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>camera.cameras &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for camera.cameras</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">from</span> <span class="nn">fractions</span> <span class="kn">import</span> <span class="n">Fraction</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">picamera</span>
+<span class="kn">import</span> <span class="nn">pylepton</span>
+
+
+<div class="viewcode-block" id="Camera"><a class="viewcode-back" href="../../camera.html#camera.cameras.Camera">[docs]</a><span class="k">class</span> <span class="nc">Camera</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Base class to represent both the Picam ambient light camera and the Lepton, a thermal camera</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span>
+
+    <span class="nd">@abc.abstractmethod</span>
+<div class="viewcode-block" id="Camera.take_still"><a class="viewcode-back" href="../../camera.html#camera.cameras.Camera.take_still">[docs]</a>    <span class="k">def</span> <span class="nf">take_still</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pic_path</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="Picam"><a class="viewcode-back" href="../../camera.html#camera.cameras.Picam">[docs]</a><span class="k">class</span> <span class="nc">Picam</span><span class="p">(</span><span class="n">Camera</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Handles taking pictures with with the Picam (ambient light) camera via the software bindings from the picamera package</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">take_still</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pic_path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">take_normal_exposure_still</span><span class="p">(</span><span class="n">pic_path</span><span class="o">=</span><span class="n">pic_path</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1200</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">900</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Picam.take_still"><a class="viewcode-back" href="../../camera.html#camera.cameras.Picam.take_still">[docs]</a>    <span class="k">def</span> <span class="nf">take_still</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pic_path</span><span class="p">,</span> <span class="n">image_width</span><span class="p">,</span> <span class="n">image_height</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">take_normal_exposure_still</span><span class="p">(</span>
+            <span class="n">pic_path</span><span class="o">=</span><span class="n">pic_path</span><span class="p">,</span>
+            <span class="n">image_width</span><span class="o">=</span><span class="n">image_width</span><span class="p">,</span>
+            <span class="n">image_height</span><span class="o">=</span><span class="n">image_height</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Picam.take_normal_exposure_still"><a class="viewcode-back" href="../../camera.html#camera.cameras.Picam.take_normal_exposure_still">[docs]</a>    <span class="k">def</span> <span class="nf">take_normal_exposure_still</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pic_path</span><span class="p">,</span> <span class="n">image_width</span><span class="p">,</span> <span class="n">image_height</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">picamera</span><span class="o">.</span><span class="n">PiCamera</span><span class="p">()</span> <span class="k">as</span> <span class="n">camera</span><span class="p">:</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="p">(</span><span class="n">image_width</span><span class="p">,</span> <span class="n">image_height</span><span class="p">)</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">capture</span><span class="p">(</span><span class="n">pic_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Picam.take_long_exposure_still"><a class="viewcode-back" href="../../camera.html#camera.cameras.Picam.take_long_exposure_still">[docs]</a>    <span class="k">def</span> <span class="nf">take_long_exposure_still</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pic_path</span><span class="p">,</span> <span class="n">image_width</span><span class="p">,</span> <span class="n">image_height</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">picamera</span><span class="o">.</span><span class="n">PiCamera</span><span class="p">()</span> <span class="k">as</span> <span class="n">camera</span><span class="p">:</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">resolution</span> <span class="o">=</span> <span class="p">(</span><span class="n">image_width</span><span class="p">,</span> <span class="n">image_height</span><span class="p">)</span>
+            <span class="c1"># Set a framerate of 1/6fps, then set shutter</span>
+            <span class="c1"># speed to 6s and ISO to 800</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">framerate</span> <span class="o">=</span> <span class="n">Fraction</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">shutter_speed</span> <span class="o">=</span> <span class="mi">6000000</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">exposure_mode</span> <span class="o">=</span> <span class="s1">&#39;off&#39;</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">iso</span> <span class="o">=</span> <span class="mi">800</span>
+            <span class="c1"># Give the camera a good long time to measure AWB</span>
+            <span class="c1"># (you may wish to use fixed AWB instead)</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># Finally, capture an image with a 6s exposure. Due</span>
+            <span class="c1"># to mode switching on the still port, this will take</span>
+            <span class="c1"># longer than 6 seconds</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">capture</span><span class="p">(</span><span class="n">pic_path</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Lepton"><a class="viewcode-back" href="../../camera.html#camera.cameras.Lepton">[docs]</a><span class="k">class</span> <span class="nc">Lepton</span><span class="p">(</span><span class="n">Camera</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Handles taking pictures with the Lepton (thermal) camera using the software bindings in the pylepton package</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="Lepton.take_still"><a class="viewcode-back" href="../../camera.html#camera.cameras.Lepton.take_still">[docs]</a>    <span class="k">def</span> <span class="nf">take_still</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pic_path</span><span class="p">):</span>
+        <span class="c1"># TODO push the spi specifics into config paramters</span>
+        <span class="k">with</span> <span class="n">pylepton</span><span class="o">.</span><span class="n">Lepton</span><span class="p">(</span><span class="s2">&quot;/dev/spidev0.1&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">l</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">l</span><span class="o">.</span><span class="n">capture</span><span class="p">()</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">65535</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">NORM_MINMAX</span><span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">right_shift</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+            <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">pic_path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">(</span><span class="n">a</span><span class="p">))</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

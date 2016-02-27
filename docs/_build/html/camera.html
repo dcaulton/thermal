@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>camera package &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="index.html" />
+    <link rel="up" title="thermal" href="modules.html" />
+    <link rel="next" title="config module" href="config.html" />
+    <link rel="prev" title="analysis package" href="analysis.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="camera-package">
+<h1>camera package<a class="headerlink" href="#camera-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-camera.cameras">
+<span id="camera-cameras-module"></span><h2>camera.cameras module<a class="headerlink" href="#module-camera.cameras" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="camera.cameras.Camera">
+<em class="property">class </em><code class="descclassname">camera.cameras.</code><code class="descname">Camera</code><a class="reference internal" href="_modules/camera/cameras.html#Camera"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.cameras.Camera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Base class to represent both the Picam ambient light camera and the Lepton, a thermal camera</p>
+<dl class="method">
+<dt id="camera.cameras.Camera.take_still">
+<code class="descname">take_still</code><span class="sig-paren">(</span><em>pic_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/cameras.html#Camera.take_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.cameras.Camera.take_still" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="camera.cameras.Lepton">
+<em class="property">class </em><code class="descclassname">camera.cameras.</code><code class="descname">Lepton</code><a class="reference internal" href="_modules/camera/cameras.html#Lepton"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.cameras.Lepton" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#camera.cameras.Camera" title="camera.cameras.Camera"><code class="xref py py-class docutils literal"><span class="pre">camera.cameras.Camera</span></code></a></p>
+<p>Handles taking pictures with the Lepton (thermal) camera using the software bindings in the pylepton package</p>
+<dl class="method">
+<dt id="camera.cameras.Lepton.take_still">
+<code class="descname">take_still</code><span class="sig-paren">(</span><em>pic_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/cameras.html#Lepton.take_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.cameras.Lepton.take_still" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="camera.cameras.Picam">
+<em class="property">class </em><code class="descclassname">camera.cameras.</code><code class="descname">Picam</code><a class="reference internal" href="_modules/camera/cameras.html#Picam"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.cameras.Picam" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#camera.cameras.Camera" title="camera.cameras.Camera"><code class="xref py py-class docutils literal"><span class="pre">camera.cameras.Camera</span></code></a></p>
+<p>Handles taking pictures with with the Picam (ambient light) camera via the software bindings from the picamera package</p>
+<dl class="method">
+<dt id="camera.cameras.Picam.take_long_exposure_still">
+<code class="descname">take_long_exposure_still</code><span class="sig-paren">(</span><em>pic_path</em>, <em>image_width</em>, <em>image_height</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/cameras.html#Picam.take_long_exposure_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.cameras.Picam.take_long_exposure_still" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="camera.cameras.Picam.take_normal_exposure_still">
+<code class="descname">take_normal_exposure_still</code><span class="sig-paren">(</span><em>pic_path</em>, <em>image_width</em>, <em>image_height</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/cameras.html#Picam.take_normal_exposure_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.cameras.Picam.take_normal_exposure_still" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="camera.cameras.Picam.take_still">
+<code class="descname">take_still</code><span class="sig-paren">(</span><em>pic_path</em>, <em>image_width</em>, <em>image_height</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/cameras.html#Picam.take_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.cameras.Picam.take_still" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="camera-services-module">
+<h2>camera.services module<a class="headerlink" href="#camera-services-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="camera-tasks-module">
+<h2>camera.tasks module<a class="headerlink" href="#camera-tasks-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="camera-views-module">
+<h2>camera.views module<a class="headerlink" href="#camera-views-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-camera">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-camera" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">camera package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-camera.cameras">camera.cameras module</a></li>
+<li><a class="reference internal" href="#camera-services-module">camera.services module</a></li>
+<li><a class="reference internal" href="#camera-tasks-module">camera.tasks module</a></li>
+<li><a class="reference internal" href="#camera-views-module">camera.views module</a></li>
+<li><a class="reference internal" href="#module-camera">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">thermal</a><ul>
+      <li>Previous: <a href="analysis.html" title="previous chapter">analysis package</a></li>
+      <li>Next: <a href="config.html" title="next chapter">config module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/camera.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/camera.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
