@@ -13,6 +13,9 @@ camera = Blueprint('camera', __name__)
 
 @camera.route('/')
 def index():
+    '''
+    Lists top level endpoints for camera
+    '''
     url_base = get_url_base()
     top_level_links = {
         'picam_still': url_base + url_for('camera.picam_still'),

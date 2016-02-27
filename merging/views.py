@@ -10,6 +10,9 @@ merging = Blueprint('merging', __name__)
 
 @merging.route('/')
 def index():
+    '''
+    Lists top level endpoints for the merging app
+    '''
     url_base = get_url_base()
     top_level_links = {
         'merge_images': url_base + url_for('merging.call_merge_images'),
@@ -20,6 +23,9 @@ def index():
 # TODO add testing
 @merging.route('/merge_images')
 def call_merge_images():
+    '''
+    Merges to images into a third one
+    '''
     img1_id, img2_id = None, None
     if 'img1_id' in request.args:
         img1_id = request.args.get('img1_id')

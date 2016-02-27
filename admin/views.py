@@ -17,9 +17,9 @@ admin = Blueprint('admin', __name__)
 
 @admin.route('/')
 def index():
-    """
-    Some docstring
-    """
+    '''
+    Returns a top level index of the admin views
+    '''
     url_base = get_url_base()
     top_level_links = {
         'settings': url_base + url_for('admin.get_settings'),
@@ -33,12 +33,18 @@ def index():
 # TODO add tests for these views
 @admin.route('/settings', methods=['GET'])
 def get_settings():
+    '''
+    Returns the settings document (it's a singleton)
+    '''
     settings = get_settings_document()
     return Response(json.dumps(settings), status=200, mimetype='application/json')
 
 
 @admin.route('/settings', methods=['PUT'])
 def update_settings():
+    '''
+    Updates the settings document
+    '''
     settings = get_settings_document()
     if request.headers['Content-Type'] == 'application/json':
         for k in request.json.keys():
@@ -51,6 +57,9 @@ def update_settings():
 # TODO add tests
 @admin.route('/groups')
 def list_groups():
+    '''
+    Lists all groups
+    '''
     search_dict = {}
     for key in request.args.keys():
         search_dict[key] = request.args[key]
@@ -60,6 +69,13 @@ def list_groups():
 
 @admin.route('/groups/<group_id>', methods=['GET'])
 def get_group(group_id):
+    '''
+    Gets a particular group
+    supports these levels of information:
+     - group dict only
+     - links to photos 
+     - photos included, grouped by snap id
+    '''
     # TODO support four levels of fetch eventually.
     #  - group dict only
     #  - links to children
@@ -78,6 +94,9 @@ def get_group(group_id):
 
 @admin.route('/groups/<group_id>/pictures', methods=['GET'])
 def get_group_pictures(group_id):
+    '''
+    Fetches pictures for a supplied group id
+    '''
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
@@ -92,6 +111,9 @@ def get_group_pictures(group_id):
 # TODO this will need an integration test.
 @admin.route('/groups/<group_id>/gallery', methods=['GET'])
 def get_group_gallery(group_id):
+    '''
+    Fetches the photo gallery for a supplied group id
+    '''
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
@@ -105,6 +127,9 @@ def get_group_gallery(group_id):
 
 @admin.route('/groups/<group_id>', methods=['PUT'])
 def update_group(group_id):
+    '''
+    Updates group record
+    '''
     group_dict = get_group_document(group_id)
     if request.headers['Content-Type'] == 'application/json':
         for k in request.json.keys():
@@ -116,6 +141,9 @@ def update_group(group_id):
 
 @admin.route('/groups', methods=['POST'])
 def save_group():
+    '''
+    Creates a new group record
+    '''
     settings = get_settings_document()
     group_dict = default_group_dict()
     if request.headers['Content-Type'] == 'application/json':

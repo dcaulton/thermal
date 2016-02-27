@@ -13,6 +13,9 @@ picture = Blueprint('picture', __name__)
 #  That should be pretty high level, it will be a wrapper around all our 'return Response' calls
 @picture.route('/')
 def list_pictures():
+    '''
+    Lists all pictures
+    '''
     search_dict = {}
     for key in request.args.keys():
         search_dict[key] = request.args[key]
@@ -22,6 +25,9 @@ def list_pictures():
 
 @picture.route('/<picture_id>')
 def get_picture(picture_id):
+    '''
+    Retrieves a picture for the supplied id
+    '''
     try:
         picture_dict = find_picture(picture_id)
     except NotFoundError as e:

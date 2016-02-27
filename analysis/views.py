@@ -12,6 +12,9 @@ analysis = Blueprint('analysis', __name__)
 
 @analysis.route('/')
 def index():
+    '''
+    Lists top level endpoints for analysis
+    '''
     url_base = get_url_base()
     top_level_links = { 
         'scale_image': url_base + url_for('analysis.call_scale_image'),
@@ -24,6 +27,9 @@ def index():
 @analysis.route('/scale_image')
 @analysis.route('/scale_image/<image_id>')
 def call_scale_image(image_id=None):
+    '''
+    Scales an image according to the current group settings
+    '''
     result_id = uuid.uuid4()
 
     if not item_exists(image_id, 'picture'):  # TODO add testing for no picture id and invalid picture id
@@ -42,6 +48,9 @@ def call_scale_image(image_id=None):
 @analysis.route('/edge_detect')
 @analysis.route('/edge_detect/<image_id>')
 def call_edge_detect(image_id=None):
+    '''
+    Invokes edge detection for a given image
+    '''
     if not item_exists(image_id, 'picture'):  # TODO add testing for no picture id and invalid picture id
         err_msg = 'Image not found.  A valid image_id must be supplied as the last segment of the url in order to call'\
                   ' this endpoint'
