@@ -13,6 +13,9 @@ from thermal.utils import get_documents_from_criteria, get_url_base, virtual_pro
 
 
 def get_settings_document():
+    '''
+    Fetches the settings document (a singleton)
+    '''
     map_fun = '''function(doc) {
         if (doc.type == 'settings')
             emit(doc._id, doc);
@@ -29,6 +32,12 @@ def get_settings_document():
 
 
 def save_document(document_in):
+    '''
+    Saves any document
+    Gets doc id from the _id field
+    Has safeguards to avoid changing document type
+    Has safeguards to avoid saving derived properties
+    '''
     the_id = document_in['_id']
     if the_id in current_app.db:
         existing_document = current_app.db[the_id]
@@ -40,6 +49,9 @@ def save_document(document_in):
 
 
 def get_group_document(group_id):
+    '''
+    Fetches the group document specified by the requested id
+    '''
     if group_id == 'current':
         settings_dict = get_settings_document()
         group_id = settings_dict['current_group_id']
@@ -51,12 +63,28 @@ def get_group_document(group_id):
 
 
 def get_group_document_with_child_objects(group_id):
+    '''
+    Fetches the group document specified by the requested id
+    Also provides links to child photo objects in a child array called snap_list
+    '''
     group_dict = get_group_document(group_id)
     group_dict['snap_list'] = get_picture_objects_for_group(group_id)
     return group_dict
 
 
+def sort_dict_by_value_field(dict_in, sort_by):
+    '''
+    Takes a dict, returns an ordered dict, ordered by the sort_by field from each value in the dict.
+    It's assumed that the incoming dict has values which are dicts, and the child field is sortable.
+    '''
+    # TODO: make this work.  Pass back an ordered dict
+    def return dict_in
+
+
 def get_picture_objects_for_group(group_id):  # TODO add testing
+    '''
+    Gets all the pictures belonging to a group, groups them in an array under the snaps they belong to
+    '''
     url_base = get_url_base()
     picture_links = []
     args_dict = {}
@@ -65,6 +93,8 @@ def get_picture_objects_for_group(group_id):  # TODO add testing
     args_dict['type'] = 'picture'
     args_dict['group_id'] = group_id
     pictures_dict = get_documents_from_criteria(args_dict)
+    ordered_picture_dict = sort_dict_by_value_field(pictures_dict, 'created')
+    # TODO should be simpler after snaps becomes first class objects
     for picture_id in pictures_dict:
         picture_link = url_base + url_for('picture.get_picture', picture_id=picture_id)
         snap_id =  pictures_dict[picture_id]['snap_id']
@@ -75,17 +105,24 @@ def get_picture_objects_for_group(group_id):  # TODO add testing
                                    'id': snap_id,
                                    'picture_objects': [pictures_dict[picture_id]]}
     snaps_array = snaps_dict.values()
+    # TODO remove after sort_dict_by_value_field is implemented
     snaps_array.sort(key=lambda x: x['created'])
     return snaps_array
 
 
 def get_group_document_with_child_links(group_id):
+    '''
+    Fetches a group document, adds a picture_links array to it which has links to all the photos for that group
+    '''
     group_dict = get_group_document(group_id)
     group_dict['picture_links'] = get_picture_links_for_group(group_id)
     return group_dict
 
 
 def get_picture_links_for_group(group_id):  # TODO add testing
+    '''
+    Gets all the pictures belonging to a given group id
+    '''
     # TODO sort these ascending on time
     url_base = get_url_base()
     picture_links = []
@@ -100,6 +137,9 @@ def get_picture_links_for_group(group_id):  # TODO add testing
 
 
 def create_default_settings_and_group_documents():
+    '''
+    Creates a settings object and group object with their default settings.  Saves both objects.
+    '''
     group_dict = default_group_dict()
     settings_dict = default_settings_dict(group_dict['_id'])
     save_document(settings_dict)
@@ -108,6 +148,9 @@ def create_default_settings_and_group_documents():
 
 
 def default_group_dict():
+    '''
+    Wrapper method returning a dict with the default group settings.
+    '''
     group_id = uuid.uuid4()
     group_dict = {'_id': str(group_id),
                   'merge_type': 'colorize_screen',
@@ -128,6 +171,10 @@ def default_group_dict():
 
 
 def default_settings_dict(group_id):
+    '''
+    Wrapper method returning a dict with the default values settings.
+    Takes the group id, the only useful data to speak of in this object.
+    '''
     settings_id = uuid.uuid4()
     settings_dict = {'_id': str(settings_id),
                      'current_group_id': str(group_id),
@@ -137,6 +184,11 @@ def default_settings_dict(group_id):
 
 # TODO reschedule if we don't have internet (actually that's better for the task to do)
 def upload_files_to_s3(snap_id, group_id):
+    '''
+    Uploads pictures for a given snap to s3
+    Takes a snap id and group id, if the group is configured to use a gallery it looks for all pictures whose
+      values for source matches those are specified in the group to use for the gallery
+    '''
     group_document = get_group_document(group_id)
     if group_document['use_gallery']:
         image_sources_for_gallery = group_document['image_sources_for_gallery'].split(',')
@@ -157,6 +209,9 @@ def upload_files_to_s3(snap_id, group_id):
 
 # TODO add tests related to image_sources_to_delete
 def clean_up_files(snap_id, group_id):
+    '''
+    Deletes all picture files for a given snap if those pictures sources are designated in the group to be deleted after processing
+    '''
     group_document = get_group_document(group_id)
     if 'image_sources_to_delete' in group_document:
         image_sources_to_delete = group_document['image_sources_to_delete'].split(',')
@@ -175,6 +230,9 @@ def clean_up_files(snap_id, group_id):
 
 # TODO add unit tests
 def send_mail(snap_id, group_id):
+    '''
+    Sends an email to users specified in the group, with all the images for a supplied snap
+    '''
     group_document = get_group_document(group_id)
     if ('email_recipients' in group_document and
             'send_email_contents' in group_document and
@@ -203,6 +261,9 @@ def send_mail(snap_id, group_id):
 
 # TODO add tests
 def find_groups(args_dict, **kwargs):
+    '''
+    Retrieves a dict of all groups.  Key is the group id, value is the dict for the group.
+    '''
     args_dict['type'] = 'group'
     groups_dict = get_documents_from_criteria(args_dict, **kwargs)
     return groups_dict
