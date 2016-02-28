@@ -1,9 +1,11 @@
+from collections import OrderedDict
+
 from flask import current_app, request
 
 from thermal.exceptions import DocumentConfigurationError
 
 
-virtual_properties = ['current_group_link', 'picture_links', 'snap_list']
+dynamically_calculated_attributes = ['current_group_link', 'picture_links', 'snap_list']
 
 
 def get_documents_from_criteria(args_dict, **kwargs):
@@ -64,3 +66,12 @@ def item_exists(item_id, item_type):
         if group_dict['type'] == item_type:
             return True
     return False
+
+# Wrote this then commented out because it didn't save any complexity or lines of code, let's see if it ends up being needed
+# def sort_dict_by_child_dict_value_field(dict_in, sort_by):  # TODO add testing
+#     '''
+#     Takes a dict, returns an ordered dict, ordered by the sort_by field from each value in the dict.
+#     It's assumed that the incoming dict has values which are dicts, and the child field is sortable.
+#     '''
+#     ordered_dict = OrderedDict(sorted(dict_in.items(), key=lambda t: t[1][sort_by]))
+#     return ordered_dict

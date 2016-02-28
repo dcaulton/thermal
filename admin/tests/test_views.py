@@ -3,6 +3,8 @@ from mock import ANY, call, Mock, patch
 import pytest
 import uuid
 
+from flask import current_app
+
 import admin.views as av
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
@@ -38,8 +40,7 @@ class TestViewsUnit(object):
     def test_get_group_calls_get_group_document_when_group_found(self,
                                                                  av_get_group_document):
         av_get_group_document.return_value = {'v': 'm'}
-
-        resp_object = av.get_group('123321')
+        resp_object = current_app.test_client().get('/api/v1/admin/groups/123321')
         response_data_dict = json.loads(resp_object.data)
 
         av_get_group_document.assert_called_once_with('123321')
@@ -51,10 +52,11 @@ class TestViewsUnit(object):
     def test_get_group_fails_when_group_not_found(self,
                                                   av_get_group_document):
         av_get_group_document.side_effect = NotFoundError('no group document found for 4422')
-        resp_object = av.get_group('4422')
+        resp_object = current_app.test_client().get('/api/v1/admin/groups/4422')
         av_get_group_document.assert_called_once_with('4422')
         assert resp_object.status_code == 404
         assert resp_object.data == '"no group document found for 4422"'
+
 
     @patch('admin.views.find_pictures')
     @patch('admin.views.get_paging_info_from_request')
@@ -171,3 +173,4 @@ class TestViewsUnit(object):
 #         page = request.args['page']
 #         items_per_page = request.args['items_per_page']
 #     return (page, items_per_page)
+#class TestViewsIntegration(object):

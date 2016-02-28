@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import os
 import shutil
 import uuid
@@ -9,7 +10,7 @@ from flask.ext.mail import Message
 from picture.services import find_pictures, build_picture_path, build_picture_name, update_picture_document
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import get_documents_from_criteria, get_url_base, virtual_properties
+from thermal.utils import get_documents_from_criteria, get_url_base, dynamically_calculated_attributes
 
 
 def get_settings_document():
@@ -25,9 +26,6 @@ def get_settings_document():
         settings_dict = view_result.rows[0]['value']
     else:
         settings_dict = create_default_settings_and_group_documents()
-    if 'current_group_id' in settings_dict:  # add virtual entries for links
-        url_base = get_url_base()
-        settings_dict['current_group_link'] = url_base + url_for('admin.get_group', group_id=settings_dict['current_group_id'])
     return settings_dict
 
 
@@ -43,8 +41,9 @@ def save_document(document_in):
         existing_document = current_app.db[the_id]
         if existing_document['type'] != document_in['type']:
             raise DocumentConfigurationError('attempting to change the document type for document {0}'.format(str(the_id)))
-    for vp in virtual_properties:  # remove virtual properties, they are generated on the fly every retrieve
-        del document_in[vp]
+    for dca in dynamically_calculated_attributes:  # remove these properties, they are generated on the fly every retrieve
+        if dca in document_in:
+            del document_in[dca]
     current_app.db[the_id] = document_in
 
 
@@ -72,15 +71,6 @@ def get_group_document_with_child_objects(group_id):
     return group_dict
 
 
-def sort_dict_by_value_field(dict_in, sort_by):
-    '''
-    Takes a dict, returns an ordered dict, ordered by the sort_by field from each value in the dict.
-    It's assumed that the incoming dict has values which are dicts, and the child field is sortable.
-    '''
-    # TODO: make this work.  Pass back an ordered dict
-    def return dict_in
-
-
 def get_picture_objects_for_group(group_id):  # TODO add testing
     '''
     Gets all the pictures belonging to a group, groups them in an array under the snaps they belong to
@@ -93,8 +83,6 @@ def get_picture_objects_for_group(group_id):  # TODO add testing
     args_dict['type'] = 'picture'
     args_dict['group_id'] = group_id
     pictures_dict = get_documents_from_criteria(args_dict)
-    ordered_picture_dict = sort_dict_by_value_field(pictures_dict, 'created')
-    # TODO should be simpler after snaps becomes first class objects
     for picture_id in pictures_dict:
         picture_link = url_base + url_for('picture.get_picture', picture_id=picture_id)
         snap_id =  pictures_dict[picture_id]['snap_id']
@@ -105,7 +93,6 @@ def get_picture_objects_for_group(group_id):  # TODO add testing
                                    'id': snap_id,
                                    'picture_objects': [pictures_dict[picture_id]]}
     snaps_array = snaps_dict.values()
-    # TODO remove after sort_dict_by_value_field is implemented
     snaps_array.sort(key=lambda x: x['created'])
     return snaps_array
 

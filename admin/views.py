@@ -10,7 +10,7 @@ from admin.services import (default_group_dict,
                             save_document)
 from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
-from thermal.utils import get_url_base, virtual_properties
+from thermal.utils import get_url_base, dynamically_calculated_attributes
 
 admin = Blueprint('admin', __name__)
 
@@ -158,7 +158,7 @@ def save_group():
 
 def doc_attribute_can_be_set(key_name):
     # TODO it feels like there is some overlap with this functionality and what is in admin.services.save_document
-    if key_name not in ['_id', '_rev'] and key_name not in virtual_properties:
+    if key_name not in ['_id', '_rev'] and key_name not in dynamically_calculated_attributes:
         return True
     return False
 
