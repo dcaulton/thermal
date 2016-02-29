@@ -52,6 +52,8 @@ def update_settings():
                 settings[k] = request.json[k]
         save_document(settings)
         return Response(json.dumps(settings), status=200, mimetype='application/json')
+    err_msg = 'no valid settings parameters supplied'
+    return Response(json.dumps(err_msg), status=409, mimetype='application/json')
 
 
 # TODO add tests
@@ -81,10 +83,10 @@ def get_group(group_id):
     #  - links to children
     #  - nest full child photo objects, bin photos by 'snap' (a virtual object) with snap id and time also included
     try:
-        if 'child_links' in request.args:  # TODO add testing and documentation in sphinx
-            group_dict = get_group_document_with_child_links(group_id)
-        elif 'child_objects' in request.args:  # TODO add testing and documentation in sphinx
+        if 'child_objects' in request.args:  # TODO add documentation in sphinx
             group_dict = get_group_document_with_child_objects(group_id)
+        elif 'child_links' in request.args:  # TODO add documentation in sphinx
+            group_dict = get_group_document_with_child_links(group_id)
         else:
             group_dict = get_group_document(group_id)
     except NotFoundError as e:
