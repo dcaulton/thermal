@@ -87,21 +87,57 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 409
 
 
-## TODO this fails with a 400, something wrong with the put call
-##                             I THINK IT NEEDS TO BE A STRING OF JSON
-#    @patch('admin.views.save_document')
-#    @patch('admin.views.doc_attribute_can_be_set')
-#    @patch('admin.views.get_settings_document')
-#    def test_update_settings_sets_allowed_values(self,
-#                                                 av_get_settings_document,
-#                                                 av_doc_attribute_can_be_set,
-#                                                 av_save_document):
-#        av_get_settings_document.return_value = {'starfish': 'patrick'}
-#        av_doc_attribute_can_be_set.return_value = True
-#        with current_app.test_client() as c:
-#            haha = 'joe'
-#            resp_object = c.put('/api/v1/admin/settings', content_type='application/json', data=dict(current_group_id=haha)) 
-#            assert resp_object.status_code == 200
+    @patch('admin.views.save_document')
+    @patch('admin.views.doc_attribute_can_be_set')
+    @patch('admin.views.get_settings_document')
+    def test_update_settings_sets_allowed_values(self,
+                                                 av_get_settings_document,
+                                                 av_doc_attribute_can_be_set,
+                                                 av_save_document):
+        av_get_settings_document.return_value = {'starfish': 'patrick'}
+        av_doc_attribute_can_be_set.return_value = True
+        with current_app.test_client() as c:
+            resp_object = c.put('/api/v1/admin/settings',
+                                headers={'Content-Type':'application/json'},
+                                data='{"ali":"g"}')
+            assert resp_object.status_code == 200
+            av_get_settings_document.assert_called_once_with()
+            av_doc_attribute_can_be_set.assert_called_once_with('ali')
+            av_save_document.assert_called_once_with({'starfish': 'patrick', 'ali': 'g'})
+
+
+    @patch('admin.views.save_document')
+    @patch('admin.views.doc_attribute_can_be_set')
+    @patch('admin.views.get_group_document')
+    def test_update_groups_sets_allowed_values(self,
+                                               av_get_group_document,
+                                               av_doc_attribute_can_be_set,
+                                               av_save_document):
+        av_get_group_document.return_value = {'eeny': 'meeny', 'teensy': 'weensy'}
+        av_doc_attribute_can_be_set.return_value = True
+        with current_app.test_client() as c:
+            resp_object = c.put('/api/v1/admin/groups/876',
+                                headers={'Content-Type':'application/json'},
+                                data='{"eeny":"moe"}')
+            assert resp_object.status_code == 200
+            av_get_group_document.assert_called_once_with('876')
+            av_doc_attribute_can_be_set.assert_called_once_with('eeny')
+            av_save_document.assert_called_once_with({'eeny': 'moe', 'teensy': 'weensy'})
+
+
+    @patch('admin.views.save_document')
+    @patch('admin.views.get_group_document')
+    def test_update_groups_doesnt_set_disallowed_values(self,
+                                                        av_get_group_document,
+                                                        av_save_document):
+        av_get_group_document.return_value = {'eeny': 'meeny', 'teensy': 'weensy'}
+        with current_app.test_client() as c:
+            resp_object = c.put('/api/v1/admin/groups/876',
+                                headers={'Content-Type':'application/json'},
+                                data='{"type":"unfortunate"}')
+            assert resp_object.status_code == 200
+            av_get_group_document.assert_called_once_with('876')
+            av_save_document.assert_called_once_with({'eeny': 'meeny', 'teensy': 'weensy'})
 
 
     @patch('admin.views.get_group_document_with_child_objects')
@@ -301,16 +337,6 @@ class TestViewsUnit(object):
             settings_save_call = call({'bread': 'pudding', 'current_group_id': group_id})
             av_save_document.assert_has_calls([group_save_call, settings_save_call])
 
-# TODO make a unit test when I figure out how to mock out the request headers and request.json.keys
-# @admin.route('/groups/<group_id>', methods=['PUT'])
-## def update_group(group_id):
-#     group_dict = get_group_document(group_id)
-#     if request.headers['Content-Type'] == 'application/json':
-#         for k in request.json.keys():
-#             if doc_attribute_can_be_set(k):
-#                 group_dict[k] = request.json[k]
-#         save_document(group_dict)
-#         return Response(json.dumps(group_dict), status=200, mimetype='application/json')
 
     def test_doc_attribute_can_be_set_works_for_normal_and_forbidden_keys(self):
         assert av.doc_attribute_can_be_set('lester')

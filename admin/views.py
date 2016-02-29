@@ -156,7 +156,7 @@ def save_group():
 
 def doc_attribute_can_be_set(key_name):
     # TODO it feels like there is some overlap with this functionality and what is in admin.services.save_document
-    if key_name not in ['_id', '_rev'] and key_name not in dynamically_calculated_attributes:
+    if key_name not in ['_id', '_rev', 'type'] and key_name not in dynamically_calculated_attributes:
         return True
     return False
 
