@@ -3,6 +3,8 @@ from mock import ANY, call, Mock, patch
 import pytest
 import uuid
 
+from flask import current_app
+
 import picture.views as pv
 from thermal.exceptions import NotFoundError
 
@@ -35,11 +37,16 @@ class TestViewsUnit(object):
         assert resp_object.data == '"no picture there, friend"'
 
 
-# TODO make a unit test when I figure out how to mock out the request headers and request.json.keys
-# @picture.route('/')
-# def list_pictures():
-#     search_dict = {}
-#     for key in request.args.keys():
-#         search_dict[key] = request.args[key]
-#     pictures = find_pictures(search_dict)
-#      return Response(json.dumps(pictures), status=200, mimetype='application/json')
+    @patch('picture.views.find_pictures')
+    def test_list_pictures_matches_pictures_on_search_param(self,
+                                                            pv_find_pictures):
+        pv_find_pictures.return_value = {'6767': {'_id': '6767'},
+                                         '7878': {'_id': '7878'}}
+        with current_app.test_client() as c:
+            resp_object = c.get('/api/v1/pictures/?food=rutabega')
+            pv_find_pictures.assert_called_once_with({'food': 'rutabega'})
+            response_data_dict = json.loads(resp_object.data)
+            assert resp_object.status_code == 200
+            assert '6767' in response_data_dict
+            assert '7878' in response_data_dict
+            assert len(response_data_dict.keys()) == 2

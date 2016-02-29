@@ -15,6 +15,7 @@ picture = Blueprint('picture', __name__)
 def list_pictures():
     '''
     Lists all pictures
+    Supports filtering on any picture attribute via get parms
     '''
     search_dict = {}
     for key in request.args.keys():
