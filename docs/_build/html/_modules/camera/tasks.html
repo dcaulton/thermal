@@ -1,0 +1,539 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>camera.tasks &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for camera.tasks</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="kn">from</span> <span class="nn">celery</span> <span class="kn">import</span> <span class="n">chain</span>
+
+<span class="kn">from</span> <span class="nn">admin.services</span> <span class="kn">import</span> <span class="n">get_group_document</span>
+<span class="kn">from</span> <span class="nn">admin.tasks</span> <span class="kn">import</span> <span class="n">file_wrap_up_chained</span><span class="p">,</span> <span class="n">send_mail_chained</span>
+<span class="kn">from</span> <span class="nn">analysis.services</span> <span class="kn">import</span> <span class="n">edge_detect_chained</span><span class="p">,</span> <span class="n">scale_image_chained</span><span class="p">,</span> <span class="n">distort_image_chained</span>
+<span class="kn">import</span> <span class="nn">camera.services</span>
+<span class="kn">from</span> <span class="nn">merging.services</span> <span class="kn">import</span> <span class="n">merge_images_chained</span>
+<span class="kn">from</span> <span class="nn">thermal.appmodule</span> <span class="kn">import</span> <span class="n">celery</span>
+
+
+<span class="nd">@celery.task</span>
+<span class="k">def</span> <span class="nf">take_picam_still_chained</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">normal_exposure_pic_id</span><span class="p">,</span> <span class="n">long_exposure_pic_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrapper method to handle the celery scheduling of the taking of a single Picam still, with an extra parameter to handle</span>
+<span class="sd">      how celery chains tasks.</span>
+<span class="sd">    Calls the synchronous take_picam_still method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># don&#39;t call picam_still_task here.  It would cause a new celery task to be created, which would be out of</span>
+    <span class="c1">#  sequence with the original chain of tasks we belong to</span>
+    <span class="n">camera</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">take_picam_still</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">normal_exposure_pic_id</span><span class="p">,</span> <span class="n">long_exposure_pic_id</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="take_picam_still"><a class="viewcode-back" href="../../camera.html#camera.tasks.take_picam_still">[docs]</a><span class="k">def</span> <span class="nf">take_picam_still</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Top level handler for taking Picam pictures between the camera view and the camera service modules.</span>
+<span class="sd">    Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">normal_exposure_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">long_exposure_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">snap_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">delay</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">repeat</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)]:</span>
+        <span class="n">normal_exposure_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">long_exposure_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">chain</span><span class="p">(</span>
+            <span class="n">picam_still_task</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">normal_exposure_pic_id</span><span class="o">=</span><span class="n">normal_exposure_pic_id</span><span class="p">,</span>
+                <span class="n">long_exposure_pic_id</span><span class="o">=</span><span class="n">long_exposure_pic_id</span>
+            <span class="p">),</span>
+            <span class="n">send_mail_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">file_wrap_up_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">countdown</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">normal_exposure_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">normal_exposure_pic_id</span><span class="p">))</span>
+        <span class="n">long_exposure_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">long_exposure_pic_id</span><span class="p">))</span>
+        <span class="n">snap_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">))</span>
+        <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;snap_ids&#39;</span><span class="p">:</span> <span class="n">snap_ids</span><span class="p">,</span>
+        <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">group_id</span><span class="p">),</span>
+        <span class="s1">&#39;normal_exposure_pic_ids&#39;</span><span class="p">:</span> <span class="n">normal_exposure_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;long_exposure_pic_ids&#39;</span><span class="p">:</span> <span class="n">long_exposure_pic_ids</span>
+    <span class="p">}</span></div>
+
+
+<span class="nd">@celery.task</span>
+<span class="k">def</span> <span class="nf">picam_still_task</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">normal_exposure_pic_id</span><span class="p">,</span> <span class="n">long_exposure_pic_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrapper method to handle the celery scheduling of the taking of a single Picam still.</span>
+<span class="sd">    Calls the synchronous take_picam_still method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">camera</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">take_picam_still</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">normal_exposure_pic_id</span><span class="p">,</span> <span class="n">long_exposure_pic_id</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="take_thermal_still"><a class="viewcode-back" href="../../camera.html#camera.tasks.take_thermal_still">[docs]</a><span class="k">def</span> <span class="nf">take_thermal_still</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale_image</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Top level handler for taking Lepton pictures between the camera view and the camera service modules.</span>
+<span class="sd">    Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.</span>
+<span class="sd">    Also optionally accepts a parameter to chain an &#39;enlarge and colorize&#39; task after the Lepton still if desired</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">scaled_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">snap_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">scale_image</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">delay</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">repeat</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)]:</span>
+            <span class="n">pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+            <span class="n">scaled_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+            <span class="n">chain</span><span class="p">(</span>
+                <span class="n">thermal_still_task</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                    <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                    <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                    <span class="n">pic_id</span><span class="o">=</span><span class="n">pic_id</span>
+                <span class="p">),</span>
+                <span class="n">scale_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                    <span class="n">img_id_in</span><span class="o">=</span><span class="n">pic_id</span><span class="p">,</span>
+                    <span class="n">img_id_out</span><span class="o">=</span><span class="n">scaled_pic_id</span><span class="p">,</span>
+                    <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+                <span class="p">),</span>
+                <span class="n">send_mail_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                    <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                    <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+                <span class="p">),</span>
+                <span class="n">file_wrap_up_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                    <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                    <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+                <span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">countdown</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pic_id</span><span class="p">))</span>
+            <span class="n">snap_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">))</span>
+            <span class="n">scaled_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scaled_pic_id</span><span class="p">))</span>
+            <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">delay</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">repeat</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)]:</span>
+            <span class="n">pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+            <span class="n">chain</span><span class="p">(</span>
+                <span class="n">thermal_still_task</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                    <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                    <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                    <span class="n">pic_id</span><span class="o">=</span><span class="n">pic_id</span>
+                <span class="p">),</span>
+                <span class="n">send_mail_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                    <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                    <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+                <span class="p">),</span>
+                <span class="n">file_wrap_up_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                    <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                    <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+                <span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">countdown</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pic_id</span><span class="p">))</span>
+            <span class="n">snap_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">))</span>
+            <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;pic_ids&#39;</span><span class="p">:</span> <span class="n">pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;scaled_pic_ids&#39;</span><span class="p">:</span> <span class="n">scaled_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;snap_ids&#39;</span><span class="p">:</span> <span class="n">snap_ids</span><span class="p">,</span>
+        <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span>
+    <span class="p">}</span></div>
+
+
+<span class="nd">@celery.task</span>
+<span class="k">def</span> <span class="nf">thermal_still_task</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">pic_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrapper method to handle the celery scheduling of the taking of a single Lepton still.</span>
+<span class="sd">    Calls the synchronous take_thermal_still method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">camera</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">take_thermal_still</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">pic_id</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="take_both_still"><a class="viewcode-back" href="../../camera.html#camera.tasks.take_both_still">[docs]</a><span class="k">def</span> <span class="nf">take_both_still</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrapper method to handle the celery scheduling of the taking of a &#39;both&#39; still with standard subtasks.</span>
+<span class="sd">    A both still and subtasks consists of:</span>
+<span class="sd">      - Lepton still</span>
+<span class="sd">      - Enlarge and colorize Lepton still</span>
+<span class="sd">      - Distort enlarged+colorized Lepton still to compensate for lens distortion and alignment issues</span>
+<span class="sd">      - Picam still</span>
+<span class="sd">      - Merge picam still and &#39;Enlarged and colorized Lepton still&#39;</span>
+<span class="sd">      - Optionally email the result to recipients specified on the group file</span>
+<span class="sd">    Calls the synchronous take_picam_still method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">thermal_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">normal_exposure_picam_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">long_exposure_picam_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">scaled_for_thermal_merge_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">distorted_for_thermal_merge_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">merged_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">snap_ids</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">delay</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">repeat</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)]:</span>
+        <span class="n">thermal_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">normal_exposure_picam_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">long_exposure_picam_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">scaled_for_thermal_merge_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">distorted_for_thermal_merge_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">merged_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">chain</span><span class="p">(</span>
+            <span class="n">thermal_still_task</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">pic_id</span><span class="o">=</span><span class="n">thermal_pic_id</span>
+            <span class="p">),</span>
+            <span class="n">take_picam_still_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">normal_exposure_pic_id</span><span class="o">=</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">long_exposure_pic_id</span><span class="o">=</span><span class="n">long_exposure_picam_pic_id</span>
+            <span class="p">),</span>
+            <span class="n">scale_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">thermal_pic_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">distort_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">distorted_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">merge_images_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img1_primary_id_in</span><span class="o">=</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">img1_alternate_id_in</span><span class="o">=</span><span class="n">long_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">img2_id_in</span><span class="o">=</span><span class="n">distorted_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">merged_pic_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">send_mail_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">file_wrap_up_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">countdown</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">thermal_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_pic_id</span><span class="p">))</span>
+        <span class="n">normal_exposure_picam_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">))</span>
+        <span class="n">long_exposure_picam_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">long_exposure_picam_pic_id</span><span class="p">))</span>
+        <span class="n">scaled_for_thermal_merge_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">))</span>
+        <span class="n">distorted_for_thermal_merge_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">distorted_for_thermal_merge_pic_id</span><span class="p">))</span>
+        <span class="n">merged_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">merged_pic_id</span><span class="p">))</span>
+        <span class="n">snap_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">))</span>
+        <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;snap_ids&#39;</span><span class="p">:</span> <span class="n">snap_ids</span><span class="p">,</span>
+        <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">,</span>
+        <span class="s1">&#39;normal_exposure_picam_ids&#39;</span><span class="p">:</span> <span class="n">normal_exposure_picam_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;long_exposure_picam_ids&#39;</span><span class="p">:</span> <span class="n">long_exposure_picam_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_ids&#39;</span><span class="p">:</span> <span class="n">thermal_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;scaled_for_thermal_merge_ids&#39;</span><span class="p">:</span> <span class="n">scaled_for_thermal_merge_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;distorted_for_thermal_merge_ids&#39;</span><span class="p">:</span> <span class="n">distorted_for_thermal_merge_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;merged_ids&#39;</span><span class="p">:</span> <span class="n">merged_pic_ids</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="take_both_still_test"><a class="viewcode-back" href="../../camera.html#camera.tasks.take_both_still_test">[docs]</a><span class="k">def</span> <span class="nf">take_both_still_test</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Testing some fixed distortion logic</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">thermal_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">normal_exposure_picam_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">long_exposure_picam_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">scaled_for_thermal_merge_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">distorted_for_thermal_merge_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">merged_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">snap_ids</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">delay</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">repeat</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)]:</span>
+        <span class="n">thermal_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">normal_exposure_picam_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">long_exposure_picam_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">scaled_for_thermal_merge_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">distorted_for_thermal_merge_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">merged_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">chain</span><span class="p">(</span>
+            <span class="n">thermal_still_task</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">pic_id</span><span class="o">=</span><span class="n">thermal_pic_id</span>
+            <span class="p">),</span>
+            <span class="n">take_picam_still_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">normal_exposure_pic_id</span><span class="o">=</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">long_exposure_pic_id</span><span class="o">=</span><span class="n">long_exposure_picam_pic_id</span>
+            <span class="p">),</span>
+            <span class="n">scale_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">thermal_pic_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">distort_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">distorted_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">merge_images_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img1_primary_id_in</span><span class="o">=</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">img1_alternate_id_in</span><span class="o">=</span><span class="n">long_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">img2_id_in</span><span class="o">=</span><span class="n">distorted_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">merged_pic_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">send_mail_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">file_wrap_up_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">countdown</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">thermal_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_pic_id</span><span class="p">))</span>
+        <span class="n">normal_exposure_picam_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">))</span>
+        <span class="n">long_exposure_picam_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">long_exposure_picam_pic_id</span><span class="p">))</span>
+        <span class="n">scaled_for_thermal_merge_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">))</span>
+        <span class="n">distorted_for_thermal_merge_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">distorted_for_thermal_merge_pic_id</span><span class="p">))</span>
+        <span class="n">merged_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">merged_pic_id</span><span class="p">))</span>
+        <span class="n">snap_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">))</span>
+        <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;snap_ids&#39;</span><span class="p">:</span> <span class="n">snap_ids</span><span class="p">,</span>
+        <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">,</span>
+        <span class="s1">&#39;normal_exposure_picam_ids&#39;</span><span class="p">:</span> <span class="n">normal_exposure_picam_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;long_exposure_picam_ids&#39;</span><span class="p">:</span> <span class="n">long_exposure_picam_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_ids&#39;</span><span class="p">:</span> <span class="n">thermal_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;scaled_for_thermal_merge_ids&#39;</span><span class="p">:</span> <span class="n">scaled_for_thermal_merge_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;distorted_for_thermal_merge_ids&#39;</span><span class="p">:</span> <span class="n">distorted_for_thermal_merge_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;merged_ids&#39;</span><span class="p">:</span> <span class="n">merged_pic_ids</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="take_both_still_edge_detect"><a class="viewcode-back" href="../../camera.html#camera.tasks.take_both_still_edge_detect">[docs]</a><span class="k">def</span> <span class="nf">take_both_still_edge_detect</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrapper method to handle the celery scheduling of the taking of a &#39;both&#39; still with standard subtasks.</span>
+<span class="sd">    A both still and subtasks consists of:</span>
+<span class="sd">      - Lepton still</span>
+<span class="sd">      - Enlarge and colorize Lepton still</span>
+<span class="sd">      - Picam still</span>
+<span class="sd">      - Merge picam still and &#39;Enlarged and colorized Lepton still&#39;</span>
+<span class="sd">      - Optionally email the result to recipients specified on the group file</span>
+<span class="sd">    Calls the synchronous take_picam_still method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">thermal_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">normal_exposure_picam_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">long_exposure_picam_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">scaled_for_thermal_merge_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">merged_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">picam_auto_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">picam_wide_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">picam_tight_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">thermal_auto_small_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">thermal_wide_small_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">thermal_tight_small_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">thermal_auto_large_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">thermal_wide_large_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">thermal_tight_large_pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">snap_ids</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">delay</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">repeat</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)]:</span>
+        <span class="n">thermal_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">normal_exposure_picam_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">long_exposure_picam_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">scaled_for_thermal_merge_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">merged_pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">picam_auto_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">picam_wide_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">picam_tight_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">thermal_auto_small_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">thermal_wide_small_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">thermal_tight_small_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">thermal_auto_large_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">thermal_wide_large_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">thermal_tight_large_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">chain</span><span class="p">(</span>
+            <span class="n">thermal_still_task</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">pic_id</span><span class="o">=</span><span class="n">thermal_pic_id</span>
+            <span class="p">),</span>
+            <span class="n">take_picam_still_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">normal_exposure_pic_id</span><span class="o">=</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">long_exposure_pic_id</span><span class="o">=</span><span class="n">long_exposure_picam_pic_id</span>
+            <span class="p">),</span>
+            <span class="n">edge_detect_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">alternate_img_id_in</span><span class="o">=</span><span class="n">long_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">auto_id</span><span class="o">=</span><span class="n">picam_auto_id</span><span class="p">,</span>
+                <span class="n">wide_id</span><span class="o">=</span><span class="n">picam_wide_id</span><span class="p">,</span>
+                <span class="n">tight_id</span><span class="o">=</span><span class="n">picam_tight_id</span>
+            <span class="p">),</span>
+            <span class="n">edge_detect_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">thermal_pic_id</span><span class="p">,</span>
+                <span class="n">alternate_img_id_in</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+                <span class="n">auto_id</span><span class="o">=</span><span class="n">thermal_auto_small_id</span><span class="p">,</span>
+                <span class="n">wide_id</span><span class="o">=</span><span class="n">thermal_wide_small_id</span><span class="p">,</span>
+                <span class="n">tight_id</span><span class="o">=</span><span class="n">thermal_tight_small_id</span>
+            <span class="p">),</span>
+            <span class="n">scale_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">thermal_auto_small_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">thermal_auto_large_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">scale_type</span><span class="o">=</span><span class="s1">&#39;bicubic_blur&#39;</span>
+            <span class="p">),</span>
+            <span class="n">scale_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">thermal_wide_small_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">thermal_wide_large_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">scale_type</span><span class="o">=</span><span class="s1">&#39;bicubic_blur&#39;</span>
+            <span class="p">),</span>
+            <span class="n">scale_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">thermal_tight_small_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">thermal_tight_large_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+                <span class="n">scale_type</span><span class="o">=</span><span class="s1">&#39;bicubic_blur&#39;</span>
+            <span class="p">),</span>
+            <span class="n">scale_image_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img_id_in</span><span class="o">=</span><span class="n">thermal_pic_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">merge_images_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">img1_primary_id_in</span><span class="o">=</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">img1_alternate_id_in</span><span class="o">=</span><span class="n">long_exposure_picam_pic_id</span><span class="p">,</span>
+                <span class="n">img2_id_in</span><span class="o">=</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">,</span>
+                <span class="n">img_id_out</span><span class="o">=</span><span class="n">merged_pic_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">send_mail_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">),</span>
+            <span class="n">file_wrap_up_chained</span><span class="o">.</span><span class="n">s</span><span class="p">(</span>
+                <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+                <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span>
+            <span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">countdown</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">thermal_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_pic_id</span><span class="p">))</span>
+        <span class="n">normal_exposure_picam_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">normal_exposure_picam_pic_id</span><span class="p">))</span>
+        <span class="n">long_exposure_picam_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">long_exposure_picam_pic_id</span><span class="p">))</span>
+        <span class="n">scaled_for_thermal_merge_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">scaled_for_thermal_merge_pic_id</span><span class="p">))</span>
+        <span class="n">merged_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">merged_pic_id</span><span class="p">))</span>
+        <span class="n">snap_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">))</span>
+        <span class="n">picam_auto_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">picam_auto_id</span><span class="p">))</span>
+        <span class="n">picam_wide_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">picam_wide_id</span><span class="p">))</span>
+        <span class="n">picam_tight_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">picam_tight_id</span><span class="p">))</span>
+        <span class="n">thermal_auto_small_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_auto_small_id</span><span class="p">))</span>
+        <span class="n">thermal_wide_small_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_wide_small_id</span><span class="p">))</span>
+        <span class="n">thermal_tight_small_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_tight_small_id</span><span class="p">))</span>
+        <span class="n">thermal_auto_large_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_auto_large_id</span><span class="p">))</span>
+        <span class="n">thermal_wide_large_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_wide_large_id</span><span class="p">))</span>
+        <span class="n">thermal_tight_large_pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">thermal_tight_large_id</span><span class="p">))</span>
+        <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;snap_ids&#39;</span><span class="p">:</span> <span class="n">snap_ids</span><span class="p">,</span>
+        <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">,</span>
+        <span class="s1">&#39;normal_exposure_picam_ids&#39;</span><span class="p">:</span> <span class="n">normal_exposure_picam_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;long_exposure_picam_ids&#39;</span><span class="p">:</span> <span class="n">long_exposure_picam_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_ids&#39;</span><span class="p">:</span> <span class="n">thermal_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;scaled_for_thermal_merge_ids&#39;</span><span class="p">:</span> <span class="n">scaled_for_thermal_merge_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;merged_ids&#39;</span><span class="p">:</span> <span class="n">merged_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;picam_auto_pic_ids&#39;</span><span class="p">:</span> <span class="n">picam_auto_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;picam_wide_pic_ids&#39;</span><span class="p">:</span> <span class="n">picam_wide_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;picam_tight_pic_ids&#39;</span><span class="p">:</span> <span class="n">picam_tight_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_auto_small_pic_ids&#39;</span><span class="p">:</span> <span class="n">thermal_auto_small_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_wide_small_pic_ids&#39;</span><span class="p">:</span> <span class="n">thermal_wide_small_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_tight_small_pic_ids&#39;</span><span class="p">:</span> <span class="n">thermal_tight_small_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_auto_large_pic_ids&#39;</span><span class="p">:</span> <span class="n">thermal_auto_large_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_wide_large_pic_ids&#39;</span><span class="p">:</span> <span class="n">thermal_wide_large_pic_ids</span><span class="p">,</span>
+        <span class="s1">&#39;thermal_tight_large_pic_ids&#39;</span><span class="p">:</span> <span class="n">thermal_tight_large_pic_ids</span>
+    <span class="p">}</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

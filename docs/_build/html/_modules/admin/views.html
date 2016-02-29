@@ -1,0 +1,265 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>admin.views &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for admin.views</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Blueprint</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">Response</span><span class="p">,</span> <span class="n">url_for</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">admin.services</span> <span class="kn">import</span> <span class="p">(</span><span class="n">default_group_dict</span><span class="p">,</span>
+                            <span class="n">find_groups</span><span class="p">,</span>
+                            <span class="n">get_settings_document</span><span class="p">,</span>
+                            <span class="n">get_group_document</span><span class="p">,</span>
+                            <span class="n">get_group_document_with_child_links</span><span class="p">,</span>
+                            <span class="n">get_group_document_with_child_objects</span><span class="p">,</span>
+                            <span class="n">save_document</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">picture.services</span> <span class="kn">import</span> <span class="n">find_pictures</span>
+<span class="kn">from</span> <span class="nn">thermal.exceptions</span> <span class="kn">import</span> <span class="n">NotFoundError</span>
+<span class="kn">from</span> <span class="nn">thermal.utils</span> <span class="kn">import</span> <span class="n">get_url_base</span><span class="p">,</span> <span class="n">dynamically_calculated_attributes</span>
+
+<span class="n">admin</span> <span class="o">=</span> <span class="n">Blueprint</span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span> <span class="n">__name__</span><span class="p">)</span>
+
+
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="index"><a class="viewcode-back" href="../../admin.html#admin.views.index">[docs]</a><span class="k">def</span> <span class="nf">index</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    * one thing</span>
+<span class="sd">    * another thing</span>
+
+<span class="sd">    Returns a top level index of the admin views</span>
+<span class="sd">    :param name: The name to use.</span>
+<span class="sd">    :type name: str.</span>
+<span class="sd">    :param state: Current state to be in.</span>
+<span class="sd">    :type state: bool.</span>
+<span class="sd">    :returns:  int -- the return code.</span>
+<span class="sd">    :raises: AttributeError, KeyError</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">url_base</span> <span class="o">=</span> <span class="n">get_url_base</span><span class="p">()</span>
+    <span class="n">top_level_links</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;settings&#39;</span><span class="p">:</span> <span class="n">url_base</span> <span class="o">+</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;admin.get_settings&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;groups&#39;</span><span class="p">:</span> <span class="n">url_base</span> <span class="o">+</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;admin.list_groups&#39;</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">top_level_links</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO add a test on the service side to check the integrity of settings.current_group_id on settings save.</span>
+<span class="c1">#   we don&#39;t need to worry about deletes, just updates</span>
+<span class="c1"># TODO add tests for these views</span>
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/settings&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="get_settings"><a class="viewcode-back" href="../../admin.html#admin.views.get_settings">[docs]</a><span class="k">def</span> <span class="nf">get_settings</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Returns the settings document (it&#39;s a singleton)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">settings</span> <span class="o">=</span> <span class="n">get_settings_document</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">settings</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/settings&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PUT&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="update_settings"><a class="viewcode-back" href="../../admin.html#admin.views.update_settings">[docs]</a><span class="k">def</span> <span class="nf">update_settings</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Updates the settings document</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">settings</span> <span class="o">=</span> <span class="n">get_settings_document</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;application/json&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">doc_attribute_can_be_set</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+                <span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">save_document</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">settings</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span>
+    <span class="n">err_msg</span> <span class="o">=</span> <span class="s1">&#39;no valid settings parameters supplied&#39;</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">err_msg</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">409</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/groups&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="list_groups"><a class="viewcode-back" href="../../admin.html#admin.views.list_groups">[docs]</a><span class="k">def</span> <span class="nf">list_groups</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Lists all groups</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">search_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">search_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">find_groups</span><span class="p">(</span><span class="n">search_dict</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">groups</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/groups/&lt;group_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="get_group"><a class="viewcode-back" href="../../admin.html#admin.views.get_group">[docs]</a><span class="k">def</span> <span class="nf">get_group</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Gets a particular group</span>
+<span class="sd">    supports these levels of information:</span>
+<span class="sd">     - group dict only</span>
+<span class="sd">     - links to photos </span>
+<span class="sd">     - photos included, grouped by snap id</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;child_objects&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>  <span class="c1"># TODO add documentation in sphinx</span>
+            <span class="n">group_dict</span> <span class="o">=</span> <span class="n">get_group_document_with_child_objects</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s1">&#39;child_links&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>  <span class="c1"># TODO add documentation in sphinx</span>
+            <span class="n">group_dict</span> <span class="o">=</span> <span class="n">get_group_document_with_child_links</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">group_dict</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">NotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">group_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/groups/&lt;group_id&gt;/pictures&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="get_group_pictures"><a class="viewcode-back" href="../../admin.html#admin.views.get_group_pictures">[docs]</a><span class="k">def</span> <span class="nf">get_group_pictures</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fetches pictures for a supplied group id</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">group_dict</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+        <span class="n">group_id</span> <span class="o">=</span> <span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+        <span class="n">args_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">}</span>
+        <span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">items_per_page</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_paging_info_from_request</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">pictures_dict</span> <span class="o">=</span> <span class="n">find_pictures</span><span class="p">(</span><span class="n">args_dict</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span> <span class="n">items_per_page</span><span class="o">=</span><span class="n">items_per_page</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pictures_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/groups/&lt;group_id&gt;/gallery&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="get_group_gallery"><a class="viewcode-back" href="../../admin.html#admin.views.get_group_gallery">[docs]</a><span class="k">def</span> <span class="nf">get_group_gallery</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fetches the photo gallery for a supplied group id</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">group_dict</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+        <span class="n">group_id</span> <span class="o">=</span> <span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+        <span class="n">args_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">}</span>
+        <span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">items_per_page</span><span class="p">)</span> <span class="o">=</span> <span class="n">get_paging_info_from_request</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">pictures_dict</span> <span class="o">=</span> <span class="n">find_pictures</span><span class="p">(</span><span class="n">args_dict</span><span class="p">,</span> <span class="n">gallery_url_not_null</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span> <span class="n">items_per_page</span><span class="o">=</span><span class="n">items_per_page</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">pictures_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/groups/&lt;group_id&gt;&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PUT&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="update_group"><a class="viewcode-back" href="../../admin.html#admin.views.update_group">[docs]</a><span class="k">def</span> <span class="nf">update_group</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Updates group record</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">group_dict</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;application/json&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">doc_attribute_can_be_set</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+                <span class="n">group_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">save_document</span><span class="p">(</span><span class="n">group_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">group_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="s1">&#39;problem with request data&#39;</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">409</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@admin.route</span><span class="p">(</span><span class="s1">&#39;/groups&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="save_group"><a class="viewcode-back" href="../../admin.html#admin.views.save_group">[docs]</a><span class="k">def</span> <span class="nf">save_group</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates a new group record, saves it as the new current group in the settings document</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">settings</span> <span class="o">=</span> <span class="n">get_settings_document</span><span class="p">()</span>
+    <span class="n">group_dict</span> <span class="o">=</span> <span class="n">default_group_dict</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;application/json&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">doc_attribute_can_be_set</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+                <span class="n">group_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">save_document</span><span class="p">(</span><span class="n">group_dict</span><span class="p">)</span>
+        <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;current_group_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+        <span class="n">save_document</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">group_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="s1">&#39;problem with request data&#39;</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">409</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="doc_attribute_can_be_set"><a class="viewcode-back" href="../../admin.html#admin.views.doc_attribute_can_be_set">[docs]</a><span class="k">def</span> <span class="nf">doc_attribute_can_be_set</span><span class="p">(</span><span class="n">key_name</span><span class="p">):</span>
+    <span class="c1"># TODO it feels like there is some overlap with this functionality and what is in admin.services.save_document</span>
+    <span class="k">if</span> <span class="n">key_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span> <span class="s1">&#39;_rev&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">key_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dynamically_calculated_attributes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span></div>
+
+
+<span class="c1"># TODO we need a more systematic way of dealing with expected and unexpected get/post parameters</span>
+<div class="viewcode-block" id="get_paging_info_from_request"><a class="viewcode-back" href="../../admin.html#admin.views.get_paging_info_from_request">[docs]</a><span class="k">def</span> <span class="nf">get_paging_info_from_request</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">items_per_page</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;page&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s1">&#39;items_per_page&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span>
+        <span class="n">items_per_page</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;items_per_page&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">items_per_page</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

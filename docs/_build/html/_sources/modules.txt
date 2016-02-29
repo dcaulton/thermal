@@ -7,7 +7,6 @@ thermal
    admin
    analysis
    camera
-   config
    conftest
    frontend
    merging

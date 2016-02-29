@@ -44,11 +44,59 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="analysis-services-module">
-<h2>analysis.services module<a class="headerlink" href="#analysis-services-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-analysis.services">
+<span id="analysis-services-module"></span><h2>analysis.services module<a class="headerlink" href="#module-analysis.services" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="analysis.services.auto_canny">
+<code class="descclassname">analysis.services.</code><code class="descname">auto_canny</code><span class="sig-paren">(</span><em>image</em>, <em>sigma=0.33</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/services.html#auto_canny"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.services.auto_canny" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="analysis.services.check_if_image_is_too_dark">
+<code class="descclassname">analysis.services.</code><code class="descname">check_if_image_is_too_dark</code><span class="sig-paren">(</span><em>filename</em>, <em>brightness_threshold</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/services.html#check_if_image_is_too_dark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.services.check_if_image_is_too_dark" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="analysis.services.distort_image_shepards_fixed">
+<code class="descclassname">analysis.services.</code><code class="descname">distort_image_shepards_fixed</code><span class="sig-paren">(</span><em>img_id_in</em>, <em>img_id_out</em>, <em>group_id</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/services.html#distort_image_shepards_fixed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.services.distort_image_shepards_fixed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="analysis.services.edge_detect">
+<code class="descclassname">analysis.services.</code><code class="descname">edge_detect</code><span class="sig-paren">(</span><em>img_id_in</em>, <em>alternate_img_id_in</em>, <em>auto_id</em>, <em>wide_id=None</em>, <em>tight_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/services.html#edge_detect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.services.edge_detect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="analysis.services.make_edge_picture_dict">
+<code class="descclassname">analysis.services.</code><code class="descname">make_edge_picture_dict</code><span class="sig-paren">(</span><em>pic_id</em>, <em>pic_filename</em>, <em>pic_path</em>, <em>snap_id</em>, <em>group_id</em>, <em>source_pic_id</em>, <em>edge_detect_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/services.html#make_edge_picture_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.services.make_edge_picture_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="analysis.services.scale_image">
+<code class="descclassname">analysis.services.</code><code class="descname">scale_image</code><span class="sig-paren">(</span><em>img_id_in</em>, <em>img_id_out</em>, <em>group_id</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/services.html#scale_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.services.scale_image" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
-<div class="section" id="analysis-views-module">
-<h2>analysis.views module<a class="headerlink" href="#analysis-views-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-analysis.views">
+<span id="analysis-views-module"></span><h2>analysis.views module<a class="headerlink" href="#module-analysis.views" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="analysis.views.call_edge_detect">
+<code class="descclassname">analysis.views.</code><code class="descname">call_edge_detect</code><span class="sig-paren">(</span><em>image_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/views.html#call_edge_detect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.views.call_edge_detect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invokes edge detection for a given image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="analysis.views.call_scale_image">
+<code class="descclassname">analysis.views.</code><code class="descname">call_scale_image</code><span class="sig-paren">(</span><em>image_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/views.html#call_scale_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.views.call_scale_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scales an image according to the current group settings</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="analysis.views.index">
+<code class="descclassname">analysis.views.</code><code class="descname">index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/analysis/views.html#index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#analysis.views.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists top level endpoints for analysis</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-analysis">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-analysis" title="Permalink to this headline">¶</a></h2>
@@ -65,8 +113,8 @@
   <ul>
 <li><a class="reference internal" href="#">analysis package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#analysis-services-module">analysis.services module</a></li>
-<li><a class="reference internal" href="#analysis-views-module">analysis.views module</a></li>
+<li><a class="reference internal" href="#module-analysis.services">analysis.services module</a></li>
+<li><a class="reference internal" href="#module-analysis.views">analysis.views module</a></li>
 <li><a class="reference internal" href="#module-analysis">Module contents</a></li>
 </ul>
 </li>

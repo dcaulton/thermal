@@ -1,0 +1,435 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>admin.tests.test_views &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for admin.tests.test_views</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">mock</span> <span class="kn">import</span> <span class="n">ANY</span><span class="p">,</span> <span class="n">call</span><span class="p">,</span> <span class="n">Mock</span><span class="p">,</span> <span class="n">patch</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">current_app</span><span class="p">,</span> <span class="n">request</span>
+
+<span class="kn">import</span> <span class="nn">admin.views</span> <span class="kn">as</span> <span class="nn">av</span>
+<span class="kn">from</span> <span class="nn">thermal.exceptions</span> <span class="kn">import</span> <span class="n">DocumentConfigurationError</span><span class="p">,</span> <span class="n">NotFoundError</span>
+
+
+<div class="viewcode-block" id="TestViewsUnit"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit">[docs]</a><span class="k">class</span> <span class="nc">TestViewsUnit</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.find_groups&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_list_groups_gets_groups"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_list_groups_gets_groups">[docs]</a>    <span class="k">def</span> <span class="nf">test_list_groups_gets_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                     <span class="n">av_find_groups</span><span class="p">):</span>
+        <span class="n">av_find_groups</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;1212&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;1212&#39;</span><span class="p">},</span>
+                                       <span class="s1">&#39;2323&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;2323&#39;</span><span class="p">}}</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups&#39;</span><span class="p">)</span>
+            <span class="n">av_find_groups</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({})</span>
+            <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="k">assert</span> <span class="s1">&#39;1212&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+            <span class="k">assert</span> <span class="s1">&#39;2323&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">2</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.find_groups&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_list_groups_matches_groups_on_search_param"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_list_groups_matches_groups_on_search_param">[docs]</a>    <span class="k">def</span> <span class="nf">test_list_groups_matches_groups_on_search_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                        <span class="n">av_find_groups</span><span class="p">):</span>
+        <span class="n">av_find_groups</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;1212&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;1212&#39;</span><span class="p">},</span>
+                                       <span class="s1">&#39;2323&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;2323&#39;</span><span class="p">}}</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups?use_gallery=false&#39;</span><span class="p">)</span>
+            <span class="n">av_find_groups</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;use_gallery&#39;</span><span class="p">:</span> <span class="s1">&#39;false&#39;</span><span class="p">})</span>
+            <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="k">assert</span> <span class="s1">&#39;1212&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+            <span class="k">assert</span> <span class="s1">&#39;2323&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">2</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.find_pictures&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_paging_info_gets_needed_params"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_paging_info_gets_needed_params">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_paging_info_gets_needed_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                <span class="n">av_find_pictures</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;3145&#39;</span><span class="p">}</span>
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="s1">&#39;b&#39;</span><span class="p">}</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups/xxx/pictures?page=2&amp;items_per_page=44&#39;</span><span class="p">)</span>
+            <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_called_with</span><span class="p">(</span><span class="s1">&#39;xxx&#39;</span><span class="p">)</span>
+            <span class="n">the_call</span> <span class="o">=</span> <span class="n">call</span><span class="p">({</span><span class="s1">&#39;group_id&#39;</span><span class="p">:</span><span class="s1">&#39;3145&#39;</span><span class="p">},</span> <span class="n">page</span><span class="o">=</span><span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="n">items_per_page</span><span class="o">=</span><span class="s1">&#39;44&#39;</span><span class="p">)</span>
+            <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">assert_has_calls</span><span class="p">([</span><span class="n">the_call</span><span class="p">])</span>
+            <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;2&#39;</span>
+            <span class="k">assert</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;items_per_page&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;44&#39;</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="k">assert</span> <span class="s1">&#39;y&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_settings_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_settings_calls_get_settings_document"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_settings_calls_get_settings_document">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_settings_calls_get_settings_document</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                      <span class="n">av_get_settings_document</span><span class="p">):</span>
+        <span class="n">av_get_settings_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;h&#39;</span><span class="p">:</span> <span class="s1">&#39;t&#39;</span><span class="p">}</span>
+
+        <span class="n">resp_object</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">get_settings</span><span class="p">()</span>
+        <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">av_get_settings_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+        <span class="k">assert</span> <span class="s1">&#39;h&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.save_document&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_settings_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_update_settings_fails_when_bad_content_type"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_update_settings_fails_when_bad_content_type">[docs]</a>    <span class="k">def</span> <span class="nf">test_update_settings_fails_when_bad_content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">av_get_settings_document</span><span class="p">,</span>
+                                                         <span class="n">av_save_document</span><span class="p">):</span>
+        <span class="n">av_get_settings_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;starfish&#39;</span><span class="p">:</span> <span class="s1">&#39;patrick&#39;</span><span class="p">}</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/settings&#39;</span><span class="p">,</span><span class="n">content_type</span><span class="o">=</span><span class="s1">&#39;spongey&#39;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="s1">&#39;&quot;no valid settings parameters supplied&quot;&#39;</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">409</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.save_document&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.doc_attribute_can_be_set&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_settings_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_update_settings_sets_allowed_values"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_update_settings_sets_allowed_values">[docs]</a>    <span class="k">def</span> <span class="nf">test_update_settings_sets_allowed_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                 <span class="n">av_get_settings_document</span><span class="p">,</span>
+                                                 <span class="n">av_doc_attribute_can_be_set</span><span class="p">,</span>
+                                                 <span class="n">av_save_document</span><span class="p">):</span>
+        <span class="n">av_get_settings_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;starfish&#39;</span><span class="p">:</span> <span class="s1">&#39;patrick&#39;</span><span class="p">}</span>
+        <span class="n">av_doc_attribute_can_be_set</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/settings&#39;</span><span class="p">,</span>
+                                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">},</span>
+                                <span class="n">data</span><span class="o">=</span><span class="s1">&#39;{&quot;ali&quot;:&quot;g&quot;}&#39;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="n">av_get_settings_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">()</span>
+            <span class="n">av_doc_attribute_can_be_set</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;ali&#39;</span><span class="p">)</span>
+            <span class="n">av_save_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;starfish&#39;</span><span class="p">:</span> <span class="s1">&#39;patrick&#39;</span><span class="p">,</span> <span class="s1">&#39;ali&#39;</span><span class="p">:</span> <span class="s1">&#39;g&#39;</span><span class="p">})</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.save_document&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.doc_attribute_can_be_set&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_update_groups_sets_allowed_values"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_update_groups_sets_allowed_values">[docs]</a>    <span class="k">def</span> <span class="nf">test_update_groups_sets_allowed_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                               <span class="n">av_get_group_document</span><span class="p">,</span>
+                                               <span class="n">av_doc_attribute_can_be_set</span><span class="p">,</span>
+                                               <span class="n">av_save_document</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;eeny&#39;</span><span class="p">:</span> <span class="s1">&#39;meeny&#39;</span><span class="p">,</span> <span class="s1">&#39;teensy&#39;</span><span class="p">:</span> <span class="s1">&#39;weensy&#39;</span><span class="p">}</span>
+        <span class="n">av_doc_attribute_can_be_set</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups/876&#39;</span><span class="p">,</span>
+                                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">},</span>
+                                <span class="n">data</span><span class="o">=</span><span class="s1">&#39;{&quot;eeny&quot;:&quot;moe&quot;}&#39;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;876&#39;</span><span class="p">)</span>
+            <span class="n">av_doc_attribute_can_be_set</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;eeny&#39;</span><span class="p">)</span>
+            <span class="n">av_save_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;eeny&#39;</span><span class="p">:</span> <span class="s1">&#39;moe&#39;</span><span class="p">,</span> <span class="s1">&#39;teensy&#39;</span><span class="p">:</span> <span class="s1">&#39;weensy&#39;</span><span class="p">})</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.save_document&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_update_groups_doesnt_set_disallowed_values"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_update_groups_doesnt_set_disallowed_values">[docs]</a>    <span class="k">def</span> <span class="nf">test_update_groups_doesnt_set_disallowed_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                        <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                        <span class="n">av_save_document</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;eeny&#39;</span><span class="p">:</span> <span class="s1">&#39;meeny&#39;</span><span class="p">,</span> <span class="s1">&#39;teensy&#39;</span><span class="p">:</span> <span class="s1">&#39;weensy&#39;</span><span class="p">}</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups/876&#39;</span><span class="p">,</span>
+                                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">},</span>
+                                <span class="n">data</span><span class="o">=</span><span class="s1">&#39;{&quot;type&quot;:&quot;unfortunate&quot;}&#39;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;876&#39;</span><span class="p">)</span>
+            <span class="n">av_save_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;eeny&#39;</span><span class="p">:</span> <span class="s1">&#39;meeny&#39;</span><span class="p">,</span> <span class="s1">&#39;teensy&#39;</span><span class="p">:</span> <span class="s1">&#39;weensy&#39;</span><span class="p">})</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_objects&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_links&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_calls_get_group_document_when_group_found"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_calls_get_group_document_when_group_found">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_calls_get_group_document_when_group_found</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                                 <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                                 <span class="n">av_get_group_document_with_child_links</span><span class="p">,</span>
+                                                                 <span class="n">av_get_group_document_with_child_objects</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;v&#39;</span><span class="p">:</span> <span class="s1">&#39;m&#39;</span><span class="p">}</span>
+        <span class="n">resp_object</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups/123321&#39;</span><span class="p">)</span>
+        <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;123321&#39;</span><span class="p">)</span>
+        <span class="n">av_get_group_document_with_child_links</span><span class="o">.</span><span class="n">assert_not_called</span><span class="p">()</span>
+        <span class="n">av_get_group_document_with_child_objects</span><span class="o">.</span><span class="n">assert_not_called</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+        <span class="k">assert</span> <span class="s1">&#39;v&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_objects&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_links&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_fails_when_group_not_found"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_fails_when_group_not_found">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_fails_when_group_not_found</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                  <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                  <span class="n">av_get_group_document_with_child_links</span><span class="p">,</span>
+                                                  <span class="n">av_get_group_document_with_child_objects</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">side_effect</span> <span class="o">=</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="s1">&#39;no group document found for 4422&#39;</span><span class="p">)</span>
+        <span class="n">resp_object</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups/4422&#39;</span><span class="p">)</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;4422&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="s1">&#39;&quot;no group document found for 4422&quot;&#39;</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_objects&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_links&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_gets_child_links_when_requested"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_gets_child_links_when_requested">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_gets_child_links_when_requested</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                       <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                       <span class="n">av_get_group_document_with_child_links</span><span class="p">,</span>
+                                                       <span class="n">av_get_group_document_with_child_objects</span><span class="p">):</span>
+        <span class="n">av_get_group_document_with_child_links</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="s1">&#39;q&#39;</span><span class="p">}</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups/123321?child_links=x&#39;</span><span class="p">)</span>
+            <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_not_called</span><span class="p">()</span>
+            <span class="n">av_get_group_document_with_child_links</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;123321&#39;</span><span class="p">)</span>
+            <span class="n">av_get_group_document_with_child_objects</span><span class="o">.</span><span class="n">assert_not_called</span><span class="p">()</span>
+            <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;child_links&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;x&#39;</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="k">assert</span> <span class="s1">&#39;r&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_objects&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_links&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_gets_child_objects_when_requested"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_gets_child_objects_when_requested">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_gets_child_objects_when_requested</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                         <span class="n">av_get_group_document_with_child_links</span><span class="p">,</span>
+                                                         <span class="n">av_get_group_document_with_child_objects</span><span class="p">):</span>
+        <span class="n">av_get_group_document_with_child_objects</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;m&#39;</span><span class="p">:</span> <span class="s1">&#39;s&#39;</span><span class="p">}</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups/123321?child_objects=x&#39;</span><span class="p">)</span>
+            <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_not_called</span><span class="p">()</span>
+            <span class="n">av_get_group_document_with_child_links</span><span class="o">.</span><span class="n">assert_not_called</span><span class="p">()</span>
+            <span class="n">av_get_group_document_with_child_objects</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;123321&#39;</span><span class="p">)</span>
+            <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;child_objects&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;x&#39;</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="k">assert</span> <span class="s1">&#39;m&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_objects&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document_with_child_links&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_gets_child_objects_when_both_links_and_objects_are_requested"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_gets_child_objects_when_both_links_and_objects_are_requested">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_gets_child_objects_when_both_links_and_objects_are_requested</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                                                    <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                                                    <span class="n">av_get_group_document_with_child_links</span><span class="p">,</span>
+                                                                                    <span class="n">av_get_group_document_with_child_objects</span><span class="p">):</span>
+        <span class="n">av_get_group_document_with_child_objects</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;o&#39;</span><span class="p">:</span> <span class="s1">&#39;i&#39;</span><span class="p">}</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups/123321?child_objects=x&amp;child_links=y&#39;</span><span class="p">)</span>
+            <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_not_called</span><span class="p">()</span>
+            <span class="n">av_get_group_document_with_child_links</span><span class="o">.</span><span class="n">assert_not_called</span><span class="p">()</span>
+            <span class="n">av_get_group_document_with_child_objects</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;123321&#39;</span><span class="p">)</span>
+            <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;child_objects&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;x&#39;</span>
+            <span class="k">assert</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;child_links&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;y&#39;</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+            <span class="k">assert</span> <span class="s1">&#39;o&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.find_pictures&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_paging_info_from_request&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_pictures_calls_appropriate_methods"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_pictures_calls_appropriate_methods">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_pictures_calls_appropriate_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                          <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                          <span class="n">av_get_paging_info_from_request</span><span class="p">,</span>
+                                                          <span class="n">av_find_pictures</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;123&#39;</span><span class="p">}</span>
+        <span class="n">av_get_paging_info_from_request</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;some_key&#39;</span><span class="p">:</span> <span class="s1">&#39;some_value&#39;</span><span class="p">}</span>
+
+        <span class="n">resp_object</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">get_group_pictures</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+        <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="s1">&#39;123&#39;</span><span class="p">},</span> <span class="n">page</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">items_per_page</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+        <span class="k">assert</span> <span class="s1">&#39;some_key&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.find_pictures&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_paging_info_from_request&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_pictures_handles_crash_in_find_pictures"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_pictures_handles_crash_in_find_pictures">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_pictures_handles_crash_in_find_pictures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                               <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                               <span class="n">av_get_paging_info_from_request</span><span class="p">,</span>
+                                                               <span class="n">av_find_pictures</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;123&#39;</span><span class="p">}</span>
+        <span class="n">av_get_paging_info_from_request</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;irish&#39;</span><span class="p">)</span>
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">side_effect</span> <span class="o">=</span> <span class="n">DocumentConfigurationError</span><span class="p">(</span><span class="s1">&#39;invalid number specified for items_per_page: irish&#39;</span><span class="p">)</span>
+
+        <span class="n">resp_object</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">get_group_pictures</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="s1">&#39;123&#39;</span><span class="p">},</span> <span class="n">page</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">items_per_page</span><span class="o">=</span><span class="s1">&#39;irish&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">409</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="s1">&#39;&quot;invalid number specified for items_per_page: irish&quot;&#39;</span></div>
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.find_pictures&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_paging_info_from_request&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_gallery_calls_appropriate_methods"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_gallery_calls_appropriate_methods">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_gallery_calls_appropriate_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                         <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                         <span class="n">av_get_paging_info_from_request</span><span class="p">,</span>
+                                                         <span class="n">av_find_pictures</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;123&#39;</span><span class="p">}</span>
+        <span class="n">av_get_paging_info_from_request</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;some_key&#39;</span><span class="p">:</span> <span class="s1">&#39;some_value&#39;</span><span class="p">}</span>
+
+        <span class="n">resp_object</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">get_group_gallery</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+        <span class="n">response_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="s1">&#39;123&#39;</span><span class="p">},</span> <span class="n">gallery_url_not_null</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">items_per_page</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+        <span class="k">assert</span> <span class="s1">&#39;some_key&#39;</span> <span class="ow">in</span> <span class="n">response_data_dict</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">response_data_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.find_pictures&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_paging_info_from_request&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_get_group_gallery_handles_crash_in_find_pictures"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_get_group_gallery_handles_crash_in_find_pictures">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_gallery_handles_crash_in_find_pictures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                              <span class="n">av_get_group_document</span><span class="p">,</span>
+                                                              <span class="n">av_get_paging_info_from_request</span><span class="p">,</span>
+                                                              <span class="n">av_find_pictures</span><span class="p">):</span>
+        <span class="n">av_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="s1">&#39;123&#39;</span><span class="p">}</span>
+        <span class="n">av_get_paging_info_from_request</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;irish&#39;</span><span class="p">)</span>
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">side_effect</span> <span class="o">=</span> <span class="n">DocumentConfigurationError</span><span class="p">(</span><span class="s1">&#39;invalid number specified for items_per_page: irish&#39;</span><span class="p">)</span>
+
+        <span class="n">resp_object</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">get_group_gallery</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+
+        <span class="n">av_find_pictures</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="s1">&#39;123&#39;</span><span class="p">},</span> <span class="n">gallery_url_not_null</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">items_per_page</span><span class="o">=</span><span class="s1">&#39;irish&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">409</span>
+        <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="s1">&#39;&quot;invalid number specified for items_per_page: irish&quot;&#39;</span></div>
+
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.save_document&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.doc_attribute_can_be_set&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.views.get_settings_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestViewsUnit.test_add_group_adds_a_group"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_add_group_adds_a_group">[docs]</a>    <span class="k">def</span> <span class="nf">test_add_group_adds_a_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                    <span class="n">av_get_settings_document</span><span class="p">,</span>
+                                    <span class="n">av_doc_attribute_can_be_set</span><span class="p">,</span>
+                                    <span class="n">av_save_document</span><span class="p">):</span>
+        <span class="n">av_get_settings_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;bread&#39;</span><span class="p">:</span> <span class="s1">&#39;pudding&#39;</span><span class="p">}</span>
+        
+        <span class="n">av_doc_attribute_can_be_set</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">test_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+            <span class="n">resp_object</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/api/v1/admin/groups&#39;</span><span class="p">,</span>
+                                 <span class="n">data</span><span class="o">=</span><span class="s1">&#39;{&quot;dog&quot;:&quot;food&quot;}&#39;</span><span class="p">,</span>
+                                 <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">})</span>
+            <span class="k">assert</span> <span class="n">resp_object</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span>
+
+            <span class="n">resp_data_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp_object</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">group_id</span> <span class="o">=</span> <span class="n">resp_data_dict</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+            <span class="n">group_dict_for_call</span> <span class="o">=</span> <span class="n">av</span><span class="o">.</span><span class="n">default_group_dict</span><span class="p">()</span>
+            <span class="n">group_dict_for_call</span><span class="p">[</span><span class="s1">&#39;dog&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;food&#39;</span>
+            <span class="n">group_dict_for_call</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">group_id</span>
+
+            <span class="n">av_get_settings_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">()</span>
+            <span class="n">av_doc_attribute_can_be_set</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s1">&#39;dog&#39;</span><span class="p">)</span>
+
+            <span class="n">group_save_call</span> <span class="o">=</span> <span class="n">call</span><span class="p">(</span><span class="n">group_dict_for_call</span><span class="p">)</span>
+            <span class="n">settings_save_call</span> <span class="o">=</span> <span class="n">call</span><span class="p">({</span><span class="s1">&#39;bread&#39;</span><span class="p">:</span> <span class="s1">&#39;pudding&#39;</span><span class="p">,</span> <span class="s1">&#39;current_group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">})</span>
+            <span class="n">av_save_document</span><span class="o">.</span><span class="n">assert_has_calls</span><span class="p">([</span><span class="n">group_save_call</span><span class="p">,</span> <span class="n">settings_save_call</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="TestViewsUnit.test_doc_attribute_can_be_set_works_for_normal_and_forbidden_keys"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsUnit.test_doc_attribute_can_be_set_works_for_normal_and_forbidden_keys">[docs]</a>    <span class="k">def</span> <span class="nf">test_doc_attribute_can_be_set_works_for_normal_and_forbidden_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">av</span><span class="o">.</span><span class="n">doc_attribute_can_be_set</span><span class="p">(</span><span class="s1">&#39;lester&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">av</span><span class="o">.</span><span class="n">doc_attribute_can_be_set</span><span class="p">(</span><span class="s1">&#39;_id&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">av</span><span class="o">.</span><span class="n">doc_attribute_can_be_set</span><span class="p">(</span><span class="s1">&#39;_rev&#39;</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="TestViewsIntegration"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_views.TestViewsIntegration">[docs]</a><span class="k">class</span> <span class="nc">TestViewsIntegration</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+<span class="c1"># TODO this will need an integration test because that gallery_url_not_null is a little special</span>
+<span class="c1"># @admin.route(&#39;/groups/&lt;group_id&gt;/gallery&#39;, methods=[&#39;GET&#39;])</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

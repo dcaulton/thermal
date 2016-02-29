@@ -18,7 +18,16 @@ admin = Blueprint('admin', __name__)
 @admin.route('/')
 def index():
     '''
+    * one thing
+    * another thing
+
     Returns a top level index of the admin views
+    :param name: The name to use.
+    :type name: str.
+    :param state: Current state to be in.
+    :type state: bool.
+    :returns:  int -- the return code.
+    :raises: AttributeError, KeyError
     '''
     url_base = get_url_base()
     top_level_links = {

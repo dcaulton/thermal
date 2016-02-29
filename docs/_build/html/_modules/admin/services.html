@@ -1,0 +1,342 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>admin.services &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for admin.services</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="kn">import</span> <span class="nn">boto</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">current_app</span><span class="p">,</span> <span class="n">url_for</span>
+<span class="kn">from</span> <span class="nn">flask.ext.mail</span> <span class="kn">import</span> <span class="n">Message</span>
+
+<span class="kn">from</span> <span class="nn">picture.services</span> <span class="kn">import</span> <span class="n">find_pictures</span><span class="p">,</span> <span class="n">build_picture_path</span><span class="p">,</span> <span class="n">build_picture_name</span><span class="p">,</span> <span class="n">update_picture_document</span>
+<span class="kn">from</span> <span class="nn">thermal.appmodule</span> <span class="kn">import</span> <span class="n">mail</span>
+<span class="kn">from</span> <span class="nn">thermal.exceptions</span> <span class="kn">import</span> <span class="n">DocumentConfigurationError</span><span class="p">,</span> <span class="n">NotFoundError</span>
+<span class="kn">from</span> <span class="nn">thermal.utils</span> <span class="kn">import</span> <span class="n">get_documents_from_criteria</span><span class="p">,</span> <span class="n">get_url_base</span><span class="p">,</span> <span class="n">dynamically_calculated_attributes</span>
+
+
+<div class="viewcode-block" id="get_settings_document"><a class="viewcode-back" href="../../admin.html#admin.services.get_settings_document">[docs]</a><span class="k">def</span> <span class="nf">get_settings_document</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fetches the settings document (a singleton)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">map_fun</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;function(doc) {</span>
+<span class="s1">        if (doc.type == &#39;settings&#39;)</span>
+<span class="s1">            emit(doc._id, doc);</span>
+<span class="s1">    }&#39;&#39;&#39;</span>
+    <span class="n">view_result</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">map_fun</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">view_result</span><span class="o">.</span><span class="n">total_rows</span><span class="p">:</span>
+        <span class="n">settings_dict</span> <span class="o">=</span> <span class="n">view_result</span><span class="o">.</span><span class="n">rows</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">settings_dict</span> <span class="o">=</span> <span class="n">create_default_settings_and_group_documents</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">settings_dict</span></div>
+
+
+<div class="viewcode-block" id="save_document"><a class="viewcode-back" href="../../admin.html#admin.services.save_document">[docs]</a><span class="k">def</span> <span class="nf">save_document</span><span class="p">(</span><span class="n">document_in</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Saves any document</span>
+<span class="sd">    Gets doc id from the _id field</span>
+<span class="sd">    Has safeguards to avoid changing document type</span>
+<span class="sd">    Has safeguards to avoid saving derived properties</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">the_id</span> <span class="o">=</span> <span class="n">document_in</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">the_id</span> <span class="ow">in</span> <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">:</span>
+        <span class="n">existing_document</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">existing_document</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">document_in</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">DocumentConfigurationError</span><span class="p">(</span><span class="s1">&#39;attempting to change the document type for document {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">the_id</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">dca</span> <span class="ow">in</span> <span class="n">dynamically_calculated_attributes</span><span class="p">:</span>  <span class="c1"># remove these properties, they are generated on the fly every retrieve</span>
+        <span class="k">if</span> <span class="n">dca</span> <span class="ow">in</span> <span class="n">document_in</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">document_in</span><span class="p">[</span><span class="n">dca</span><span class="p">]</span>
+    <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">document_in</span></div>
+
+
+<div class="viewcode-block" id="get_group_document"><a class="viewcode-back" href="../../admin.html#admin.services.get_group_document">[docs]</a><span class="k">def</span> <span class="nf">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fetches the group document specified by the requested id</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">group_id</span> <span class="o">==</span> <span class="s1">&#39;current&#39;</span><span class="p">:</span>
+        <span class="n">settings_dict</span> <span class="o">=</span> <span class="n">get_settings_document</span><span class="p">()</span>
+        <span class="n">group_id</span> <span class="o">=</span> <span class="n">settings_dict</span><span class="p">[</span><span class="s1">&#39;current_group_id&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">group_id</span> <span class="ow">in</span> <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">:</span>  <span class="c1"># TODO this is fragile, make into one if using item_exists and get_documents_by_criteria</span>
+        <span class="n">group_dict</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">group_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;group&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">group_dict</span>
+    <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="s1">&#39;no group document found for id {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">group_id</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="get_group_document_with_child_objects"><a class="viewcode-back" href="../../admin.html#admin.services.get_group_document_with_child_objects">[docs]</a><span class="k">def</span> <span class="nf">get_group_document_with_child_objects</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fetches the group document specified by the requested id</span>
+<span class="sd">    Also provides links to child photo objects in a child array called snap_list</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">group_dict</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;snap_list&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_picture_objects_for_group</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">group_dict</span></div>
+
+
+<div class="viewcode-block" id="get_picture_objects_for_group"><a class="viewcode-back" href="../../admin.html#admin.services.get_picture_objects_for_group">[docs]</a><span class="k">def</span> <span class="nf">get_picture_objects_for_group</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>  <span class="c1"># TODO add testing</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Gets all the pictures belonging to a group, groups them in an array under the snaps they belong to</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">url_base</span> <span class="o">=</span> <span class="n">get_url_base</span><span class="p">()</span>
+    <span class="n">picture_links</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">args_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">snaps_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">snaps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">args_dict</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;picture&#39;</span>
+    <span class="n">args_dict</span><span class="p">[</span><span class="s1">&#39;group_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">group_id</span>
+    <span class="n">pictures_dict</span> <span class="o">=</span> <span class="n">get_documents_from_criteria</span><span class="p">(</span><span class="n">args_dict</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">picture_id</span> <span class="ow">in</span> <span class="n">pictures_dict</span><span class="p">:</span>
+        <span class="n">picture_link</span> <span class="o">=</span> <span class="n">url_base</span> <span class="o">+</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;picture.get_picture&#39;</span><span class="p">,</span> <span class="n">picture_id</span><span class="o">=</span><span class="n">picture_id</span><span class="p">)</span>
+        <span class="n">snap_id</span> <span class="o">=</span>  <span class="n">pictures_dict</span><span class="p">[</span><span class="n">picture_id</span><span class="p">][</span><span class="s1">&#39;snap_id&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">snap_id</span> <span class="ow">in</span> <span class="n">snaps_dict</span><span class="p">:</span>
+            <span class="n">snaps_dict</span><span class="p">[</span><span class="n">snap_id</span><span class="p">][</span><span class="s1">&#39;picture_objects&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pictures_dict</span><span class="p">[</span><span class="n">picture_id</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">snaps_dict</span><span class="p">[</span><span class="n">snap_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="n">pictures_dict</span><span class="p">[</span><span class="n">picture_id</span><span class="p">][</span><span class="s1">&#39;created&#39;</span><span class="p">],</span>
+                                   <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">snap_id</span><span class="p">,</span>
+                                   <span class="s1">&#39;picture_objects&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">pictures_dict</span><span class="p">[</span><span class="n">picture_id</span><span class="p">]]}</span>
+    <span class="n">snaps_array</span> <span class="o">=</span> <span class="n">snaps_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="n">snaps_array</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;created&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">snaps_array</span></div>
+
+
+<div class="viewcode-block" id="get_group_document_with_child_links"><a class="viewcode-back" href="../../admin.html#admin.services.get_group_document_with_child_links">[docs]</a><span class="k">def</span> <span class="nf">get_group_document_with_child_links</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Fetches a group document, adds a picture_links array to it which has links to all the photos for that group</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">group_dict</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;picture_links&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_picture_links_for_group</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">group_dict</span></div>
+
+
+<div class="viewcode-block" id="get_picture_links_for_group"><a class="viewcode-back" href="../../admin.html#admin.services.get_picture_links_for_group">[docs]</a><span class="k">def</span> <span class="nf">get_picture_links_for_group</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>  <span class="c1"># TODO add testing</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Gets all the pictures belonging to a given group id</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># TODO sort these ascending on time</span>
+    <span class="n">url_base</span> <span class="o">=</span> <span class="n">get_url_base</span><span class="p">()</span>
+    <span class="n">picture_links</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">args_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">args_dict</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;picture&#39;</span>
+    <span class="n">args_dict</span><span class="p">[</span><span class="s1">&#39;group_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">group_id</span>
+    <span class="n">pictures_dict</span> <span class="o">=</span> <span class="n">get_documents_from_criteria</span><span class="p">(</span><span class="n">args_dict</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">picture_id</span> <span class="ow">in</span> <span class="n">pictures_dict</span><span class="p">:</span>
+        <span class="n">picture_link</span> <span class="o">=</span> <span class="n">url_base</span> <span class="o">+</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;picture.get_picture&#39;</span><span class="p">,</span> <span class="n">picture_id</span><span class="o">=</span><span class="n">picture_id</span><span class="p">)</span>
+        <span class="n">picture_links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">picture_link</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">picture_links</span></div>
+
+
+<div class="viewcode-block" id="create_default_settings_and_group_documents"><a class="viewcode-back" href="../../admin.html#admin.services.create_default_settings_and_group_documents">[docs]</a><span class="k">def</span> <span class="nf">create_default_settings_and_group_documents</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates a settings object and group object with their default settings.  Saves both objects.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">group_dict</span> <span class="o">=</span> <span class="n">default_group_dict</span><span class="p">()</span>
+    <span class="n">settings_dict</span> <span class="o">=</span> <span class="n">default_settings_dict</span><span class="p">(</span><span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">])</span>
+    <span class="n">save_document</span><span class="p">(</span><span class="n">settings_dict</span><span class="p">)</span>
+    <span class="n">save_document</span><span class="p">(</span><span class="n">group_dict</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">settings_dict</span></div>
+
+
+<div class="viewcode-block" id="default_group_dict"><a class="viewcode-back" href="../../admin.html#admin.services.default_group_dict">[docs]</a><span class="k">def</span> <span class="nf">default_group_dict</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrapper method returning a dict with the default group settings.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">group_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="n">group_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">group_id</span><span class="p">),</span>
+                  <span class="s1">&#39;merge_type&#39;</span><span class="p">:</span> <span class="s1">&#39;colorize_screen&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;retake_picam_pics_when_dark&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+                  <span class="s1">&#39;use_gallery&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+                  <span class="s1">&#39;email_recipients&#39;</span><span class="p">:</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;send_email_contents&#39;</span><span class="p">:</span> <span class="s1">&#39;merge&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;colorize_range_low&#39;</span><span class="p">:</span> <span class="s1">&#39;#000080&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;colorize_range_high&#39;</span><span class="p">:</span> <span class="s1">&#39;#FFD700&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;picam_brightness_threshold&#39;</span><span class="p">:</span> <span class="s1">&#39;5.0&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;capture_type&#39;</span><span class="p">:</span> <span class="s1">&#39;both_still&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;image_sources_to_delete&#39;</span><span class="p">:</span> <span class="s1">&#39;analysis&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;use_gallery&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span>
+                  <span class="s1">&#39;image_sources_for_gallery&#39;</span><span class="p">:</span> <span class="s1">&#39;merge&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;button_active&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+                  <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;group&#39;</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">group_dict</span></div>
+
+
+<div class="viewcode-block" id="default_settings_dict"><a class="viewcode-back" href="../../admin.html#admin.services.default_settings_dict">[docs]</a><span class="k">def</span> <span class="nf">default_settings_dict</span><span class="p">(</span><span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Wrapper method returning a dict with the default values settings.</span>
+<span class="sd">    Takes the group id, the only useful data to speak of in this object.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">settings_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="n">settings_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">settings_id</span><span class="p">),</span>
+                     <span class="s1">&#39;current_group_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">group_id</span><span class="p">),</span>
+                     <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;settings&#39;</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">settings_dict</span></div>
+
+
+<span class="c1"># TODO reschedule if we don&#39;t have internet (actually that&#39;s better for the task to do)</span>
+<div class="viewcode-block" id="upload_files_to_s3"><a class="viewcode-back" href="../../admin.html#admin.services.upload_files_to_s3">[docs]</a><span class="k">def</span> <span class="nf">upload_files_to_s3</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Uploads pictures for a given snap to s3</span>
+<span class="sd">    Takes a snap id and group id, if the group is configured to use a gallery it looks for all pictures whose</span>
+<span class="sd">      values for source matches those are specified in the group to use for the gallery</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">group_document</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;use_gallery&#39;</span><span class="p">]:</span>
+        <span class="n">image_sources_for_gallery</span> <span class="o">=</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;image_sources_for_gallery&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">pictures</span> <span class="o">=</span> <span class="n">find_pictures</span><span class="p">({</span><span class="s1">&#39;snap_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)})</span>
+        <span class="c1"># TODO the following assumes s3 and internet are working fine, make it more robust, with py.test tests too</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">boto</span><span class="o">.</span><span class="n">connect_s3</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;S3_ACCESS_KEY_ID&#39;</span><span class="p">],</span> <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;S3_SECRET_ACCESS_KEY&#39;</span><span class="p">])</span>
+        <span class="n">bucket</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">get_bucket</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;S3_BUCKET_NAME&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">pic_id</span> <span class="ow">in</span> <span class="n">pictures</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">image_sources_for_gallery</span><span class="p">:</span>
+                <span class="n">destination</span> <span class="o">=</span> <span class="n">boto</span><span class="o">.</span><span class="n">s3</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">Key</span><span class="p">(</span><span class="n">bucket</span><span class="p">)</span>
+                <span class="n">destination</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;filename&#39;</span><span class="p">]</span>
+                <span class="n">destination</span><span class="o">.</span><span class="n">set_contents_from_filename</span><span class="p">(</span><span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;uri&#39;</span><span class="p">])</span>
+                <span class="n">destination</span><span class="o">.</span><span class="n">make_public</span><span class="p">()</span>
+                <span class="n">pic_gallery_url</span> <span class="o">=</span> <span class="n">destination</span><span class="o">.</span><span class="n">generate_url</span><span class="p">(</span><span class="n">expires_in</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">query_auth</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+                <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;gallery_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pic_gallery_url</span>
+                <span class="n">update_picture_document</span><span class="p">(</span><span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">])</span></div>
+
+
+<span class="c1"># TODO add tests related to image_sources_to_delete</span>
+<div class="viewcode-block" id="clean_up_files"><a class="viewcode-back" href="../../admin.html#admin.services.clean_up_files">[docs]</a><span class="k">def</span> <span class="nf">clean_up_files</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Deletes all picture files for a given snap if those pictures sources are designated in the group to be deleted after processing</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">group_document</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;image_sources_to_delete&#39;</span> <span class="ow">in</span> <span class="n">group_document</span><span class="p">:</span>
+        <span class="n">image_sources_to_delete</span> <span class="o">=</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;image_sources_to_delete&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+    <span class="n">pictures</span> <span class="o">=</span> <span class="n">find_pictures</span><span class="p">({</span><span class="s1">&#39;snap_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)})</span>
+    <span class="k">for</span> <span class="n">pic_id</span> <span class="ow">in</span> <span class="n">pictures</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">image_sources_to_delete</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;uri&#39;</span><span class="p">])</span>
+            <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;uri&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;deleted&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;uri&#39;</span><span class="p">],</span> <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;PICTURE_SAVE_DIRECTORY&#39;</span><span class="p">])</span>
+            <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;uri&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;PICTURE_SAVE_DIRECTORY&#39;</span><span class="p">],</span> <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;filename&#39;</span><span class="p">])</span>
+        <span class="n">update_picture_document</span><span class="p">(</span><span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">])</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;PICTURE_SAVE_DIRECTORY&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)))</span></div>
+
+
+<span class="c1"># TODO add unit tests</span>
+<div class="viewcode-block" id="send_mail"><a class="viewcode-back" href="../../admin.html#admin.services.send_mail">[docs]</a><span class="k">def</span> <span class="nf">send_mail</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Sends an email to users specified in the group, with all the images for a supplied snap</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">group_document</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;email_recipients&#39;</span> <span class="ow">in</span> <span class="n">group_document</span> <span class="ow">and</span>
+            <span class="s1">&#39;send_email_contents&#39;</span> <span class="ow">in</span> <span class="n">group_document</span> <span class="ow">and</span>
+            <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;email_recipients&#39;</span><span class="p">]</span> <span class="ow">and</span>
+            <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;send_email_contents&#39;</span><span class="p">]):</span>
+        <span class="n">pics_have_been_attached</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="n">subject</span> <span class="o">=</span> <span class="s2">&quot;pictures from snap {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)</span>
+        <span class="n">recipients</span> <span class="o">=</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;email_recipients&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">sender_addr</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;MAIL_USERNAME&#39;</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">Message</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">sender</span><span class="o">=</span><span class="n">sender_addr</span><span class="p">,</span> <span class="n">recipients</span><span class="o">=</span><span class="n">recipients</span><span class="p">)</span>
+        <span class="n">msg</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;this is the image for snap id {0}</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)</span>
+
+        <span class="n">pictures</span> <span class="o">=</span> <span class="n">find_pictures</span><span class="p">({</span><span class="s1">&#39;snap_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)})</span>
+        <span class="n">picture_types</span> <span class="o">=</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;send_email_contents&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pic_id</span> <span class="ow">in</span> <span class="n">pictures</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">pictures</span><span class="p">[</span><span class="n">pic_id</span><span class="p">][</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">picture_types</span><span class="p">:</span>
+                <span class="n">pic_name</span> <span class="o">=</span> <span class="n">build_picture_name</span><span class="p">(</span><span class="n">pic_id</span><span class="p">)</span>
+                <span class="n">pic_path</span> <span class="o">=</span> <span class="n">build_picture_path</span><span class="p">(</span><span class="n">picture_name</span><span class="o">=</span><span class="n">pic_name</span><span class="p">,</span> <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">)</span>
+                <span class="k">with</span> <span class="n">current_app</span><span class="o">.</span><span class="n">open_resource</span><span class="p">(</span><span class="n">pic_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                    <span class="n">msg</span><span class="o">.</span><span class="n">attach</span><span class="p">(</span><span class="n">pic_name</span><span class="p">,</span> <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+                    <span class="n">pics_have_been_attached</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="n">pics_have_been_attached</span><span class="p">:</span>
+            <span class="n">mail</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO add tests</span>
+<div class="viewcode-block" id="find_groups"><a class="viewcode-back" href="../../admin.html#admin.services.find_groups">[docs]</a><span class="k">def</span> <span class="nf">find_groups</span><span class="p">(</span><span class="n">args_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Retrieves a dict of all groups.  Key is the group id, value is the dict for the group.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">args_dict</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;group&#39;</span>
+    <span class="n">groups_dict</span> <span class="o">=</span> <span class="n">get_documents_from_criteria</span><span class="p">(</span><span class="n">args_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">groups_dict</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

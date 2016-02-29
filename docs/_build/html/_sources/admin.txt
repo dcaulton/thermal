@@ -31,7 +31,7 @@ admin.views module
 ------------------
 
 .. automodule:: admin.views
-    :members:
+    :members: 
     :undoc-members:
     :show-inheritance:
 

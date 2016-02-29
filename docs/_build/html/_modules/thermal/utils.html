@@ -38,12 +38,14 @@
           <div class="body" role="main">
             
   <h1>Source code for thermal.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">current_app</span><span class="p">,</span> <span class="n">request</span>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">current_app</span><span class="p">,</span> <span class="n">request</span>
 
 <span class="kn">from</span> <span class="nn">thermal.exceptions</span> <span class="kn">import</span> <span class="n">DocumentConfigurationError</span>
 
 
-<span class="n">virtual_properties</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current_group_link&#39;</span><span class="p">,</span> <span class="s1">&#39;picture_links&#39;</span><span class="p">,</span> <span class="s1">&#39;snap_list&#39;</span><span class="p">]</span>
+<span class="n">dynamically_calculated_attributes</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;current_group_link&#39;</span><span class="p">,</span> <span class="s1">&#39;picture_links&#39;</span><span class="p">,</span> <span class="s1">&#39;snap_list&#39;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="get_documents_from_criteria"><a class="viewcode-back" href="../../thermal.html#thermal.utils.get_documents_from_criteria">[docs]</a><span class="k">def</span> <span class="nf">get_documents_from_criteria</span><span class="p">(</span><span class="n">args_dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -104,6 +106,15 @@
         <span class="k">if</span> <span class="n">group_dict</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">item_type</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">True</span>
     <span class="k">return</span> <span class="bp">False</span></div>
+
+<span class="c1"># Wrote this then commented out because it didn&#39;t save any complexity or lines of code, let&#39;s see if it ends up being needed</span>
+<span class="c1"># def sort_dict_by_child_dict_value_field(dict_in, sort_by):  # TODO add testing</span>
+<span class="c1">#     &#39;&#39;&#39;</span>
+<span class="c1">#     Takes a dict, returns an ordered dict, ordered by the sort_by field from each value in the dict.</span>
+<span class="c1">#     It&#39;s assumed that the incoming dict has values which are dicts, and the child field is sortable.</span>
+<span class="c1">#     &#39;&#39;&#39;</span>
+<span class="c1">#     ordered_dict = OrderedDict(sorted(dict_in.items(), key=lambda t: t[1][sort_by]))</span>
+<span class="c1">#     return ordered_dict</span>
 </pre></div>
 
           </div>

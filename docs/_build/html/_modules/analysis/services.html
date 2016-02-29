@@ -1,0 +1,285 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>analysis.services &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for analysis.services</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">current_app</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFilter</span><span class="p">,</span> <span class="n">ImageStat</span><span class="p">,</span> <span class="n">ImageOps</span>
+
+<span class="kn">from</span> <span class="nn">admin.services</span> <span class="kn">import</span> <span class="n">get_group_document</span>
+<span class="kn">from</span> <span class="nn">picture.services</span> <span class="kn">import</span> <span class="n">build_picture_path</span><span class="p">,</span> <span class="n">build_picture_name</span><span class="p">,</span> <span class="n">find_picture</span><span class="p">,</span> <span class="n">picture_exists</span><span class="p">,</span> <span class="n">save_picture_document</span>
+<span class="kn">from</span> <span class="nn">thermal.appmodule</span> <span class="kn">import</span> <span class="n">celery</span>
+
+
+<div class="viewcode-block" id="check_if_image_is_too_dark"><a class="viewcode-back" href="../../analysis.html#analysis.services.check_if_image_is_too_dark">[docs]</a><span class="k">def</span> <span class="nf">check_if_image_is_too_dark</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">brightness_threshold</span><span class="p">):</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="s1">&#39;L&#39;</span><span class="p">)</span>
+    <span class="n">stat</span> <span class="o">=</span> <span class="n">ImageStat</span><span class="o">.</span><span class="n">Stat</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">avg_pixel_value</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">mean</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">avg_pixel_value</span> <span class="o">&lt;</span> <span class="n">brightness_threshold</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span></div>
+
+
+<span class="nd">@celery.task</span>
+<span class="k">def</span> <span class="nf">edge_detect_chained</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">img_id_in</span><span class="p">,</span> <span class="n">alternate_img_id_in</span><span class="p">,</span> <span class="n">auto_id</span><span class="p">,</span> <span class="n">wide_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tight_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">edge_detect</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">alternate_img_id_in</span><span class="p">,</span> <span class="n">auto_id</span><span class="p">,</span> <span class="n">wide_id</span><span class="p">,</span> <span class="n">tight_id</span><span class="p">)</span>
+
+
+<span class="nd">@celery.task</span>
+<span class="k">def</span> <span class="nf">edge_detect_task</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">alternate_img_id_in</span><span class="p">,</span> <span class="n">auto_id</span><span class="p">,</span> <span class="n">wide_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tight_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">edge_detect</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">alternate_img_id_in</span><span class="p">,</span> <span class="n">auto_id</span><span class="p">,</span> <span class="n">wide_id</span><span class="p">,</span> <span class="n">tight_id</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="edge_detect"><a class="viewcode-back" href="../../analysis.html#analysis.services.edge_detect">[docs]</a><span class="k">def</span> <span class="nf">edge_detect</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">alternate_img_id_in</span><span class="p">,</span> <span class="n">auto_id</span><span class="p">,</span> <span class="n">wide_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tight_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">picture_exists</span><span class="p">(</span><span class="n">alternate_img_id_in</span><span class="p">):</span>
+        <span class="n">img_id_in</span> <span class="o">=</span> <span class="n">alternate_img_id_in</span>
+    <span class="n">pic_dict_in</span> <span class="o">=</span> <span class="n">find_picture</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">)</span>
+    <span class="n">image_in</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">])</span>
+    <span class="n">gray</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">image_in</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">)</span>
+    <span class="n">blurred</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">GaussianBlur</span><span class="p">(</span><span class="n">gray</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># apply Canny edge detection using a wide threshold, tight</span>
+    <span class="c1"># threshold, and automatically determined threshold</span>
+    <span class="n">auto</span> <span class="o">=</span> <span class="n">auto_canny</span><span class="p">(</span><span class="n">blurred</span><span class="p">)</span>
+    <span class="n">auto</span> <span class="o">=</span> <span class="n">auto_canny</span><span class="p">(</span><span class="n">image_in</span><span class="p">)</span>
+    <span class="n">auto_filename</span> <span class="o">=</span> <span class="n">build_picture_name</span><span class="p">(</span><span class="n">auto_id</span><span class="p">)</span>
+    <span class="n">auto_path_out</span> <span class="o">=</span> <span class="n">build_picture_path</span><span class="p">(</span><span class="n">picture_name</span><span class="o">=</span><span class="n">auto_filename</span><span class="p">,</span> <span class="n">snap_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">])</span>
+    <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">auto_path_out</span><span class="p">,</span> <span class="n">auto</span><span class="p">)</span>
+    <span class="n">auto_dict_out</span> <span class="o">=</span> <span class="n">make_edge_picture_dict</span><span class="p">(</span><span class="n">pic_id</span><span class="o">=</span><span class="n">auto_id</span><span class="p">,</span> <span class="n">pic_filename</span><span class="o">=</span><span class="n">auto_filename</span><span class="p">,</span> <span class="n">pic_path</span><span class="o">=</span><span class="n">auto_path_out</span><span class="p">,</span>
+                                           <span class="n">snap_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">],</span> <span class="n">group_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;group_id&#39;</span><span class="p">],</span>
+                                           <span class="n">source_pic_id</span><span class="o">=</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">edge_detect_type</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+    <span class="n">save_picture_document</span><span class="p">(</span><span class="n">auto_dict_out</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">wide_id</span><span class="p">:</span>
+        <span class="n">wide</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">Canny</span><span class="p">(</span><span class="n">blurred</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+        <span class="n">wide_filename</span> <span class="o">=</span> <span class="n">build_picture_name</span><span class="p">(</span><span class="n">wide_id</span><span class="p">)</span>
+        <span class="n">wide_path_out</span> <span class="o">=</span> <span class="n">build_picture_path</span><span class="p">(</span><span class="n">picture_name</span><span class="o">=</span><span class="n">wide_filename</span><span class="p">,</span> <span class="n">snap_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">])</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">wide_path_out</span><span class="p">,</span> <span class="n">wide</span><span class="p">)</span>
+        <span class="n">wide_dict_out</span> <span class="o">=</span> <span class="n">make_edge_picture_dict</span><span class="p">(</span><span class="n">pic_id</span><span class="o">=</span><span class="n">wide_id</span><span class="p">,</span> <span class="n">pic_filename</span><span class="o">=</span><span class="n">wide_filename</span><span class="p">,</span> <span class="n">pic_path</span><span class="o">=</span><span class="n">wide_path_out</span><span class="p">,</span>
+                                               <span class="n">snap_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">],</span> <span class="n">group_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;group_id&#39;</span><span class="p">],</span>
+                                               <span class="n">source_pic_id</span><span class="o">=</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">edge_detect_type</span><span class="o">=</span><span class="s1">&#39;wide&#39;</span><span class="p">)</span>
+        <span class="n">save_picture_document</span><span class="p">(</span><span class="n">wide_dict_out</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tight_id</span><span class="p">:</span>
+        <span class="n">tight</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">Canny</span><span class="p">(</span><span class="n">blurred</span><span class="p">,</span> <span class="mi">225</span><span class="p">,</span> <span class="mi">250</span><span class="p">)</span>
+        <span class="n">tight_filename</span> <span class="o">=</span> <span class="n">build_picture_name</span><span class="p">(</span><span class="n">tight_id</span><span class="p">)</span>
+        <span class="n">tight_path_out</span> <span class="o">=</span> <span class="n">build_picture_path</span><span class="p">(</span><span class="n">picture_name</span><span class="o">=</span><span class="n">tight_filename</span><span class="p">,</span> <span class="n">snap_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">])</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imwrite</span><span class="p">(</span><span class="n">tight_path_out</span><span class="p">,</span> <span class="n">tight</span><span class="p">)</span>
+        <span class="n">tight_dict_out</span> <span class="o">=</span> <span class="n">make_edge_picture_dict</span><span class="p">(</span><span class="n">pic_id</span><span class="o">=</span><span class="n">tight_id</span><span class="p">,</span> <span class="n">pic_filename</span><span class="o">=</span><span class="n">tight_filename</span><span class="p">,</span> <span class="n">pic_path</span><span class="o">=</span><span class="n">tight_path_out</span><span class="p">,</span>
+                                                <span class="n">snap_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">],</span> <span class="n">group_id</span><span class="o">=</span><span class="n">pic_dict_in</span><span class="p">[</span><span class="s1">&#39;group_id&#39;</span><span class="p">],</span>
+                                                <span class="n">source_pic_id</span><span class="o">=</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">edge_detect_type</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+        <span class="n">save_picture_document</span><span class="p">(</span><span class="n">tight_dict_out</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="auto_canny"><a class="viewcode-back" href="../../analysis.html#analysis.services.auto_canny">[docs]</a><span class="k">def</span> <span class="nf">auto_canny</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.33</span><span class="p">):</span>
+    <span class="c1"># compute the median of the single channel pixel intensities</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="c1"># apply automatic Canny edge detection using the computed median</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span><span class="p">))</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">*</span> <span class="n">v</span><span class="p">))</span>
+    <span class="n">edged</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">Canny</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+    <span class="c1"># return the edged image</span>
+    <span class="k">return</span> <span class="n">edged</span></div>
+
+
+<div class="viewcode-block" id="make_edge_picture_dict"><a class="viewcode-back" href="../../analysis.html#analysis.services.make_edge_picture_dict">[docs]</a><span class="k">def</span> <span class="nf">make_edge_picture_dict</span><span class="p">(</span><span class="n">pic_id</span><span class="p">,</span> <span class="n">pic_filename</span><span class="p">,</span> <span class="n">pic_path</span><span class="p">,</span> <span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">source_pic_id</span><span class="p">,</span> <span class="n">edge_detect_type</span><span class="p">):</span>
+    <span class="n">img_dict_out</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">pic_id</span><span class="p">),</span>
+        <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;picture&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;analysis&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source_image_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">source_pic_id</span><span class="p">),</span>
+        <span class="s1">&#39;analysis_type&#39;</span><span class="p">:</span> <span class="s1">&#39;edge detect&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;edge_detect_type&#39;</span><span class="p">:</span> <span class="n">edge_detect_type</span><span class="p">,</span>
+        <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">,</span>
+        <span class="s1">&#39;snap_id&#39;</span><span class="p">:</span> <span class="n">snap_id</span><span class="p">,</span>
+        <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">pic_filename</span><span class="p">,</span>
+        <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="n">pic_path</span><span class="p">,</span>
+        <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">img_dict_out</span></div>
+
+
+<span class="nd">@celery.task</span>
+<span class="k">def</span> <span class="nf">scale_image_chained</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">img_id_in</span><span class="p">,</span> <span class="n">img_id_out</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">scale_image</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">img_id_out</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="nd">@celery.task</span>
+<span class="k">def</span> <span class="nf">scale_image_task</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">img_id_out</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">scale_image</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">img_id_out</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="scale_image"><a class="viewcode-back" href="../../analysis.html#analysis.services.scale_image">[docs]</a><span class="k">def</span> <span class="nf">scale_image</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">img_id_out</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># only works on black and white images for now</span>
+    <span class="c1"># that should only be a problem for images that aren&#39;t of type &#39;L&#39;.  Add this test</span>
+    <span class="k">if</span> <span class="s1">&#39;scale_type&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">scale_type</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;colorize_bicubic&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">scale_type</span> <span class="o">=</span> <span class="s1">&#39;colorize_bicubic&#39;</span>
+    <span class="c1"># TODO add a test to show that scale_type makes it in through kwargs</span>
+    <span class="n">group_document</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="n">group_id</span> <span class="o">=</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+    <span class="n">img_dict_in</span> <span class="o">=</span> <span class="n">find_picture</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">))</span>
+    <span class="n">img_filename_in</span> <span class="o">=</span> <span class="n">img_dict_in</span><span class="p">[</span><span class="s1">&#39;filename&#39;</span><span class="p">]</span>
+    <span class="n">img_filename_out</span> <span class="o">=</span> <span class="n">build_picture_name</span><span class="p">(</span><span class="n">img_id_out</span><span class="p">)</span>
+    <span class="n">pic_path_in</span> <span class="o">=</span> <span class="n">img_dict_in</span><span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">]</span>
+    <span class="n">pic_path_out</span> <span class="o">=</span> <span class="n">build_picture_path</span><span class="p">(</span><span class="n">picture_name</span><span class="o">=</span><span class="n">img_filename_out</span><span class="p">,</span> <span class="n">snap_id</span><span class="o">=</span><span class="n">img_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">])</span>
+
+    <span class="n">image_in</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">pic_path_in</span><span class="p">)</span>
+
+    <span class="c1"># scale image</span>
+    <span class="n">scale_method</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">BICUBIC</span>
+    <span class="k">if</span> <span class="n">scale_type</span> <span class="ow">and</span> <span class="s1">&#39;bilinear&#39;</span> <span class="ow">in</span> <span class="n">scale_type</span><span class="p">:</span>
+        <span class="n">scale_method</span> <span class="o">==</span> <span class="n">Image</span><span class="o">.</span><span class="n">BILINEAR</span>
+    <span class="k">if</span> <span class="n">scale_type</span> <span class="ow">and</span> <span class="s1">&#39;antialias&#39;</span> <span class="ow">in</span> <span class="n">scale_type</span><span class="p">:</span>
+        <span class="n">scale_method</span> <span class="o">==</span> <span class="n">Image</span><span class="o">.</span><span class="n">ANTIALIAS</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;STILL_IMAGE_WIDTH&#39;</span><span class="p">]</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;STILL_IMAGE_HEIGHT&#39;</span><span class="p">]</span>
+    <span class="n">image_scaled</span> <span class="o">=</span> <span class="n">image_in</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span> <span class="n">scale_method</span><span class="p">)</span>
+
+    <span class="c1"># TODO: below is terribly inefficient.  After I look at PIL internals I should be able to do better</span>
+    <span class="c1"># blur image</span>
+    <span class="k">if</span> <span class="n">scale_type</span> <span class="ow">and</span> <span class="s1">&#39;blur&#39;</span> <span class="ow">in</span> <span class="n">scale_type</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">):</span>
+            <span class="n">image_scaled</span> <span class="o">=</span> <span class="n">image_scaled</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">ImageFilter</span><span class="o">.</span><span class="n">BLUR</span><span class="p">)</span>
+
+    <span class="c1"># colorize image</span>
+    <span class="k">if</span> <span class="n">scale_type</span> <span class="ow">and</span> <span class="s1">&#39;colorize&#39;</span> <span class="ow">in</span> <span class="n">scale_type</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">colorize_range_low</span><span class="p">,</span> <span class="n">colorize_range_high</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;#000080&#39;</span><span class="p">,</span> <span class="s1">&#39;#FFD700&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;colorize_range_low&#39;</span> <span class="ow">in</span> <span class="n">group_document</span> <span class="ow">and</span> <span class="s1">&#39;colorize_range_high&#39;</span> <span class="ow">in</span> <span class="n">group_document</span><span class="p">:</span>
+            <span class="n">colorize_range_low</span> <span class="o">=</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;colorize_range_low&#39;</span><span class="p">]</span>
+            <span class="n">colorize_range_high</span> <span class="o">=</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;colorize_range_high&#39;</span><span class="p">]</span>
+        <span class="n">image_colorized</span> <span class="o">=</span> <span class="n">ImageOps</span><span class="o">.</span><span class="n">colorize</span><span class="p">(</span><span class="n">image_scaled</span><span class="p">,</span> <span class="n">colorize_range_low</span><span class="p">,</span> <span class="n">colorize_range_high</span><span class="p">)</span>
+        <span class="n">image_colorized</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">pic_path_out</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">image_scaled</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">pic_path_out</span><span class="p">)</span>
+
+    <span class="n">img_dict_out</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">img_id_out</span><span class="p">),</span>
+        <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;picture&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;analysis&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source_image_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">),</span>
+        <span class="s1">&#39;analysis_type&#39;</span><span class="p">:</span> <span class="n">scale_type</span><span class="p">,</span>
+        <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">,</span>
+        <span class="s1">&#39;snap_id&#39;</span><span class="p">:</span> <span class="n">img_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">img_filename_out</span><span class="p">,</span>
+        <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="n">pic_path_out</span><span class="p">,</span>
+        <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+    <span class="p">}</span>
+    <span class="n">save_picture_document</span><span class="p">(</span><span class="n">img_dict_out</span><span class="p">)</span></div>
+
+
+<span class="nd">@celery.task</span>
+<span class="k">def</span> <span class="nf">distort_image_chained</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">img_id_in</span><span class="p">,</span> <span class="n">img_id_out</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">distort_image_shepards_fixed</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">img_id_out</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="distort_image_shepards_fixed"><a class="viewcode-back" href="../../analysis.html#analysis.services.distort_image_shepards_fixed">[docs]</a><span class="k">def</span> <span class="nf">distort_image_shepards_fixed</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">,</span> <span class="n">img_id_out</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">group_document</span> <span class="o">=</span> <span class="n">get_group_document</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+    <span class="n">group_id</span> <span class="o">=</span> <span class="n">group_document</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+    <span class="n">img_dict_in</span> <span class="o">=</span> <span class="n">find_picture</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">))</span>
+    <span class="n">img_filename_out</span> <span class="o">=</span> <span class="n">build_picture_name</span><span class="p">(</span><span class="n">img_id_out</span><span class="p">)</span>
+    <span class="n">pic_path_in</span> <span class="o">=</span> <span class="n">img_dict_in</span><span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">]</span>
+    <span class="n">pic_path_out</span> <span class="o">=</span> <span class="n">build_picture_path</span><span class="p">(</span><span class="n">picture_name</span><span class="o">=</span><span class="n">img_filename_out</span><span class="p">,</span> <span class="n">snap_id</span><span class="o">=</span><span class="n">img_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">])</span>
+
+    <span class="n">command</span> <span class="o">=</span> <span class="s2">&quot;convert {0} -distort Shepards &#39;300,110 350,140  600,310 650,340&#39; {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pic_path_in</span><span class="p">,</span> <span class="n">pic_path_out</span><span class="p">)</span>
+
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+    <span class="n">img_dict_out</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">img_id_out</span><span class="p">),</span>
+        <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;picture&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;analysis&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;source_image_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">img_id_in</span><span class="p">),</span>
+        <span class="s1">&#39;analysis_type&#39;</span><span class="p">:</span> <span class="s1">&#39;distort&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">group_id</span><span class="p">,</span>
+        <span class="s1">&#39;snap_id&#39;</span><span class="p">:</span> <span class="n">img_dict_in</span><span class="p">[</span><span class="s1">&#39;snap_id&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">img_filename_out</span><span class="p">,</span>
+        <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="n">pic_path_out</span><span class="p">,</span>
+        <span class="s1">&#39;created&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span>
+    <span class="p">}</span>
+    <span class="n">save_picture_document</span><span class="p">(</span><span class="n">img_dict_out</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

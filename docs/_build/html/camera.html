@@ -93,14 +93,187 @@
 </dd></dl>
 
 </div>
-<div class="section" id="camera-services-module">
-<h2>camera.services module<a class="headerlink" href="#camera-services-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-camera.services">
+<span id="camera-services-module"></span><h2>camera.services module<a class="headerlink" href="#module-camera.services" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="camera.services.get_brightness_threshold">
+<code class="descclassname">camera.services.</code><code class="descname">get_brightness_threshold</code><span class="sig-paren">(</span><em>group_document</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/services.html#get_brightness_threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.services.get_brightness_threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles getting a &#8216;brightness threshold&#8217; value from the supplied group document.
+Has a hard coded default, forces the value to be a float.
+This information is used by the analysis service to determine if some particular picture meets a user-defined</p>
+<blockquote>
+<div>limit for being too dark</div></blockquote>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.services.get_retake_picam_pics_when_dark_setting">
+<code class="descclassname">camera.services.</code><code class="descname">get_retake_picam_pics_when_dark_setting</code><span class="sig-paren">(</span><em>group_document</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/services.html#get_retake_picam_pics_when_dark_setting"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.services.get_retake_picam_pics_when_dark_setting" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Handles getting a setting from the group document intended to reflect if a user wants to retake picam photos</dt>
+<dd>during this session if they are too dim.  It&#8217;s not a decision to be taken lightly, long exposures can
+take around 50 seconds and definitely affect ones workflow.</dd>
+</dl>
+<p>Has a hardcoded default value of False</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.services.save_picture">
+<code class="descclassname">camera.services.</code><code class="descname">save_picture</code><span class="sig-paren">(</span><em>pic_dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/services.html#save_picture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.services.save_picture" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="camera.services.take_long_exposure_picam_still">
+<code class="descclassname">camera.services.</code><code class="descname">take_long_exposure_picam_still</code><span class="sig-paren">(</span><em>pic_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/services.html#take_long_exposure_picam_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.services.take_long_exposure_picam_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to take a generic &#8216;long exposure image&#8217; from the Picam camera if earlier logic determines that conditions warrant
+It&#8217;s currently configured to always take what seems to be the longest possible exposure</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.services.take_picam_still">
+<code class="descclassname">camera.services.</code><code class="descname">take_picam_still</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em>, <em>normal_exposure_pic_id</em>, <em>long_exposure_pic_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/services.html#take_picam_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.services.take_picam_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Top level method in the camera service for taking a still image via the picam (regular raspberry pi) camera.
+Also saves a picture record to the db
+Depending on settings and real time conditions, may cause a second, longer exposure to be taken</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.services.take_standard_exposure_picam_still">
+<code class="descclassname">camera.services.</code><code class="descname">take_standard_exposure_picam_still</code><span class="sig-paren">(</span><em>pic_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/services.html#take_standard_exposure_picam_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.services.take_standard_exposure_picam_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to interface with the Picam camera to take a standard, or automatically exposed image</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.services.take_thermal_still">
+<code class="descclassname">camera.services.</code><code class="descname">take_thermal_still</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em>, <em>pic_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/services.html#take_thermal_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.services.take_thermal_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Top level method in the camera service for taking a still image via the Lepton camera.
+Also saves a picture record to the db</p>
+</dd></dl>
+
 </div>
-<div class="section" id="camera-tasks-module">
-<h2>camera.tasks module<a class="headerlink" href="#camera-tasks-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-camera.tasks">
+<span id="camera-tasks-module"></span><h2>camera.tasks module<a class="headerlink" href="#module-camera.tasks" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="camera.tasks.take_both_still">
+<code class="descclassname">camera.tasks.</code><code class="descname">take_both_still</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em>, <em>delay=0</em>, <em>repeat=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/tasks.html#take_both_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.tasks.take_both_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper method to handle the celery scheduling of the taking of a &#8216;both&#8217; still with standard subtasks.
+A both still and subtasks consists of:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Lepton still</li>
+<li>Enlarge and colorize Lepton still</li>
+<li>Distort enlarged+colorized Lepton still to compensate for lens distortion and alignment issues</li>
+<li>Picam still</li>
+<li>Merge picam still and &#8216;Enlarged and colorized Lepton still&#8217;</li>
+<li>Optionally email the result to recipients specified on the group file</li>
+</ul>
+</div></blockquote>
+<p>Calls the synchronous take_picam_still method.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.tasks.take_both_still_edge_detect">
+<code class="descclassname">camera.tasks.</code><code class="descname">take_both_still_edge_detect</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em>, <em>delay=0</em>, <em>repeat=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/tasks.html#take_both_still_edge_detect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.tasks.take_both_still_edge_detect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper method to handle the celery scheduling of the taking of a &#8216;both&#8217; still with standard subtasks.
+A both still and subtasks consists of:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Lepton still</li>
+<li>Enlarge and colorize Lepton still</li>
+<li>Picam still</li>
+<li>Merge picam still and &#8216;Enlarged and colorized Lepton still&#8217;</li>
+<li>Optionally email the result to recipients specified on the group file</li>
+</ul>
+</div></blockquote>
+<p>Calls the synchronous take_picam_still method.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.tasks.take_both_still_test">
+<code class="descclassname">camera.tasks.</code><code class="descname">take_both_still_test</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em>, <em>delay=0</em>, <em>repeat=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/tasks.html#take_both_still_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.tasks.take_both_still_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Testing some fixed distortion logic</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.tasks.take_picam_still">
+<code class="descclassname">camera.tasks.</code><code class="descname">take_picam_still</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em>, <em>delay=0</em>, <em>repeat=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/tasks.html#take_picam_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.tasks.take_picam_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Top level handler for taking Picam pictures between the camera view and the camera service modules.
+Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.tasks.take_thermal_still">
+<code class="descclassname">camera.tasks.</code><code class="descname">take_thermal_still</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em>, <em>delay=0</em>, <em>repeat=0</em>, <em>scale_image=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/tasks.html#take_thermal_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.tasks.take_thermal_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Top level handler for taking Lepton pictures between the camera view and the camera service modules.
+Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.
+Also optionally accepts a parameter to chain an &#8216;enlarge and colorize&#8217; task after the Lepton still if desired</p>
+</dd></dl>
+
 </div>
-<div class="section" id="camera-views-module">
-<h2>camera.views module<a class="headerlink" href="#camera-views-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-camera.views">
+<span id="camera-views-module"></span><h2>camera.views module<a class="headerlink" href="#module-camera.views" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="camera.views.both_still">
+<code class="descclassname">camera.views.</code><code class="descname">both_still</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/views.html#both_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.views.both_still" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Api endpoint for taking one or a series of &#8216;both&#8217; stills - that is, Picam and Lepton stills which are then post-processed</dt>
+<dd>and merged into a single image</dd>
+</dl>
+<p>The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.views.both_still_test">
+<code class="descclassname">camera.views.</code><code class="descname">both_still_test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/views.html#both_still_test"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.views.both_still_test" title="Permalink to this definition">¶</a></dt>
+<dd><p>for experimental both_still</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.views.get_delay_parameter">
+<code class="descclassname">camera.views.</code><code class="descname">get_delay_parameter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/views.html#get_delay_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.views.get_delay_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts the delay parameter from the GET parameters.
+Has a hardcoded default of &#8216;shoot immediately&#8217;</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.views.get_repeat_parameter">
+<code class="descclassname">camera.views.</code><code class="descname">get_repeat_parameter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/views.html#get_repeat_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.views.get_repeat_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts the repeat parameter from the GET parameters.
+Has a hardcoded default of &#8216;one picture only, no repeating behavior&#8217;</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.views.get_scale_image_parameter">
+<code class="descclassname">camera.views.</code><code class="descname">get_scale_image_parameter</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/views.html#get_scale_image_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.views.get_scale_image_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Extracts a parameter from the GET parameters which indicates if the user wants the Lepton image, which will be coming in</dt>
+<dd>as 80x60, to be scaled up and colorized</dd>
+</dl>
+<p>Has a hardcoded default of &#8216;yes, scale and colorize it up&#8217;</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.views.index">
+<code class="descclassname">camera.views.</code><code class="descname">index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/views.html#index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.views.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists top level endpoints for camera</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.views.picam_still">
+<code class="descclassname">camera.views.</code><code class="descname">picam_still</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/views.html#picam_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.views.picam_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Api endpoint for taking one or a series of Picam stills.
+The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="camera.views.thermal_still">
+<code class="descclassname">camera.views.</code><code class="descname">thermal_still</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/camera/views.html#thermal_still"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#camera.views.thermal_still" title="Permalink to this definition">¶</a></dt>
+<dd><p>Api endpoint for taking one or a series of Lepton stills.
+The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-camera">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-camera" title="Permalink to this headline">¶</a></h2>
@@ -118,9 +291,9 @@
 <li><a class="reference internal" href="#">camera package</a><ul>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-camera.cameras">camera.cameras module</a></li>
-<li><a class="reference internal" href="#camera-services-module">camera.services module</a></li>
-<li><a class="reference internal" href="#camera-tasks-module">camera.tasks module</a></li>
-<li><a class="reference internal" href="#camera-views-module">camera.views module</a></li>
+<li><a class="reference internal" href="#module-camera.services">camera.services module</a></li>
+<li><a class="reference internal" href="#module-camera.tasks">camera.tasks module</a></li>
+<li><a class="reference internal" href="#module-camera.views">camera.views module</a></li>
 <li><a class="reference internal" href="#module-camera">Module contents</a></li>
 </ul>
 </li>

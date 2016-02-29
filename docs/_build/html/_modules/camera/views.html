@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>camera.views &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for camera.views</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">current_app</span><span class="p">,</span> <span class="n">Blueprint</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">Response</span><span class="p">,</span> <span class="n">url_for</span>
+
+<span class="kn">from</span> <span class="nn">admin.services</span> <span class="kn">import</span> <span class="n">get_settings_document</span>
+<span class="kn">from</span> <span class="nn">camera.tasks</span> <span class="kn">import</span> <span class="n">take_picam_still</span><span class="p">,</span> <span class="n">take_thermal_still</span><span class="p">,</span> <span class="n">take_both_still</span><span class="p">,</span> <span class="n">take_both_still_test</span>
+<span class="kn">from</span> <span class="nn">thermal.utils</span> <span class="kn">import</span> <span class="n">get_url_base</span>
+
+<span class="n">camera</span> <span class="o">=</span> <span class="n">Blueprint</span><span class="p">(</span><span class="s1">&#39;camera&#39;</span><span class="p">,</span> <span class="n">__name__</span><span class="p">)</span>
+
+
+<span class="nd">@camera.route</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="index"><a class="viewcode-back" href="../../camera.html#camera.views.index">[docs]</a><span class="k">def</span> <span class="nf">index</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Lists top level endpoints for camera</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">url_base</span> <span class="o">=</span> <span class="n">get_url_base</span><span class="p">()</span>
+    <span class="n">top_level_links</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;picam_still&#39;</span><span class="p">:</span> <span class="n">url_base</span> <span class="o">+</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;camera.picam_still&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;thermal_still&#39;</span><span class="p">:</span> <span class="n">url_base</span> <span class="o">+</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;camera.thermal_still&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;both_still&#39;</span><span class="p">:</span> <span class="n">url_base</span> <span class="o">+</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;camera.both_still&#39;</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">top_level_links</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@camera.route</span><span class="p">(</span><span class="s1">&#39;/picam_still&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="picam_still"><a class="viewcode-back" href="../../camera.html#camera.views.picam_still">[docs]</a><span class="k">def</span> <span class="nf">picam_still</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Api endpoint for taking one or a series of Picam stills.</span>
+<span class="sd">    The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module</span>
+<span class="sd">    Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="n">group_id</span> <span class="o">=</span> <span class="n">get_settings_document</span><span class="p">()[</span><span class="s1">&#39;current_group_id&#39;</span><span class="p">]</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">get_delay_parameter</span><span class="p">()</span>
+    <span class="n">repeat</span> <span class="o">=</span> <span class="n">get_repeat_parameter</span><span class="p">()</span>
+    <span class="n">ret_dict</span> <span class="o">=</span> <span class="n">take_picam_still</span><span class="p">(</span><span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">repeat</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ret_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@camera.route</span><span class="p">(</span><span class="s1">&#39;/thermal_still&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="thermal_still"><a class="viewcode-back" href="../../camera.html#camera.views.thermal_still">[docs]</a><span class="k">def</span> <span class="nf">thermal_still</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Api endpoint for taking one or a series of Lepton stills.</span>
+<span class="sd">    The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module</span>
+<span class="sd">    Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="n">group_id</span> <span class="o">=</span> <span class="n">get_settings_document</span><span class="p">()[</span><span class="s1">&#39;current_group_id&#39;</span><span class="p">]</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">get_delay_parameter</span><span class="p">()</span>
+    <span class="n">repeat</span> <span class="o">=</span> <span class="n">get_repeat_parameter</span><span class="p">()</span>
+    <span class="n">scale_image</span> <span class="o">=</span> <span class="n">get_scale_image_parameter</span><span class="p">()</span>
+    <span class="n">ret_dict</span> <span class="o">=</span> <span class="n">take_thermal_still</span><span class="p">(</span><span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">repeat</span><span class="p">,</span> <span class="n">scale_image</span><span class="o">=</span><span class="n">scale_image</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ret_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@camera.route</span><span class="p">(</span><span class="s1">&#39;/both_still&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="both_still"><a class="viewcode-back" href="../../camera.html#camera.views.both_still">[docs]</a><span class="k">def</span> <span class="nf">both_still</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Api endpoint for taking one or a series of &#39;both&#39; stills - that is, Picam and Lepton stills which are then post-processed</span>
+<span class="sd">      and merged into a single image</span>
+<span class="sd">    The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module</span>
+<span class="sd">    Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="n">group_id</span> <span class="o">=</span> <span class="n">get_settings_document</span><span class="p">()[</span><span class="s1">&#39;current_group_id&#39;</span><span class="p">]</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">get_delay_parameter</span><span class="p">()</span>
+    <span class="n">repeat</span> <span class="o">=</span> <span class="n">get_repeat_parameter</span><span class="p">()</span>
+
+    <span class="n">both_still_dict</span> <span class="o">=</span> <span class="n">take_both_still</span><span class="p">(</span>
+        <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+        <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+        <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span>
+        <span class="n">repeat</span><span class="o">=</span><span class="n">repeat</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">both_still_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="nd">@camera.route</span><span class="p">(</span><span class="s1">&#39;/both_still_test&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="both_still_test"><a class="viewcode-back" href="../../camera.html#camera.views.both_still_test">[docs]</a><span class="k">def</span> <span class="nf">both_still_test</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    for experimental both_still</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="n">group_id</span> <span class="o">=</span> <span class="n">get_settings_document</span><span class="p">()[</span><span class="s1">&#39;current_group_id&#39;</span><span class="p">]</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="n">get_delay_parameter</span><span class="p">()</span>
+    <span class="n">repeat</span> <span class="o">=</span> <span class="n">get_repeat_parameter</span><span class="p">()</span>
+
+    <span class="n">both_still_dict</span> <span class="o">=</span> <span class="n">take_both_still_test</span><span class="p">(</span>
+        <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">,</span>
+        <span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span>
+        <span class="n">delay</span><span class="o">=</span><span class="n">delay</span><span class="p">,</span>
+        <span class="n">repeat</span><span class="o">=</span><span class="n">repeat</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">both_still_dict</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="mi">202</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO add tests for these three functions and what they default to</span>
+<div class="viewcode-block" id="get_delay_parameter"><a class="viewcode-back" href="../../camera.html#camera.views.get_delay_parameter">[docs]</a><span class="k">def</span> <span class="nf">get_delay_parameter</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Extracts the delay parameter from the GET parameters.</span>
+<span class="sd">    Has a hardcoded default of &#39;shoot immediately&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">delay</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;delay&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+            <span class="n">delay</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;delay&#39;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">delay</span></div>
+
+
+<div class="viewcode-block" id="get_repeat_parameter"><a class="viewcode-back" href="../../camera.html#camera.views.get_repeat_parameter">[docs]</a><span class="k">def</span> <span class="nf">get_repeat_parameter</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Extracts the repeat parameter from the GET parameters.</span>
+<span class="sd">    Has a hardcoded default of &#39;one picture only, no repeating behavior&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">repeat</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;repeat&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+            <span class="n">repeat</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;repeat&#39;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">repeat</span></div>
+
+
+<div class="viewcode-block" id="get_scale_image_parameter"><a class="viewcode-back" href="../../camera.html#camera.views.get_scale_image_parameter">[docs]</a><span class="k">def</span> <span class="nf">get_scale_image_parameter</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Extracts a parameter from the GET parameters which indicates if the user wants the Lepton image, which will be coming in</span>
+<span class="sd">      as 80x60, to be scaled up and colorized</span>
+<span class="sd">    Has a hardcoded default of &#39;yes, scale and colorize it up&#39;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">scale_image</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">if</span> <span class="s1">&#39;scale_image&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+        <span class="n">scale_image</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;scale_image&#39;</span><span class="p">)</span>
+        <span class="c1"># need a cleaner way to parse a boolean from a get parameter.  e.g. &#39;False&#39; evaluates to True as a non-empty string</span>
+    <span class="k">return</span> <span class="n">scale_image</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

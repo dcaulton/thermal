@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>admin.tests.test_services &mdash; thermal 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="thermal 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for admin.tests.test_services</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">mock</span> <span class="kn">import</span> <span class="n">ANY</span><span class="p">,</span> <span class="n">call</span><span class="p">,</span> <span class="n">Mock</span><span class="p">,</span> <span class="n">patch</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="kn">import</span> <span class="nn">boto</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">current_app</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+
+<span class="kn">import</span> <span class="nn">admin.services</span>
+<span class="kn">import</span> <span class="nn">conftest</span>
+<span class="kn">from</span> <span class="nn">picture.services</span> <span class="kn">import</span> <span class="p">(</span><span class="n">build_picture_name</span><span class="p">,</span> <span class="n">build_picture_path</span><span class="p">,</span> <span class="n">find_picture</span><span class="p">,</span> <span class="n">find_pictures</span><span class="p">,</span> <span class="n">save_picture_document</span><span class="p">,</span>
+                              <span class="n">update_picture_document</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">thermal.exceptions</span> <span class="kn">import</span> <span class="n">DocumentConfigurationError</span><span class="p">,</span> <span class="n">NotFoundError</span>
+
+
+<div class="viewcode-block" id="TestSettingsUnit"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsUnit">[docs]</a><span class="k">class</span> <span class="nc">TestSettingsUnit</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="c1"># TODO add test case for upload_to_s3 if we don&#39;t have use_gallery in the group doc</span>
+
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.services.update_picture_document&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;boto.connect_s3&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;boto.s3.key.Key&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.services.find_pictures&#39;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;admin.services.get_group_document&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="TestSettingsUnit.test_upload_files_to_s3_calls_expected_methods"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsUnit.test_upload_files_to_s3_calls_expected_methods">[docs]</a>    <span class="k">def</span> <span class="nf">test_upload_files_to_s3_calls_expected_methods</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                                                       <span class="n">as_get_group_document</span><span class="p">,</span>
+                                                       <span class="n">as_find_pictures</span><span class="p">,</span>
+                                                       <span class="n">boto_s3_key_key</span><span class="p">,</span>
+                                                       <span class="n">boto_connect_s3</span><span class="p">,</span>
+                                                       <span class="n">as_update_picture_document</span><span class="p">):</span>
+        <span class="k">class</span> <span class="nc">MockObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="n">the_pictures</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;key_1&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;uri&quot;</span><span class="p">:</span> <span class="s2">&quot;uri_1&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;filename_1&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;analysis&quot;</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;key_2&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;uri&quot;</span><span class="p">:</span> <span class="s2">&quot;uri_2&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;filename_2&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;merge&quot;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">expected_updated_picture_document</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;uri&quot;</span><span class="p">:</span> <span class="s2">&quot;uri_2&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;filename_2&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;gallery_url&quot;</span><span class="p">:</span> <span class="s2">&quot;the_generated_url&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;merge&quot;</span>
+        <span class="p">}</span>
+        <span class="n">as_get_group_document</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;use_gallery&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span>
+                                              <span class="s1">&#39;image_sources_for_gallery&#39;</span><span class="p">:</span> <span class="s1">&#39;merge&#39;</span><span class="p">}</span>
+        <span class="n">as_find_pictures</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">the_pictures</span>
+        <span class="n">the_mock_bucket</span> <span class="o">=</span> <span class="n">MockObject</span><span class="p">()</span>
+        <span class="n">the_mock_connection</span> <span class="o">=</span> <span class="n">MockObject</span><span class="p">()</span>
+        <span class="n">the_mock_connection</span><span class="o">.</span><span class="n">get_bucket</span> <span class="o">=</span> <span class="n">Mock</span><span class="p">(</span><span class="n">return_value</span><span class="o">=</span><span class="n">the_mock_bucket</span><span class="p">)</span>
+        <span class="n">the_mock_destination</span> <span class="o">=</span> <span class="n">MockObject</span><span class="p">()</span>
+        <span class="n">the_mock_destination</span><span class="o">.</span><span class="n">set_contents_from_filename</span> <span class="o">=</span> <span class="n">Mock</span><span class="p">()</span>
+        <span class="n">the_mock_destination</span><span class="o">.</span><span class="n">make_public</span> <span class="o">=</span> <span class="n">Mock</span><span class="p">()</span>
+        <span class="n">the_mock_destination</span><span class="o">.</span><span class="n">generate_url</span> <span class="o">=</span> <span class="n">Mock</span><span class="p">(</span><span class="n">return_value</span><span class="o">=</span><span class="s1">&#39;the_generated_url&#39;</span><span class="p">)</span>
+        <span class="n">boto</span> <span class="o">=</span> <span class="n">Mock</span><span class="p">()</span>
+        <span class="n">boto_connect_s3</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">the_mock_connection</span>
+        <span class="n">boto_s3_key_key</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">the_mock_destination</span>
+
+        <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">group_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">upload_files_to_s3</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">)</span>
+
+        <span class="n">as_get_group_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="n">group_id</span><span class="p">)</span>
+        <span class="n">as_find_pictures</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">({</span><span class="s1">&#39;snap_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)})</span>
+        <span class="n">connect_s3_call</span> <span class="o">=</span> <span class="n">call</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;S3_ACCESS_KEY_ID&#39;</span><span class="p">],</span> <span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;S3_SECRET_ACCESS_KEY&#39;</span><span class="p">])</span>
+        <span class="n">boto_s3_key_key</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="n">the_mock_bucket</span><span class="p">)</span>
+        <span class="n">boto_connect_s3</span><span class="o">.</span><span class="n">assert_has_calls</span><span class="p">([</span><span class="n">connect_s3_call</span><span class="p">])</span>
+        <span class="n">the_mock_connection</span><span class="o">.</span><span class="n">get_bucket</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;S3_BUCKET_NAME&#39;</span><span class="p">])</span>
+        <span class="n">the_mock_destination</span><span class="o">.</span><span class="n">set_contents_from_filename</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="s2">&quot;uri_2&quot;</span><span class="p">)</span>
+        <span class="n">the_mock_destination</span><span class="o">.</span><span class="n">make_public</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">()</span>
+        <span class="n">as_update_picture_document</span><span class="o">.</span><span class="n">assert_called_once_with</span><span class="p">(</span><span class="n">expected_updated_picture_document</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="TestSettingsIntegration"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration">[docs]</a><span class="k">class</span> <span class="nc">TestSettingsIntegration</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_default_settings_dict_has_expected_fields"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_default_settings_dict_has_expected_fields">[docs]</a>    <span class="k">def</span> <span class="nf">test_default_settings_dict_has_expected_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">the_group_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">settings_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">default_settings_dict</span><span class="p">(</span><span class="n">the_group_id</span><span class="p">)</span>
+        <span class="n">expected_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span> <span class="s1">&#39;current_group_id&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">expected_fields</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">settings_doc</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">settings_doc</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">expected_fields</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_default_group_dict_has_expected_fields"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_default_group_dict_has_expected_fields">[docs]</a>    <span class="k">def</span> <span class="nf">test_default_group_dict_has_expected_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">group_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">default_group_dict</span><span class="p">()</span>
+        <span class="n">expected_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;merge_type&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;retake_picam_pics_when_dark&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;email_recipients&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;send_email_contents&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;colorize_range_low&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;colorize_range_high&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;picam_brightness_threshold&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;capture_type&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;image_sources_to_delete&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;use_gallery&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;image_sources_for_gallery&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;button_active&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">expected_fields</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">group_doc</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">group_doc</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">expected_fields</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_get_settings_fetches_a_real_settings_document"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_get_settings_fetches_a_real_settings_document">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_settings_fetches_a_real_settings_document</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">settings_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_settings_document</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="s1">&#39;_id&#39;</span> <span class="ow">in</span> <span class="n">settings_doc</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="s1">&#39;_rev&#39;</span> <span class="ow">in</span> <span class="n">settings_doc</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="s1">&#39;current_group_id&#39;</span> <span class="ow">in</span> <span class="n">settings_doc</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">settings_doc</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;settings&#39;</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_settings_points_to_a_real_group_document"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_settings_points_to_a_real_group_document">[docs]</a>    <span class="k">def</span> <span class="nf">test_settings_points_to_a_real_group_document</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">settings_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_settings_document</span><span class="p">()</span>
+        <span class="n">group_doc</span> <span class="o">=</span> <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">settings_doc</span><span class="p">[</span><span class="s1">&#39;current_group_id&#39;</span><span class="p">]]</span>
+        <span class="k">assert</span> <span class="n">group_doc</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;group&#39;</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_get_settings_creates_new_settings_document_if_document_is_missing"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_get_settings_creates_new_settings_document_if_document_is_missing">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_settings_creates_new_settings_document_if_document_is_missing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">old_settings_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_settings_document</span><span class="p">()</span>
+        <span class="n">old_settings_id</span> <span class="o">=</span> <span class="n">old_settings_doc</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+        <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">old_settings_doc</span><span class="p">)</span>
+        <span class="n">new_settings_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_settings_document</span><span class="p">()</span>
+        <span class="n">new_settings_id</span> <span class="o">=</span> <span class="n">new_settings_doc</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">old_settings_id</span> <span class="o">!=</span> <span class="n">new_settings_id</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_get_group_document_fails_if_doc_is_not_of_type_group"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_get_group_document_fails_if_doc_is_not_of_type_group">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_document_fails_if_doc_is_not_of_type_group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">the_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">the_doc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;not_group&#39;</span><span class="p">}</span>
+        <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">the_doc</span>
+        <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="n">NotFoundError</span><span class="p">):</span>
+            <span class="n">the_returned_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_group_document</span><span class="p">(</span><span class="n">the_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_get_group_document_succeeds_if_doc_is_of_type_group"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_get_group_document_succeeds_if_doc_is_of_type_group">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_document_succeeds_if_doc_is_of_type_group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">the_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">the_doc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;group&#39;</span><span class="p">}</span>
+        <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">the_doc</span>
+        <span class="n">the_returned_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_group_document</span><span class="p">(</span><span class="n">the_id</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">the_returned_doc</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">the_id</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_get_group_document_current_gets_the_current_group_document"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_get_group_document_current_gets_the_current_group_document">[docs]</a>    <span class="k">def</span> <span class="nf">test_get_group_document_current_gets_the_current_group_document</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">settings_doc</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_settings_document</span><span class="p">()</span>
+
+        <span class="n">some_other_group_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">some_other_group_doc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;group&#39;</span><span class="p">}</span>
+        <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">some_other_group_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">some_other_group_doc</span>
+
+        <span class="n">group_doc_from_current</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_group_document</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">group_doc_from_current</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">some_other_group_id</span>
+        <span class="k">assert</span> <span class="n">group_doc_from_current</span><span class="p">[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">settings_doc</span><span class="p">[</span><span class="s1">&#39;current_group_id&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_save_document_fails_if_document_type_is_being_altered"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_save_document_fails_if_document_type_is_being_altered">[docs]</a>    <span class="k">def</span> <span class="nf">test_save_document_fails_if_document_type_is_being_altered</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">the_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">the_doc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="n">the_id</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;something&#39;</span><span class="p">}</span>
+        <span class="n">current_app</span><span class="o">.</span><span class="n">db</span><span class="p">[</span><span class="n">the_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">the_doc</span>
+        <span class="n">the_doc</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;something else&#39;</span>
+        <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="n">DocumentConfigurationError</span><span class="p">):</span>
+            <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">save_document</span><span class="p">(</span><span class="n">the_doc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.build_three_pictures"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.build_three_pictures">[docs]</a>    <span class="k">def</span> <span class="nf">build_three_pictures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snap_id</span><span class="p">):</span>
+        <span class="n">pic_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="n">pic_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">build_picture_name</span><span class="p">(</span><span class="n">pic_id</span><span class="p">)</span>
+            <span class="n">picture_path</span> <span class="o">=</span> <span class="n">build_picture_path</span><span class="p">(</span><span class="n">picture_name</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">snap_id</span><span class="o">=</span><span class="n">snap_id</span><span class="p">)</span>
+            <span class="n">the_doc</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">pic_id</span><span class="p">),</span>
+                <span class="s1">&#39;snap_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">),</span>
+                <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="n">picture_path</span><span class="p">,</span>
+                <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="s1">&#39;whatever&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;picture&#39;</span>
+            <span class="p">}</span>
+            <span class="n">save_picture_document</span><span class="p">(</span><span class="n">the_doc</span><span class="p">)</span>
+            <span class="n">pic_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pic_id</span><span class="p">)</span>
+            <span class="c1"># touch the picture file in the temp directory</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">picture_path</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">utime</span><span class="p">(</span><span class="n">picture_path</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pic_ids</span></div>
+
+<div class="viewcode-block" id="TestSettingsIntegration.test_clean_up_files_cleans_pictures_from_the_snap"><a class="viewcode-back" href="../../../admin.tests.html#admin.tests.test_services.TestSettingsIntegration.test_clean_up_files_cleans_pictures_from_the_snap">[docs]</a>    <span class="k">def</span> <span class="nf">test_clean_up_files_cleans_pictures_from_the_snap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">snap_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+        <span class="n">group_id</span> <span class="o">=</span> <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">get_group_document</span><span class="p">(</span><span class="s1">&#39;current&#39;</span><span class="p">)[</span><span class="s1">&#39;_id&#39;</span><span class="p">]</span>
+        <span class="n">pic_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_three_pictures</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pic_id</span> <span class="ow">in</span> <span class="n">pic_ids</span><span class="p">:</span>
+            <span class="n">pic_doc</span> <span class="o">=</span> <span class="n">find_picture</span><span class="p">(</span><span class="n">pic_id</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">pic_doc</span><span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">])</span>
+            <span class="k">assert</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)</span> <span class="ow">in</span> <span class="n">pic_doc</span><span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">]</span>
+
+        <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;PICTURE_SAVE_DIRECTORY&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)))</span>
+        <span class="n">admin</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">clean_up_files</span><span class="p">(</span><span class="n">snap_id</span><span class="p">,</span> <span class="n">group_id</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">pic_id</span> <span class="ow">in</span> <span class="n">pic_ids</span><span class="p">:</span>
+            <span class="n">pic_doc</span> <span class="o">=</span> <span class="n">find_picture</span><span class="p">(</span><span class="n">pic_id</span><span class="p">)</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">build_picture_name</span><span class="p">(</span><span class="n">pic_id</span><span class="p">)</span>
+            <span class="n">expected_picture_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;PICTURE_SAVE_DIRECTORY&#39;</span><span class="p">],</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">pic_doc</span><span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">expected_picture_path</span>
+            <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">expected_picture_path</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;PICTURE_SAVE_DIRECTORY&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">(</span><span class="n">snap_id</span><span class="p">)))</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Dave Caulton.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
