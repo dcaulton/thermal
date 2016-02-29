@@ -9,8 +9,38 @@ import admin.views as av
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
 
-# TODO this needs a ton more tests
 class TestViewsUnit(object):
+
+    @patch('admin.views.find_groups')
+    def test_list_groups_gets_groups(self,
+                                     av_find_groups):
+        av_find_groups.return_value = {'1212': {'_id': '1212'},
+                                       '2323': {'_id': '2323'}}
+        with current_app.test_client() as c:
+            resp_object = c.get('/api/v1/admin/groups')
+            av_find_groups.assert_called_once_with({})
+            response_data_dict = json.loads(resp_object.data)
+            assert resp_object.status_code == 200
+            assert '1212' in response_data_dict
+            assert '2323' in response_data_dict
+            assert len(response_data_dict.keys()) == 2
+
+
+    @patch('admin.views.find_groups')
+    def test_list_groups_matches_groups_on_search_param(self,
+                                                        av_find_groups):
+        av_find_groups.return_value = {'1212': {'_id': '1212'},
+                                       '2323': {'_id': '2323'}}
+        with current_app.test_client() as c:
+            resp_object = c.get('/api/v1/admin/groups?use_gallery=false')
+            av_find_groups.assert_called_once_with({'use_gallery': 'false'})
+            response_data_dict = json.loads(resp_object.data)
+            assert resp_object.status_code == 200
+            assert '1212' in response_data_dict
+            assert '2323' in response_data_dict
+            assert len(response_data_dict.keys()) == 2
+
+
     @patch('admin.views.find_pictures')
     @patch('admin.views.get_group_document')
     def test_get_paging_info_gets_needed_params(self,
@@ -57,7 +87,8 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 409
 
 
-# TODO get this test working
+## TODO this fails with a 400, something wrong with the put call
+##                             I THINK IT NEEDS TO BE A STRING OF JSON
 #    @patch('admin.views.save_document')
 #    @patch('admin.views.doc_attribute_can_be_set')
 #    @patch('admin.views.get_settings_document')
@@ -69,7 +100,7 @@ class TestViewsUnit(object):
 #        av_doc_attribute_can_be_set.return_value = True
 #        with current_app.test_client() as c:
 #            haha = 'joe'
-#            resp_object = c.put('/api/v1/admin/settings', json=dict(current_group_id=haha), content_type='application/json')
+#            resp_object = c.put('/api/v1/admin/settings', content_type='application/json', data=dict(current_group_id=haha)) 
 #            assert resp_object.status_code == 200
 
 
@@ -241,12 +272,38 @@ class TestViewsUnit(object):
         assert resp_object.data == '"invalid number specified for items_per_page: irish"'
 
 
-# TODO this will need an integration test because that gallery_url_not_null is a little special
-# @admin.route('/groups/<group_id>/gallery', methods=['GET'])
+    @patch('admin.views.save_document')
+    @patch('admin.views.doc_attribute_can_be_set')
+    @patch('admin.views.get_settings_document')
+    def test_add_group_adds_a_group(self,
+                                    av_get_settings_document,
+                                    av_doc_attribute_can_be_set,
+                                    av_save_document):
+        av_get_settings_document.return_value = {'bread': 'pudding'}
+        
+        av_doc_attribute_can_be_set.return_value = True
+        with current_app.test_client() as c:
+            resp_object = c.post('/api/v1/admin/groups',
+                                 data='{"dog":"food"}',
+                                 headers={'Content-Type':'application/json'})
+            assert resp_object.status_code == 200
+
+            resp_data_dict = json.loads(resp_object.data)
+            group_id = resp_data_dict['_id']
+            group_dict_for_call = av.default_group_dict()
+            group_dict_for_call['dog'] = 'food'
+            group_dict_for_call['_id'] = group_id
+
+            av_get_settings_document.assert_called_once_with()
+            av_doc_attribute_can_be_set.assert_called_once_with('dog')
+
+            group_save_call = call(group_dict_for_call)
+            settings_save_call = call({'bread': 'pudding', 'current_group_id': group_id})
+            av_save_document.assert_has_calls([group_save_call, settings_save_call])
 
 # TODO make a unit test when I figure out how to mock out the request headers and request.json.keys
 # @admin.route('/groups/<group_id>', methods=['PUT'])
-# def update_group(group_id):
+## def update_group(group_id):
 #     group_dict = get_group_document(group_id)
 #     if request.headers['Content-Type'] == 'application/json':
 #         for k in request.json.keys():
@@ -255,23 +312,12 @@ class TestViewsUnit(object):
 #         save_document(group_dict)
 #         return Response(json.dumps(group_dict), status=200, mimetype='application/json')
 
-# TODO make a unit test when I figure out how to mock out the request headers and request.json.keys
-# @admin.route('/groups', methods=['POST'])
-# def save_group():
-#     settings = get_settings_document()
-#     group_dict = default_group_dict()
-#     if request.headers['Content-Type'] == 'application/json':
-#         for k in request.json.keys():
-#             if doc_attribute_can_be_set(k):
-#                 group_dict[k] = request.json[k]
-#         save_document(group_dict)
-#         settings['current_group_id'] = group_dict['_id']
-#         save_document(settings)
-#         return Response(json.dumps(group_dict), status=200, mimetype='application/json')
-
     def test_doc_attribute_can_be_set_works_for_normal_and_forbidden_keys(self):
         assert av.doc_attribute_can_be_set('lester')
         assert not av.doc_attribute_can_be_set('_id')
         assert not av.doc_attribute_can_be_set('_rev')
 
-#class TestViewsIntegration(object):
+class TestViewsIntegration(object):
+    pass
+# TODO this will need an integration test because that gallery_url_not_null is a little special
+# @admin.route('/groups/<group_id>/gallery', methods=['GET'])

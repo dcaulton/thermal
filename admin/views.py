@@ -56,7 +56,6 @@ def update_settings():
     return Response(json.dumps(err_msg), status=409, mimetype='application/json')
 
 
-# TODO add tests
 @admin.route('/groups')
 def list_groups():
     '''
@@ -78,10 +77,6 @@ def get_group(group_id):
      - links to photos 
      - photos included, grouped by snap id
     '''
-    # TODO support four levels of fetch eventually.
-    #  - group dict only
-    #  - links to children
-    #  - nest full child photo objects, bin photos by 'snap' (a virtual object) with snap id and time also included
     try:
         if 'child_objects' in request.args:  # TODO add documentation in sphinx
             group_dict = get_group_document_with_child_objects(group_id)
@@ -110,7 +105,6 @@ def get_group_pictures(group_id):
     return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
 
-# TODO this will need an integration test.
 @admin.route('/groups/<group_id>/gallery', methods=['GET'])
 def get_group_gallery(group_id):
     '''
@@ -139,12 +133,13 @@ def update_group(group_id):
                 group_dict[k] = request.json[k]
         save_document(group_dict)
         return Response(json.dumps(group_dict), status=200, mimetype='application/json')
+    return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
 
 
 @admin.route('/groups', methods=['POST'])
 def save_group():
     '''
-    Creates a new group record
+    Creates a new group record, saves it as the new current group in the settings document
     '''
     settings = get_settings_document()
     group_dict = default_group_dict()
@@ -156,6 +151,7 @@ def save_group():
         settings['current_group_id'] = group_dict['_id']
         save_document(settings)
         return Response(json.dumps(group_dict), status=200, mimetype='application/json')
+    return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
 
 
 def doc_attribute_can_be_set(key_name):
