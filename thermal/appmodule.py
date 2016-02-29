@@ -61,7 +61,7 @@ def register_blueprints(app):
     app.register_blueprint(picture, url_prefix='/api/v1/pictures')
     app.register_blueprint(merging, url_prefix='/api/v1/merging')
     app.register_blueprint(analysis, url_prefix='/api/v1/analysis')
-    app.register_blueprint(thermal, url_prefix='/')
+    app.register_blueprint(thermal, url_prefix='/api/v1')
 
 
 def make_celery(app):
