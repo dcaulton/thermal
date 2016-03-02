@@ -2,6 +2,8 @@ import json
 from mock import ANY, call, Mock, patch
 import uuid
 
+from flask import current_app, request
+
 import camera.views as cv
 
 
@@ -88,3 +90,27 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 202
         assert 'e' in response_data_dict
         assert len(response_data_dict.keys()) == 1
+
+
+    def test_get_delay_parameter_fetches_delay_parameter(self):
+        with current_app.test_request_context('/whatever?delay=657'):
+            from flask import request  # I know, crazy, but you need to import request here, not at the top of the module
+            assert 'delay' in request.args
+            delay = cv.get_delay_parameter()
+            assert delay == 657
+
+
+    def test_get_repeat_parameter_fetches_repeat_parameter(self):
+        with current_app.test_request_context('/whatever?repeat=8'):
+            from flask import request
+            assert 'repeat' in request.args
+            repeat = cv.get_repeat_parameter()
+            assert repeat == 8
+
+
+    def test_get_scale_image_parameter_fetches_scale_image_parameter(self):
+        with current_app.test_request_context('/whatever?scale_image=yipee'):
+            from flask import request
+            assert 'scale_image' in request.args
+            scale_image = cv.get_scale_image_parameter()
+            assert scale_image == 'yipee'
