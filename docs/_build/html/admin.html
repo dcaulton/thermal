@@ -59,188 +59,14 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-admin.services">
-<span id="admin-services-module"></span><h2>admin.services module<a class="headerlink" href="#module-admin.services" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="admin.services.clean_up_files">
-<code class="descclassname">admin.services.</code><code class="descname">clean_up_files</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#clean_up_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.clean_up_files" title="Permalink to this definition">¶</a></dt>
-<dd><p>Deletes all picture files for a given snap if those pictures sources are designated in the group to be deleted after processing</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.create_default_settings_and_group_documents">
-<code class="descclassname">admin.services.</code><code class="descname">create_default_settings_and_group_documents</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#create_default_settings_and_group_documents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.create_default_settings_and_group_documents" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a settings object and group object with their default settings.  Saves both objects.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.default_group_dict">
-<code class="descclassname">admin.services.</code><code class="descname">default_group_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#default_group_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.default_group_dict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper method returning a dict with the default group settings.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.default_settings_dict">
-<code class="descclassname">admin.services.</code><code class="descname">default_settings_dict</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#default_settings_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.default_settings_dict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper method returning a dict with the default values settings.
-Takes the group id, the only useful data to speak of in this object.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.find_groups">
-<code class="descclassname">admin.services.</code><code class="descname">find_groups</code><span class="sig-paren">(</span><em>args_dict</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#find_groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.find_groups" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieves a dict of all groups.  Key is the group id, value is the dict for the group.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.get_group_document">
-<code class="descclassname">admin.services.</code><code class="descname">get_group_document</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#get_group_document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.get_group_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetches the group document specified by the requested id</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.get_group_document_with_child_links">
-<code class="descclassname">admin.services.</code><code class="descname">get_group_document_with_child_links</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#get_group_document_with_child_links"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.get_group_document_with_child_links" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetches a group document, adds a picture_links array to it which has links to all the photos for that group</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.get_group_document_with_child_objects">
-<code class="descclassname">admin.services.</code><code class="descname">get_group_document_with_child_objects</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#get_group_document_with_child_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.get_group_document_with_child_objects" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetches the group document specified by the requested id
-Also provides links to child photo objects in a child array called snap_list</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.get_picture_links_for_group">
-<code class="descclassname">admin.services.</code><code class="descname">get_picture_links_for_group</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#get_picture_links_for_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.get_picture_links_for_group" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets all the pictures belonging to a given group id</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.get_picture_objects_for_group">
-<code class="descclassname">admin.services.</code><code class="descname">get_picture_objects_for_group</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#get_picture_objects_for_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.get_picture_objects_for_group" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets all the pictures belonging to a group, groups them in an array under the snaps they belong to</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.get_settings_document">
-<code class="descclassname">admin.services.</code><code class="descname">get_settings_document</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#get_settings_document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.get_settings_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetches the settings document (a singleton)</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.save_document">
-<code class="descclassname">admin.services.</code><code class="descname">save_document</code><span class="sig-paren">(</span><em>document_in</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#save_document"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.save_document" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saves any document
-Gets doc id from the _id field
-Has safeguards to avoid changing document type
-Has safeguards to avoid saving derived properties</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.send_mail">
-<code class="descclassname">admin.services.</code><code class="descname">send_mail</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#send_mail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.send_mail" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sends an email to users specified in the group, with all the images for a supplied snap</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.services.upload_files_to_s3">
-<code class="descclassname">admin.services.</code><code class="descname">upload_files_to_s3</code><span class="sig-paren">(</span><em>snap_id</em>, <em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/services.html#upload_files_to_s3"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.services.upload_files_to_s3" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uploads pictures for a given snap to s3
-Takes a snap id and group id, if the group is configured to use a gallery it looks for all pictures whose</p>
-<blockquote>
-<div>values for source matches those are specified in the group to use for the gallery</div></blockquote>
-</dd></dl>
-
+<div class="section" id="admin-services-module">
+<h2>admin.services module<a class="headerlink" href="#admin-services-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-admin.tasks">
-<span id="admin-tasks-module"></span><h2>admin.tasks module<a class="headerlink" href="#module-admin.tasks" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="admin-tasks-module">
+<h2>admin.tasks module<a class="headerlink" href="#admin-tasks-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-admin.views">
-<span id="admin-views-module"></span><h2>admin.views module<a class="headerlink" href="#module-admin.views" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="admin.views.doc_attribute_can_be_set">
-<code class="descclassname">admin.views.</code><code class="descname">doc_attribute_can_be_set</code><span class="sig-paren">(</span><em>key_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#doc_attribute_can_be_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.doc_attribute_can_be_set" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="admin.views.get_group">
-<code class="descclassname">admin.views.</code><code class="descname">get_group</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#get_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.get_group" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets a particular group
-supports these levels of information:</p>
-<blockquote>
-<div><ul class="simple">
-<li>group dict only</li>
-<li>links to photos</li>
-<li>photos included, grouped by snap id</li>
-</ul>
-</div></blockquote>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.views.get_group_gallery">
-<code class="descclassname">admin.views.</code><code class="descname">get_group_gallery</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#get_group_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.get_group_gallery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetches the photo gallery for a supplied group id</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.views.get_group_pictures">
-<code class="descclassname">admin.views.</code><code class="descname">get_group_pictures</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#get_group_pictures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.get_group_pictures" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetches pictures for a supplied group id</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.views.get_paging_info_from_request">
-<code class="descclassname">admin.views.</code><code class="descname">get_paging_info_from_request</code><span class="sig-paren">(</span><em>request</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#get_paging_info_from_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.get_paging_info_from_request" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="admin.views.get_settings">
-<code class="descclassname">admin.views.</code><code class="descname">get_settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.get_settings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the settings document (it&#8217;s a singleton)</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.views.index">
-<code class="descclassname">admin.views.</code><code class="descname">index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.index" title="Permalink to this definition">¶</a></dt>
-<dd><ul class="simple">
-<li>one thing</li>
-<li>another thing</li>
-</ul>
-<p>Returns a top level index of the admin views
-:param name: The name to use.
-:type name: str.
-:param state: Current state to be in.
-:type state: bool.
-:returns:  int &#8211; the return code.
-:raises: AttributeError, KeyError</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.views.list_groups">
-<code class="descclassname">admin.views.</code><code class="descname">list_groups</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#list_groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.list_groups" title="Permalink to this definition">¶</a></dt>
-<dd><p>Lists all groups</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.views.save_group">
-<code class="descclassname">admin.views.</code><code class="descname">save_group</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#save_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.save_group" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a new group record, saves it as the new current group in the settings document</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.views.update_group">
-<code class="descclassname">admin.views.</code><code class="descname">update_group</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#update_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.update_group" title="Permalink to this definition">¶</a></dt>
-<dd><p>Updates group record</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="admin.views.update_settings">
-<code class="descclassname">admin.views.</code><code class="descname">update_settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/admin/views.html#update_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#admin.views.update_settings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Updates the settings document</p>
-</dd></dl>
-
+<div class="section" id="admin-views-module">
+<h2>admin.views module<a class="headerlink" href="#admin-views-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-admin">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-admin" title="Permalink to this headline">¶</a></h2>
@@ -258,9 +84,9 @@ supports these levels of information:</p>
 <li><a class="reference internal" href="#">admin package</a><ul>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-admin.services">admin.services module</a></li>
-<li><a class="reference internal" href="#module-admin.tasks">admin.tasks module</a></li>
-<li><a class="reference internal" href="#module-admin.views">admin.views module</a></li>
+<li><a class="reference internal" href="#admin-services-module">admin.services module</a></li>
+<li><a class="reference internal" href="#admin-tasks-module">admin.tasks module</a></li>
+<li><a class="reference internal" href="#admin-views-module">admin.views module</a></li>
 <li><a class="reference internal" href="#module-admin">Module contents</a></li>
 </ul>
 </li>

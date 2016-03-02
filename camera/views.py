@@ -133,6 +133,7 @@ def get_scale_image_parameter():
     Extracts a parameter from the GET parameters which indicates if the user wants the Lepton image, which will be coming in
       as 80x60, to be scaled up and colorized
     Has a hardcoded default of 'yes, scale and colorize it up'
+    So you have to pass it something like 0 or '' to suppress
     '''
     scale_image = True
     if 'scale_image' in request.args:

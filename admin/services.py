@@ -123,17 +123,6 @@ def get_picture_links_for_group(group_id):  # TODO add testing
     return picture_links
 
 
-def create_default_settings_and_group_documents():
-    '''
-    Creates a settings object and group object with their default settings.  Saves both objects.
-    '''
-    group_dict = default_group_dict()
-    settings_dict = default_settings_dict(group_dict['_id'])
-    save_document(settings_dict)
-    save_document(group_dict)
-    return settings_dict
-
-
 def default_group_dict():
     '''
     Wrapper method returning a dict with the default group settings.
@@ -166,6 +155,17 @@ def default_settings_dict(group_id):
     settings_dict = {'_id': str(settings_id),
                      'current_group_id': str(group_id),
                      'type': 'settings'}
+    return settings_dict
+
+
+def create_default_settings_and_group_documents():
+    '''
+    Creates a settings object and group object with their default settings.  Saves both objects.
+    '''
+    group_dict = default_group_dict()
+    settings_dict = default_settings_dict(group_dict['_id'])
+    save_document(settings_dict)
+    save_document(group_dict)
     return settings_dict
 
 
