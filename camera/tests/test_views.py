@@ -100,6 +100,12 @@ class TestViewsUnit(object):
             assert delay == 657
 
 
+    def test_get_delay_parameter_defaults_to_0(self):
+        with current_app.test_request_context('/whatever'):
+            delay = cv.get_delay_parameter()
+            assert delay == 0
+
+
     def test_get_repeat_parameter_fetches_repeat_parameter(self):
         with current_app.test_request_context('/whatever?repeat=8'):
             from flask import request
@@ -108,9 +114,30 @@ class TestViewsUnit(object):
             assert repeat == 8
 
 
+    def test_get_repeat_parameter_defaults_to_0(self):
+        with current_app.test_request_context('/whatever'):
+            repeat = cv.get_repeat_parameter()
+            assert repeat == 0
+
+
     def test_get_scale_image_parameter_fetches_scale_image_parameter(self):
         with current_app.test_request_context('/whatever?scale_image=yipee'):
             from flask import request
             assert 'scale_image' in request.args
             scale_image = cv.get_scale_image_parameter()
             assert scale_image == 'yipee'
+
+
+    def test_get_scale_image_parameter_defaults_to_true(self):
+        with current_app.test_request_context('/whatever'):
+            scale_image = cv.get_scale_image_parameter()
+            assert scale_image
+
+
+    def test_get_scale_image_parameter_can_be_suppressed_with_empty_string(self):
+        with current_app.test_request_context('/whatever?scale_image='):
+            from flask import request
+            assert 'scale_image' in request.args
+            scale_image = cv.get_scale_image_parameter()
+            assert scale_image == ''
+            assert not scale_image
