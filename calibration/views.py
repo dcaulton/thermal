@@ -16,51 +16,68 @@ def index():
     '''
     url_base = get_url_base()
     top_level_links = { 
-#        'scale_image': url_base + url_for('analysis.call_scale_image'),
+        'distortion_sets': url_base + url_for('calibration.list_distortion_sets'),
+        'distortion_pairs': url_base + url_for('calibration.list_distortion_pairs'),
+        'calibration_sessions': url_base + url_for('calibration.list_calibration_sessions'),
     }
     return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
 
 
-@calibration.route('/distortion_set')
-def get_distortion_set(methods=['GET']):
+@calibration.route('/distortion_sets/')
+def list_distortion_sets():
     pass
 
 
-@calibration.route('/distortion_set')
-def update_distortion_set(methods=['PUT']):
+@calibration.route('/distortion_sets/<distortion_set_id>', methods=['GET'])
+def get_distortion_set(distortion_set_id):
     pass
 
 
-@calibration.route('/distortion_set')
-def create_distortion_set(methods=['POST']):
+@calibration.route('/distortion_sets/<distortion_set_id>', methods=['PUT'])
+def update_distortion_set(distortion_set_id):
     pass
 
 
-@calibration.route('/distortion_pair')
-def get_distortion_pair(methods=['GET']):
+@calibration.route('/distortion_sets/<distortion_set_id>', methods=['POST'])
+def create_distortion_set(distortion_set_id):
     pass
 
 
-@calibration.route('/distortion_pair')
-def update_distortion_pairt(methods=['PUT']):
+@calibration.route('/distortion_pairs')
+def list_distortion_pairs():
     pass
 
 
-@calibration.route('/distortion_pair')
-def create_distortion_pair(methods=['POST']):
+@calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['GET'])
+def get_distortion_pair(distortion_pair_id):
     pass
 
 
-@calibration.route('/calibration_session')
-def get_calibration_session(methods=['GET']):
+@calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['PUT'])
+def update_distortion_pairs(distortion_pair_id):
     pass
 
 
-@calibration.route('/calibration_session')
-def update_calibration_session(methods=['PUT']):
+@calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['POST'])
+def create_distortion_pair(distortion_pair_id):
     pass
 
 
-@calibration.route('/calibration_session')
-def create_calibration_session(methods=['POST']):
+@calibration.route('/calibration_sessions')
+def list_calibration_sessions():
+    pass
+
+
+@calibration.route('/calibration_sessions/<calibration_session_id>', methods=['GET'])
+def get_calibration_sessions(calibration_session_id):
+    pass
+
+
+@calibration.route('/calibration_sessions/<calibration_session_id>', methods=['PUT'])
+def update_calibration_session(calibration_session_id):
+    pass
+
+
+@calibration.route('/calibration_sessions/<calibration_session_id>', methods=['POST'])
+def create_calibration_session(calibration_session_id):
     pass
