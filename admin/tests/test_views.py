@@ -338,11 +338,6 @@ class TestViewsUnit(object):
             av_save_document.assert_has_calls([group_save_call, settings_save_call])
 
 
-    def test_doc_attribute_can_be_set_works_for_normal_and_forbidden_keys(self):
-        assert av.doc_attribute_can_be_set('lester')
-        assert not av.doc_attribute_can_be_set('_id')
-        assert not av.doc_attribute_can_be_set('_rev')
-
 class TestViewsIntegration(object):
     pass
 # TODO this will need an integration test because that gallery_url_not_null is a little special

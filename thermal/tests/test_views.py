@@ -23,4 +23,5 @@ class TestViewsUnit(object):
             assert 'merging' in response_data_dict
             assert 'camera' in response_data_dict
             assert 'docs' in response_data_dict
-            assert len(response_data_dict.keys()) == 6
+            assert 'calibration' in response_data_dict
+            assert len(response_data_dict.keys()) == 7

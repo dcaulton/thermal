@@ -10,7 +10,7 @@ from admin.services import (default_group_dict,
                             save_document)
 from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
-from thermal.utils import get_url_base, dynamically_calculated_attributes
+from thermal.utils import doc_attribute_can_be_set, get_url_base, dynamically_calculated_attributes
 
 admin = Blueprint('admin', __name__)
 

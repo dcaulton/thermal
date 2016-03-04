@@ -45,6 +45,11 @@ class TestUtilsUnit(object):
             (paging_requested, start_index, end_index) = thermal.utils.get_paging_info(**kwargs)
         assert 'items_per_page must be a number greater than zero' in str(exception_info.value)
 
+    def test_doc_attribute_can_be_set_works_for_normal_and_forbidden_keys(self):
+        assert thermal.utils.doc_attribute_can_be_set('lester')
+        assert not thermal.utils.doc_attribute_can_be_set('_id')
+        assert not thermal.utils.doc_attribute_can_be_set('_rev')
+
 
 class TestUtilsIntegration(object):
 

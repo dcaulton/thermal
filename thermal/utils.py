@@ -67,6 +67,11 @@ def item_exists(item_id, item_type):
             return True
     return False
 
+def doc_attribute_can_be_set(key_name):
+    if key_name not in ['_id', '_rev', 'type'] and key_name not in dynamically_calculated_attributes:
+        return True
+    return False
+
 # Wrote this then commented out because it didn't save any complexity or lines of code, let's see if it ends up being needed
 # def sort_dict_by_child_dict_value_field(dict_in, sort_by):  # TODO add testing
 #     '''
