@@ -58,6 +58,82 @@ class TestUtilsUnit(object):
         with pytest.raises(DocumentConfigurationError):
             tu.save_document(the_doc)
 
+    def test_get_parameter_fetches_parameter_when_all_is_well(self):
+        with current_app.test_request_context('/whatever?the_parameter=the_value'):
+            from flask import request  # I know, crazy, but you need to import request here, not at the top of the module
+            assert 'the_parameter' in request.args
+            fetched_value = tu.get_parameter('the_parameter')
+            assert fetched_value == 'the_value'
+
+    def test_get_parameter_fetches_None_when_no_parameter_and_no_default(self):
+        with current_app.test_request_context('/whatever?the_parameter=the_value'):
+            fetched_value = tu.get_parameter('mike_ptyson')
+            assert fetched_value == None
+
+    def test_get_parameter_fetches_default_when_no_parameter_and_default_specified(self):
+        with current_app.test_request_context('/whatever?the_parameter=the_value'):
+            fetched_value = tu.get_parameter('mike_ptyson', default='john_abercrombie')
+            assert fetched_value == 'john_abercrombie'
+
+    def test_get_parameter_returns_string_by_default(self):
+        with current_app.test_request_context('/whatever?the_parameter=66'):
+            fetched_value = tu.get_parameter('the_parameter')
+            assert type(fetched_value).__name__ == 'unicode'
+            assert fetched_value == '66'
+
+    def test_get_parameter_can_cast_a_value_to_int(self):
+        with current_app.test_request_context('/whatever?the_parameter=66'):
+            fetched_value = tu.get_parameter('the_parameter', cast_to_type=int)
+            assert type(fetched_value).__name__ == 'int'
+            assert fetched_value == 66
+
+    def test_get_parameter_returns_none_when_cast_fails_and_no_default_and_no_raise_value_error(self):
+        with current_app.test_request_context('/whatever?the_parameter=baloney'):
+            fetched_value = tu.get_parameter('the_parameter', cast_to_type=int)
+            assert fetched_value == None
+
+    def test_get_parameter_returns_default_when_cast_fails_and_default_specified_and_no_raise_value_error(self):
+        with current_app.test_request_context('/whatever?the_parameter=baloney'):
+            fetched_value = tu.get_parameter('the_parameter', default='monkey_chow', cast_to_type=int)
+            assert fetched_value == 'monkey_chow'
+
+    def test_get_parameter_raises_valueerror_when_cast_fails_and_default_specified_and_raise_value_error_requested(self):
+        with current_app.test_request_context('/whatever?the_parameter=baloney'):
+            with pytest.raises(ValueError) as exception_info:
+                fetched_value = tu.get_parameter('the_parameter', default='monkey_chow', cast_to_type=int, raise_value_error=True)
+            assert 'problem casting parameter the_parameter (value baloney) as type int' in str(exception_info.value)
+## TODO test all the branches of this
+#def get_parameter(parameter_name, default=None, cast_to_type=None, raise_value_error=False):
+#    '''
+#    Fetches a value from the request args
+#    You can specify a default value.  If you do not it uses None
+#    You can specify a default data type.  If you do not it uses string
+#    If no parameter for that name is found it returns the default
+#    If you specify a cast_to_type it will attempt to cast the string to that type.  
+#      - If the cast fails and you don't specify raise_value_error it returns the default value
+#      - If the cast fails and you do specify raise_value_error it raises a ValueError with info in its detail message
+#    '''
+#    return_value = default
+#    if parameter_name in request.args:
+#        return_value = request.args.get(parameter_name)
+#        if cast_to_type:
+#            try:
+#                return_value = cast_to_type(return_value)
+#            except ValueError as e:
+#                if raise_value_error:
+#                    error_string = "problem casting parameter {0} (value {1} as type {2}".format(str(paramater_name),
+#                                                                                                 str(return_value),
+#                                                                                                 str(cast_to_type.__name__))
+#                    raise ValueError(error_string)
+#                else:
+#                    return_value = default
+#    return return_value
+
+
+
+
+
+
 
 class TestUtilsIntegration(object):
 

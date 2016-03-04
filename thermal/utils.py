@@ -75,6 +75,10 @@ def doc_attribute_can_be_set(key_name):
 
 # TODO we need a more systematic way of dealing with expected and unexpected get/post parameters
 def get_paging_info_from_request(request):
+    # TODO this just serves admin.  And it's clunky with the strings.  We need to merge it with the other paging info stuff
+    # but the below breaks it for now
+    # page = get_parameter('page', default=0, cast_to_type=int)
+    # items_per_page = get_parameter('items_per_page', default=0, cast_to_type=int)
     (page, items_per_page) = (0, 0)
     if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
         page = request.args['page']
@@ -116,9 +120,9 @@ def get_parameter(parameter_name, default=None, cast_to_type=None, raise_value_e
                 return_value = cast_to_type(return_value)
             except ValueError as e:
                 if raise_value_error:
-                    error_string = "problem casting parameter {0} (value {1} as type {2}".format(str(paramater_name),
-                                                                                                 str(return_value),
-                                                                                                 str(cast_to_type.__name__))
+                    error_string = "problem casting parameter {0} (value {1}) as type {2}".format(str(parameter_name),
+                                                                                                  str(return_value),
+                                                                                                  str(cast_to_type.__name__))
                     raise ValueError(error_string)
                 else:
                     return_value = default
