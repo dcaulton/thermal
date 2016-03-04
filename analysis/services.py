@@ -8,8 +8,12 @@ import numpy as np
 from PIL import Image, ImageFilter, ImageStat, ImageOps
 
 from admin.services import get_group_document
-from picture.services import build_picture_path, build_picture_name, find_picture, picture_exists, save_picture_document
+from picture.services import (build_picture_path,
+                              build_picture_name,
+                              find_picture,
+                              save_picture_document)
 from thermal.appmodule import celery
+from thermal.utils import item_exists
 
 
 def check_if_image_is_too_dark(filename, brightness_threshold):
@@ -32,7 +36,7 @@ def edge_detect_task(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tigh
 
 
 def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
-    if picture_exists(alternate_img_id_in):
+    if item_exists(alternate_img_id_in, 'picture'):
         img_id_in = alternate_img_id_in
     pic_dict_in = find_picture(img_id_in)
     image_in = cv2.imread(pic_dict_in['uri'])

@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import os
 import shutil
 import uuid
@@ -7,10 +6,15 @@ import boto
 from flask import current_app, url_for
 from flask.ext.mail import Message
 
-from picture.services import find_pictures, build_picture_path, build_picture_name, update_picture_document
+from picture.services import (find_pictures,
+                              build_picture_path,
+                              build_picture_name,
+                              update_picture_document)
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import get_documents_from_criteria, get_url_base, dynamically_calculated_attributes
+from thermal.utils import (get_documents_from_criteria,
+                           get_url_base, 
+                           save_document)
 
 
 def get_settings_document():
@@ -27,24 +31,6 @@ def get_settings_document():
     else:
         settings_dict = create_default_settings_and_group_documents()
     return settings_dict
-
-
-def save_document(document_in):
-    '''
-    Saves any document
-    Gets doc id from the _id field
-    Has safeguards to avoid changing document type
-    Has safeguards to avoid saving derived properties
-    '''
-    the_id = document_in['_id']
-    if the_id in current_app.db:
-        existing_document = current_app.db[the_id]
-        if existing_document['type'] != document_in['type']:
-            raise DocumentConfigurationError('attempting to change the document type for document {0}'.format(str(the_id)))
-    for dca in dynamically_calculated_attributes:  # remove these properties, they are generated on the fly every retrieve
-        if dca in document_in:
-            del document_in[dca]
-    current_app.db[the_id] = document_in
 
 
 def get_group_document(group_id):

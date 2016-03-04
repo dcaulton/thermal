@@ -61,9 +61,10 @@ def get_url_base():
     return request.environ['wsgi.url_scheme'] + '://' + request.environ['HTTP_HOST']
 
 def item_exists(item_id, item_type):
+    item_id = str(item_id)  # cast to a string in case it's a uuid
     if item_id and item_id in current_app.db:
         item_dict = current_app.db[item_id]
-        if group_dict['type'] == item_type:
+        if item_dict['type'] == item_type:
             return True
     return False
 
@@ -72,11 +73,27 @@ def doc_attribute_can_be_set(key_name):
         return True
     return False
 
-# Wrote this then commented out because it didn't save any complexity or lines of code, let's see if it ends up being needed
-# def sort_dict_by_child_dict_value_field(dict_in, sort_by):  # TODO add testing
-#     '''
-#     Takes a dict, returns an ordered dict, ordered by the sort_by field from each value in the dict.
-#     It's assumed that the incoming dict has values which are dicts, and the child field is sortable.
-#     '''
-#     ordered_dict = OrderedDict(sorted(dict_in.items(), key=lambda t: t[1][sort_by]))
-#     return ordered_dict
+# TODO we need a more systematic way of dealing with expected and unexpected get/post parameters
+def get_paging_info_from_request(request):
+    (page, items_per_page) = (0, 0)
+    if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
+        page = request.args['page']
+        items_per_page = request.args['items_per_page']
+    return (page, items_per_page)
+
+def save_document(document_in):
+    '''
+    Saves any document
+    Gets doc id from the _id field
+    Has safeguards to avoid changing document type
+    Has safeguards to avoid saving derived properties
+    '''
+    the_id = document_in['_id']
+    if the_id in current_app.db:
+        existing_document = current_app.db[the_id]
+        if existing_document['type'] != document_in['type']:
+            raise DocumentConfigurationError('attempting to change the document type for document {0}'.format(str(the_id)))
+    for dca in dynamically_calculated_attributes:  # remove these properties, they are generated on the fly every retrieve
+        if dca in document_in:
+            del document_in[dca]
+    current_app.db[the_id] = document_in

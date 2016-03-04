@@ -10,7 +10,10 @@ from admin.services import (default_group_dict,
                             save_document)
 from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
-from thermal.utils import doc_attribute_can_be_set, get_url_base, dynamically_calculated_attributes
+from thermal.utils import (doc_attribute_can_be_set,
+                           get_paging_info_from_request,
+                           get_url_base,
+                           dynamically_calculated_attributes)
 
 admin = Blueprint('admin', __name__)
 
@@ -152,19 +155,3 @@ def save_group():
         save_document(settings)
         return Response(json.dumps(group_dict), status=200, mimetype='application/json')
     return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
-
-
-def doc_attribute_can_be_set(key_name):
-    # TODO it feels like there is some overlap with this functionality and what is in admin.services.save_document
-    if key_name not in ['_id', '_rev', 'type'] and key_name not in dynamically_calculated_attributes:
-        return True
-    return False
-
-
-# TODO we need a more systematic way of dealing with expected and unexpected get/post parameters
-def get_paging_info_from_request(request):
-    (page, items_per_page) = (0, 0)
-    if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
-        page = request.args['page']
-        items_per_page = request.args['items_per_page']
-    return (page, items_per_page)

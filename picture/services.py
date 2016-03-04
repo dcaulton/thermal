@@ -3,7 +3,7 @@ import os
 from flask import current_app
 
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import get_documents_from_criteria
+from thermal.utils import get_documents_from_criteria, save_document
 
 
 def find_pictures(args_dict, **kwargs):
@@ -19,15 +19,6 @@ def find_picture(picture_id):
     else:
         raise NotFoundError("picture not found for id {0}".format(picture_id))
     return picture_dict
-
-
-def picture_exists(picture_id):
-    picture_id = str(picture_id)
-    if picture_id in current_app.db:
-        picture_dict = current_app.db[picture_id]
-        if 'type' in picture_dict and picture_dict['type'] == 'picture':
-            return True
-    return False
 
 
 def save_picture_document(the_dict):
@@ -51,7 +42,7 @@ def update_picture_document(the_dict):
     if the_dict['type'] != 'picture':
         raise DocumentConfigurationError('trying to save as a picture a document that is not of type picture: {0}'.format(str(the_id)))
     else:
-        current_app.db[the_id] = the_dict
+        save_document(the_dict)
 
 
 def build_picture_path(picture_name, snap_id='', create_directory=True):

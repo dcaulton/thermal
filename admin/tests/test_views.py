@@ -41,6 +41,7 @@ class TestViewsUnit(object):
             assert len(response_data_dict.keys()) == 2
 
 
+    # TODO this test should be restructured and moved to the thermal.utils test suite
     @patch('admin.views.find_pictures')
     @patch('admin.views.get_group_document')
     def test_get_paging_info_gets_needed_params(self,

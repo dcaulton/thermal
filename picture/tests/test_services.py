@@ -143,18 +143,3 @@ class TestPictureIntegration(object):
         assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
         picture_path = ps.build_picture_path(picture_name=picture_name, snap_id=snap_id, create_directory=False)
         assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
-
-    def test_picture_exists_returns_true_when_picture_exists(self):
-        pic_id = uuid.uuid4()
-        doc_1 = {
-            '_id': str(pic_id),
-            'type': 'picture'
-        }
-        ps.save_picture_document(doc_1)
-
-        assert ps.picture_exists(pic_id)
-
-    def test_picture_exists_returns_false_when_picture_does_not_exist(self):
-        pic_id = uuid.uuid4()
-
-        assert not ps.picture_exists(pic_id)

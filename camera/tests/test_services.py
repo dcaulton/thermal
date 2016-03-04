@@ -15,8 +15,6 @@ class TestServicesUnit(object):
     def test_thermal_still_saves_appropriate_picture_document(self, cs_save_picture):
 
         Lepton.take_still = Mock()
-        # here's how to set properties on the function we mocked out
-        #  cs_save_picture.return_value = 'haha'
         snap_id = uuid.uuid4()
         group_id = uuid.uuid4()
         pic_id = uuid.uuid4()

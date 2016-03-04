@@ -5,8 +5,12 @@ from flask import current_app
 from PIL import Image, ImageChops
 
 from admin.services import get_group_document
-from picture.services import build_picture_path, build_picture_name, find_picture, picture_exists, save_picture_document
+from picture.services import (build_picture_path,
+                              build_picture_name,
+                              find_picture,
+                              save_picture_document)
 from thermal.appmodule import celery
+from thermal.utils import item_exists
 
 
 def do_stuff():
@@ -29,7 +33,7 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
     group_id = group_document['_id']
 
     img1_id_in = img1_primary_id_in
-    if picture_exists(img1_alternate_id_in):
+    if item_exists(img1_alternate_id_in, 'picture'):
         img1_id_in = img1_alternate_id_in
 
     if 'merge_type' in group_document:

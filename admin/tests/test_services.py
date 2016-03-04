@@ -8,7 +8,11 @@ import pytest
 
 import admin.services
 import conftest
-from picture.services import (build_picture_name, build_picture_path, find_picture, find_pictures, save_picture_document,
+from picture.services import (build_picture_name,
+                              build_picture_path,
+                              find_picture,
+                              find_pictures,
+                              save_picture_document,
                               update_picture_document)
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
@@ -151,14 +155,6 @@ class TestSettingsIntegration(object):
 
         assert group_doc_from_current['_id'] != some_other_group_id
         assert group_doc_from_current['_id'] == settings_doc['current_group_id']
-
-    def test_save_document_fails_if_document_type_is_being_altered(self):
-        the_id = str(uuid.uuid4())
-        the_doc = {'_id': the_id, 'type': 'something'}
-        current_app.db[the_id] = the_doc
-        the_doc['type'] = 'something else'
-        with pytest.raises(DocumentConfigurationError):
-            admin.services.save_document(the_doc)
 
     def build_three_pictures(self, snap_id):
         pic_ids = []
