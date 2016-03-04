@@ -97,3 +97,29 @@ def save_document(document_in):
         if dca in document_in:
             del document_in[dca]
     current_app.db[the_id] = document_in
+
+def get_parameter(parameter_name, default=None, cast_to_type=None, raise_value_error=False):
+    '''
+    Fetches a value from the request args
+    You can specify a default value.  If you do not it uses None
+    You can specify a default data type.  If you do not it uses string
+    If no parameter for that name is found it returns the default
+    If you specify a cast_to_type it will attempt to cast the string to that type.  
+      - If the cast fails and you don't specify raise_value_error it returns the default value
+      - If the cast fails and you do specify raise_value_error it raises a ValueError with info in its detail message
+    '''
+    return_value = default
+    if parameter_name in request.args:
+        return_value = request.args.get(parameter_name)
+        if cast_to_type:
+            try:
+                return_value = cast_to_type(return_value)
+            except ValueError as e:
+                if raise_value_error:
+                    error_string = "problem casting parameter {0} (value {1} as type {2}".format(str(paramater_name),
+                                                                                                 str(return_value),
+                                                                                                 str(cast_to_type.__name__))
+                    raise ValueError(error_string)
+                else:
+                    return_value = default
+    return return_value

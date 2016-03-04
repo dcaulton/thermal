@@ -6,7 +6,7 @@ from flask import current_app, Blueprint, request, Response, url_for
 
 from admin.services import get_settings_document
 from camera.tasks import take_picam_still, take_thermal_still, take_both_still, take_both_still_test
-from thermal.utils import get_url_base
+from thermal.utils import get_parameter, get_url_base
 
 camera = Blueprint('camera', __name__)
 
@@ -99,19 +99,12 @@ def both_still_test():
     return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
 
 
-# TODO add tests for these three functions and what they default to
 def get_delay_parameter():
     '''
     Extracts the delay parameter from the GET parameters.
     Has a hardcoded default of 'shoot immediately'
     '''
-    delay = 0
-    try:
-        if 'delay' in request.args:
-            delay = int(request.args.get('delay'))
-    except ValueError as e:
-        pass
-    return delay
+    return get_parameter('delay', default=0, cast_to_type=int)
 
 
 def get_repeat_parameter():
@@ -119,13 +112,7 @@ def get_repeat_parameter():
     Extracts the repeat parameter from the GET parameters.
     Has a hardcoded default of 'one picture only, no repeating behavior'
     '''
-    repeat = 0
-    try:
-        if 'repeat' in request.args:
-            repeat = int(request.args.get('repeat'))
-    except ValueError as e:
-        pass
-    return repeat
+    return get_parameter('repeat', default=0, cast_to_type=int)
 
 
 def get_scale_image_parameter():
@@ -135,8 +122,4 @@ def get_scale_image_parameter():
     Has a hardcoded default of 'yes, scale and colorize it up'
     So you have to pass it something like 0 or '' to suppress
     '''
-    scale_image = True
-    if 'scale_image' in request.args:
-        scale_image = request.args.get('scale_image')
-        # need a cleaner way to parse a boolean from a get parameter.  e.g. 'False' evaluates to True as a non-empty string
-    return scale_image
+    return get_parameter('scale_image', default=True, cast_to_type=bool)

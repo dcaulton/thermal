@@ -120,12 +120,12 @@ class TestViewsUnit(object):
             assert repeat == 0
 
 
-    def test_get_scale_image_parameter_fetches_scale_image_parameter(self):
+    def test_get_scale_image_parameter_casts_scale_image_parameter_to_true(self):
         with current_app.test_request_context('/whatever?scale_image=yipee'):
             from flask import request
             assert 'scale_image' in request.args
             scale_image = cv.get_scale_image_parameter()
-            assert scale_image == 'yipee'
+            assert scale_image
 
 
     def test_get_scale_image_parameter_defaults_to_true(self):
@@ -139,5 +139,4 @@ class TestViewsUnit(object):
             from flask import request
             assert 'scale_image' in request.args
             scale_image = cv.get_scale_image_parameter()
-            assert scale_image == ''
             assert not scale_image
