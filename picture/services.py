@@ -7,17 +7,21 @@ from thermal.utils import get_documents_from_criteria, item_exists, save_documen
 
 
 def find_pictures(args_dict, **kwargs):
+    '''
+    Finds all pictures matching the parameters passed in with the kwargs dict
+    It's just a think wrapper around get_documents_from_criteria
+    '''
     args_dict['type'] = 'picture'
     pictures_dict = get_documents_from_criteria(args_dict, **kwargs)
     return pictures_dict
 
 
 def find_picture(picture_id):
-    picture_id = str(picture_id)  # deal with non-stringified UUIDs coming in
-    if picture_id in current_app.db:
-        picture_dict = current_app.db[picture_id]
-    else:
+    if not item_exists(picture_id, 'picture'):
         raise NotFoundError("picture not found for id {0}".format(picture_id))
+    # TODO replace this and all other current_app.db calls with a get_document method in thermal.utils soon.
+    # it will make stubbing out stuff a lot easier for unit testing
+    picture_dict = current_app.db[str(picture_id)]
     return picture_dict
 
 

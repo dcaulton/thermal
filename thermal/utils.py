@@ -58,9 +58,11 @@ def get_paging_info(**kwargs):
     return (paging_requested, start_index, end_index)
 
 def get_url_base():
+    '''
+    Builds a base url for this application, including scheme and host/port
+    '''
     return request.environ['wsgi.url_scheme'] + '://' + request.environ['HTTP_HOST']
 
-# TODO add testing
 def item_exists(item_id, item_type='any'):
     '''
     Checks if an item exists in the db for the supplied item_id and item_type.  Returns True if it exists, False otherwise
@@ -77,6 +79,10 @@ def item_exists(item_id, item_type='any'):
     return False
 
 def doc_attribute_can_be_set(key_name):
+    '''
+    Checks if a supplied key name can be saved with a document to the database.
+    Not record-specific, we don't really have models with this application
+    '''
     if key_name not in ['_id', '_rev', 'type'] and key_name not in dynamically_calculated_attributes:
         return True
     return False

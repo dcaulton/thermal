@@ -6,7 +6,7 @@ import boto
 from flask import current_app
 import pytest
 
-import admin.services
+import admin.services as adms
 import conftest
 from picture.services import (build_picture_name,
                               build_picture_path,
@@ -15,6 +15,7 @@ from picture.services import (build_picture_name,
                               save_picture_document,
                               update_picture_document)
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
+from thermal.utils import save_document
 
 
 class TestSettingsUnit(object):
@@ -67,7 +68,7 @@ class TestSettingsUnit(object):
 
         snap_id = uuid.uuid4()
         group_id = uuid.uuid4()
-        admin.services.upload_files_to_s3(snap_id, group_id)
+        adms.upload_files_to_s3(snap_id, group_id)
 
         as_get_group_document.assert_called_once_with(group_id)
         as_find_pictures.assert_called_once_with({'snap_id': str(snap_id)})
@@ -84,14 +85,14 @@ class TestSettingsIntegration(object):
 
     def test_default_settings_dict_has_expected_fields(self):
         the_group_id = uuid.uuid4()
-        settings_doc = admin.services.default_settings_dict(the_group_id)
+        settings_doc = adms.default_settings_dict(the_group_id)
         expected_fields = ['_id', 'current_group_id', 'type']
         for field in expected_fields:
             assert field in settings_doc
         assert len(settings_doc.keys()) == len(expected_fields)
 
     def test_default_group_dict_has_expected_fields(self):
-        group_doc = admin.services.default_group_dict()
+        group_doc = adms.default_group_dict()
         expected_fields = ['_id',
                            'merge_type',
                            'retake_picam_pics_when_dark',
@@ -111,22 +112,22 @@ class TestSettingsIntegration(object):
         assert len(group_doc.keys()) == len(expected_fields)
 
     def test_get_settings_fetches_a_real_settings_document(self):
-        settings_doc = admin.services.get_settings_document()
+        settings_doc = adms.get_settings_document()
         assert '_id' in settings_doc.keys()
         assert '_rev' in settings_doc.keys()
         assert 'current_group_id' in settings_doc.keys()
         assert settings_doc['type'] == 'settings'
 
     def test_settings_points_to_a_real_group_document(self):
-        settings_doc = admin.services.get_settings_document()
+        settings_doc = adms.get_settings_document()
         group_doc = current_app.db[settings_doc['current_group_id']]
         assert group_doc['type'] == 'group'
 
     def test_get_settings_creates_new_settings_document_if_document_is_missing(self):
-        old_settings_doc = admin.services.get_settings_document()
+        old_settings_doc = adms.get_settings_document()
         old_settings_id = old_settings_doc['_id']
         current_app.db.delete(old_settings_doc)
-        new_settings_doc = admin.services.get_settings_document()
+        new_settings_doc = adms.get_settings_document()
         new_settings_id = new_settings_doc['_id']
         assert old_settings_id != new_settings_id
 
@@ -135,23 +136,23 @@ class TestSettingsIntegration(object):
         the_doc = {'type': 'not_group'}
         current_app.db[the_id] = the_doc
         with pytest.raises(NotFoundError):
-            the_returned_doc = admin.services.get_group_document(the_id)
+            the_returned_doc = adms.get_group_document(the_id)
 
     def test_get_group_document_succeeds_if_doc_is_of_type_group(self):
         the_id = str(uuid.uuid4())
         the_doc = {'type': 'group'}
         current_app.db[the_id] = the_doc
-        the_returned_doc = admin.services.get_group_document(the_id)
+        the_returned_doc = adms.get_group_document(the_id)
         assert the_returned_doc['_id'] == the_id
 
     def test_get_group_document_current_gets_the_current_group_document(self):
-        settings_doc = admin.services.get_settings_document()
+        settings_doc = adms.get_settings_document()
 
         some_other_group_id = str(uuid.uuid4())
         some_other_group_doc = {'type': 'group'}
         current_app.db[some_other_group_id] = some_other_group_doc
 
-        group_doc_from_current = admin.services.get_group_document('current')
+        group_doc_from_current = adms.get_group_document('current')
 
         assert group_doc_from_current['_id'] != some_other_group_id
         assert group_doc_from_current['_id'] == settings_doc['current_group_id']
@@ -179,7 +180,7 @@ class TestSettingsIntegration(object):
 
     def test_clean_up_files_cleans_pictures_from_the_snap(self):
         snap_id = uuid.uuid4()
-        group_id = admin.services.get_group_document('current')['_id']
+        group_id = adms.get_group_document('current')['_id']
         pic_ids = self.build_three_pictures(snap_id)
         for pic_id in pic_ids:
             pic_doc = find_picture(pic_id)
@@ -187,7 +188,7 @@ class TestSettingsIntegration(object):
             assert str(snap_id) in pic_doc['uri']
 
         assert os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
-        admin.services.clean_up_files(snap_id, group_id)
+        adms.clean_up_files(snap_id, group_id)
 
         for pic_id in pic_ids:
             pic_doc = find_picture(pic_id)
@@ -196,3 +197,27 @@ class TestSettingsIntegration(object):
             assert pic_doc['uri'] == expected_picture_path
             assert os.path.isfile(expected_picture_path)
         assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+
+    def test_find_groups_fetches_all_groups_when_no_search_params_specified(self):
+        group_id_1 = uuid.uuid4()
+        group_id_2 = uuid.uuid4()
+        non_group_id = uuid.uuid4()
+        save_document({'_id': group_id_1, 'type': 'group'})
+        save_document({'_id': group_id_2, 'type': 'group'})
+        save_document({'_id': non_group_id, 'type': 'vegemite_sandwich'})
+        groups_dict = adms.find_groups()
+        assert str(group_id_1) in groups_dict
+        assert str(group_id_2) in groups_dict
+        assert str(non_group_id) not in groups_dict
+
+    def test_find_groups_filters_all_groups_when_search_params_specified(self):
+        group_id_1 = uuid.uuid4()
+        group_id_2 = uuid.uuid4()
+        group_id_3 = uuid.uuid4()
+        save_document({'_id': group_id_1, 'type': 'group', 'lisa': 'turtle'})
+        save_document({'_id': group_id_2, 'type': 'group', 'lisa': 'tortoise'})
+        save_document({'_id': group_id_3, 'type': 'group', 'lisa': 'turtle'})
+        groups_dict = adms.find_groups({'lisa': 'turtle'})
+        assert len(groups_dict.keys()) == 2
+        assert str(group_id_1) in groups_dict
+        assert str(group_id_3) in groups_dict

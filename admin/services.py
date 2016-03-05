@@ -232,8 +232,7 @@ def send_mail(snap_id, group_id):
             mail.send(msg)
 
 
-# TODO add tests
-def find_groups(args_dict, **kwargs):
+def find_groups(args_dict={}, **kwargs):
     '''
     Retrieves a dict of all groups.  Key is the group id, value is the dict for the group.
     '''
