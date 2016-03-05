@@ -1,3 +1,2 @@
 [run]
-omit = */tests/test*.py
-omit = */__init__.py
+omit = */__init__.py , */tests/test*.py
