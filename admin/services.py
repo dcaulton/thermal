@@ -13,7 +13,9 @@ from picture.services import (find_pictures,
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 from thermal.utils import (get_documents_from_criteria,
+                           get_document,
                            get_url_base, 
+                           item_exists,
                            save_document)
 
 
@@ -26,6 +28,7 @@ def get_settings_document():
             emit(doc._id, doc);
     }'''
     view_result = current_app.db.query(map_fun)
+    # TODO push the above map reduce stuff into thermal.utils
     if view_result.total_rows:
         settings_dict = view_result.rows[0]['value']
     else:
@@ -40,10 +43,9 @@ def get_group_document(group_id):
     if group_id == 'current':
         settings_dict = get_settings_document()
         group_id = settings_dict['current_group_id']
-    if group_id in current_app.db:  # TODO this is fragile, make into one if using item_exists and get_documents_by_criteria
-        group_dict = current_app.db[group_id]
-        if group_dict['type'] == 'group':
-            return group_dict
+    if item_exists(group_id, 'group'):
+        group_dict = get_document(group_id)
+        return group_dict
     raise NotFoundError('no group document found for id {0}'.format(str(group_id)))
 
 

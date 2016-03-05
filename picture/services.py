@@ -3,7 +3,10 @@ import os
 from flask import current_app
 
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import get_documents_from_criteria, item_exists, save_document
+from thermal.utils import (get_document,
+                           get_documents_from_criteria,
+                           item_exists,
+                           save_document)
 
 
 def find_pictures(args_dict, **kwargs):
@@ -19,9 +22,7 @@ def find_pictures(args_dict, **kwargs):
 def find_picture(picture_id):
     if not item_exists(picture_id, 'picture'):
         raise NotFoundError("picture not found for id {0}".format(picture_id))
-    # TODO replace this and all other current_app.db calls with a get_document method in thermal.utils soon.
-    # it will make stubbing out stuff a lot easier for unit testing
-    picture_dict = current_app.db[str(picture_id)]
+    picture_dict = get_document(picture_id)
     return picture_dict
 
 

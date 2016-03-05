@@ -93,11 +93,21 @@ def get_paging_info_from_request(request):
     # but the below breaks it for now
     # page = get_parameter('page', default=0, cast_to_type=int)
     # items_per_page = get_parameter('items_per_page', default=0, cast_to_type=int)
+    # TODO use get_parameter to cast to ints and default to zero
     (page, items_per_page) = (0, 0)
     if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
         page = request.args['page']
         items_per_page = request.args['items_per_page']
     return (page, items_per_page)
+
+def get_document(doc_id):  #TODO add testing
+    '''
+    Fetches a document with the supplied id from the database
+    '''
+    if type(doc_id).__name__ == 'UUID':
+        doc_id = str(doc_id)
+    return_doc = current_app.db[doc_id]
+    return return_doc
 
 def save_document(document_in):
     '''
