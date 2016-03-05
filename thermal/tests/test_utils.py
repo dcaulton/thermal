@@ -7,7 +7,7 @@ from flask import current_app
 import pytest
 
 import conftest
-from thermal.exceptions import DocumentConfigurationError
+from thermal.exceptions import DocumentConfigurationError, NotFoundError
 import thermal.utils as tu
 
 
@@ -102,7 +102,6 @@ class TestUtilsUnit(object):
             with pytest.raises(ValueError) as exception_info:
                 fetched_value = tu.get_parameter('the_parameter', default='monkey_chow', cast_to_type=int, raise_value_error=True)
             assert 'problem casting parameter the_parameter (value baloney) as type int' in str(exception_info.value)
-
 
 
 class TestUtilsIntegration(object):
@@ -242,3 +241,53 @@ class TestUtilsIntegration(object):
 
         error_string = 'attempting to change the document type for document {0}'.format(str(doc_id))
         assert error_string in str(exception_info.value)
+
+    def test_get_singleton_document_fails_when_zero_documents_exist(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id,
+                   'type': 'twix'}
+        tu.save_document(dict_in)
+        with pytest.raises(NotFoundError) as exception_info:
+            tu.get_singleton_document('skittles')
+
+        error_string = 'no document found of type skittles, expected singleton'
+        assert error_string in str(exception_info.value)
+
+    def test_get_singleton_document_fails_when_more_than_one_documents_exist(self):
+        tu.save_document({'_id': uuid.uuid4(), 'type': 'marathon'})
+        tu.save_document({'_id': uuid.uuid4(), 'type': 'marathon'})
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            tu.get_singleton_document('marathon')
+
+        error_string = 'more than one document found of type marathon, expected singleton'
+        assert error_string in str(exception_info.value)
+
+    def test_get_singleton_document_succeeds_when_one_document_is_found(self):
+        doc_id = uuid.uuid4()
+        tu.save_document({'_id': doc_id, 'type': 'zagnut'})
+        the_dict = tu.get_singleton_document('zagnut')
+
+        assert the_dict
+        assert the_dict['_id'] == str(doc_id)
+
+    def test_get_document_fetches_a_document_with_the_proper_id_supplied_as_string(self):
+        doc_id = str(uuid.uuid4())
+        tu.save_document({'_id': doc_id, 'type': 'zagnut'})
+        the_dict = tu.get_document(doc_id)
+
+        assert the_dict
+        assert the_dict['_id'] == doc_id
+
+    def test_get_document_fetches_a_document_with_the_proper_id_supplied_as_uuid(self):
+        doc_id = uuid.uuid4()
+        tu.save_document({'_id': doc_id, 'type': 'zagnut'})
+        the_dict = tu.get_document(doc_id)
+
+        assert the_dict
+        assert the_dict['_id'] == str(doc_id)
+
+    def test_get_document_returns_none_when_document_not_found(self):
+        doc_id = uuid.uuid4()
+        the_dict = tu.get_document(doc_id)
+
+        assert not the_dict

@@ -14,6 +14,7 @@ from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 from thermal.utils import (get_documents_from_criteria,
                            get_document,
+                           get_singleton_document,
                            get_url_base, 
                            item_exists,
                            save_document)
@@ -23,15 +24,9 @@ def get_settings_document():
     '''
     Fetches the settings document (a singleton)
     '''
-    map_fun = '''function(doc) {
-        if (doc.type == 'settings')
-            emit(doc._id, doc);
-    }'''
-    view_result = current_app.db.query(map_fun)
-    # TODO push the above map reduce stuff into thermal.utils
-    if view_result.total_rows:
-        settings_dict = view_result.rows[0]['value']
-    else:
+    try:
+        settings_dict = get_singleton_document('settings')
+    except NotFoundError as e:
         settings_dict = create_default_settings_and_group_documents()
     return settings_dict
 

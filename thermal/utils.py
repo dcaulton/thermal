@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from flask import current_app, request
 
-from thermal.exceptions import DocumentConfigurationError
+from thermal.exceptions import DocumentConfigurationError, NotFoundError
 
 
 dynamically_calculated_attributes = ['current_group_link', 'picture_links', 'snap_list']
@@ -68,7 +68,7 @@ def item_exists(item_id, item_type='any'):
     Checks if an item exists in the db for the supplied item_id and item_type.  Returns True if it exists, False otherwise
     If item_type is supplied as 'any', then it returns True if any document exists with that id, False otherwise.
     '''
-    item_id = str(item_id)  # cast to a string in case it's a uuid
+    item_id = cast_uuid_to_string(item_id)
     if item_id and item_id in current_app.db:
         if item_type == 'any':
             return True
@@ -100,14 +100,33 @@ def get_paging_info_from_request(request):
         items_per_page = request.args['items_per_page']
     return (page, items_per_page)
 
-def get_document(doc_id):  #TODO add testing
+def cast_uuid_to_string(item_id):  # TODO add testing
+    if type(item_id).__name__ == 'UUID':
+        item_id = str(item_id)
+    return item_id
+
+def get_document(doc_id):
     '''
     Fetches a document with the supplied id from the database
     '''
-    if type(doc_id).__name__ == 'UUID':
-        doc_id = str(doc_id)
-    return_doc = current_app.db[doc_id]
-    return return_doc
+    doc_id = cast_uuid_to_string(doc_id)
+    if item_exists(doc_id):
+        return current_app.db[doc_id]
+    return None
+
+def get_singleton_document(doc_type):
+    '''
+    Fetches a document that we expect only of its type to exist
+    Throws NotFoundError if there are zero or more than one of them in the db
+    Throws DocumentConfigurationError if more than one of them are found
+    '''
+    top_level_document_dict = get_documents_from_criteria({'type': doc_type})
+    if len(top_level_document_dict.keys()) > 1:
+        raise DocumentConfigurationError('more than one document found of type {0}, expected singleton'.format(doc_type))
+    elif len(top_level_document_dict.keys()) == 0:
+        raise NotFoundError('no document found of type {0}, expected singleton'.format(doc_type))
+    else:
+        return top_level_document_dict[top_level_document_dict.keys()[0]]
 
 def save_document(document_in):
     '''
@@ -116,12 +135,11 @@ def save_document(document_in):
     Has safeguards to avoid changing document type
     Has safeguards to avoid saving derived properties
     '''
-    if '_id' not in document_in:  # TODO add test
+    if '_id' not in document_in:
          raise DocumentConfigurationError('trying to save the document with no id')
-    if type(document_in['_id']).__name__ == 'UUID':  # cast id to string if it's a uuid, couchdb needs that
-        document_in['_id'] = str(document_in['_id'])
+    document_in['_id'] = cast_uuid_to_string(document_in['_id'])  # cast id to string if it's a uuid, couchdb needs that
     the_id = document_in['_id']
-    if 'type' not in document_in:  # TODO add test
+    if 'type' not in document_in:
          raise DocumentConfigurationError('trying to save the document with no value for type: {0}'.format(str(the_id)))
     if the_id in current_app.db:
         existing_document = current_app.db[the_id]

@@ -20,6 +20,7 @@ def find_pictures(args_dict, **kwargs):
 
 
 def find_picture(picture_id):
+    picture_id = str(picture_id)
     if not item_exists(picture_id, 'picture'):
         raise NotFoundError("picture not found for id {0}".format(picture_id))
     picture_dict = get_document(picture_id)
