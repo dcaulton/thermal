@@ -1,0 +1,3 @@
+[run]
+omit = */tests/test*.py
+omit = */__init__.py
