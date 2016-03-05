@@ -3,7 +3,7 @@ import os
 from flask import current_app
 
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import get_documents_from_criteria, save_document
+from thermal.utils import get_documents_from_criteria, item_exists, save_document
 
 
 def find_pictures(args_dict, **kwargs):
@@ -23,24 +23,19 @@ def find_picture(picture_id):
 
 def save_picture_document(the_dict):
     the_id = the_dict['_id']
-    if the_id in current_app.db:
+    if item_exists(the_id, 'any'):
         raise DocumentConfigurationError('trying to save the pic with a preexisting id: {0}'.format(str(the_id)))
-    if 'type' not in the_dict.keys():
-        raise DocumentConfigurationError('trying to save the pic with no value for type: {0}'.format(str(the_id)))
-    if the_dict['type'] != 'picture':
-        raise DocumentConfigurationError('trying to save as a picture a document that is not of type picture: {0}'.format(str(the_id)))
+    if 'type' in the_dict and the_dict['type'] != 'picture':
+        raise DocumentConfigurationError('trying to save as a picture a document that is not of type picture: {0}'\
+                                         .format(str(the_id)))
     else:
-        current_app.db[the_id] = the_dict
+        save_document(the_dict)
 
 
 def update_picture_document(the_dict):
     the_id = the_dict['_id']
-    if the_id not in current_app.db:
-        raise DocumentConfigurationError('trying to update a pic whose id isnt in the db: {0}'.format(str(the_id)))
-    if 'type' not in the_dict.keys():
-        raise DocumentConfigurationError('trying to save the pic with no value for type: {0}'.format(str(the_id)))
-    if the_dict['type'] != 'picture':
-        raise DocumentConfigurationError('trying to save as a picture a document that is not of type picture: {0}'.format(str(the_id)))
+    if not item_exists(the_id, 'picture'):
+        raise DocumentConfigurationError('trying to update a picture when no picture exists for that id: {0}'.format(str(the_id)))
     else:
         save_document(the_dict)
 

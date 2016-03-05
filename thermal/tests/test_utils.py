@@ -102,36 +102,6 @@ class TestUtilsUnit(object):
             with pytest.raises(ValueError) as exception_info:
                 fetched_value = tu.get_parameter('the_parameter', default='monkey_chow', cast_to_type=int, raise_value_error=True)
             assert 'problem casting parameter the_parameter (value baloney) as type int' in str(exception_info.value)
-## TODO test all the branches of this
-#def get_parameter(parameter_name, default=None, cast_to_type=None, raise_value_error=False):
-#    '''
-#    Fetches a value from the request args
-#    You can specify a default value.  If you do not it uses None
-#    You can specify a default data type.  If you do not it uses string
-#    If no parameter for that name is found it returns the default
-#    If you specify a cast_to_type it will attempt to cast the string to that type.  
-#      - If the cast fails and you don't specify raise_value_error it returns the default value
-#      - If the cast fails and you do specify raise_value_error it raises a ValueError with info in its detail message
-#    '''
-#    return_value = default
-#    if parameter_name in request.args:
-#        return_value = request.args.get(parameter_name)
-#        if cast_to_type:
-#            try:
-#                return_value = cast_to_type(return_value)
-#            except ValueError as e:
-#                if raise_value_error:
-#                    error_string = "problem casting parameter {0} (value {1} as type {2}".format(str(paramater_name),
-#                                                                                                 str(return_value),
-#                                                                                                 str(cast_to_type.__name__))
-#                    raise ValueError(error_string)
-#                else:
-#                    return_value = default
-#    return return_value
-
-
-
-
 
 
 
@@ -169,7 +139,7 @@ class TestUtilsIntegration(object):
         assert len(documents.keys()) == 1
         assert id_1 in documents
 
-    def test_item_exists_returns_true_when_item_exists(self):
+    def test_item_exists_returns_true_when_item_exists_type_specific(self):
         item_id = uuid.uuid4()
         doc_1 = {
             '_id': str(item_id),
@@ -179,7 +149,96 @@ class TestUtilsIntegration(object):
 
         assert tu.item_exists(item_id, 'picture')
 
-    def test_item_exists_returns_false_when_item_does_not_exist(self):
+    def test_item_exists_returns_true_when_item_exists_type_any(self):
+        item_id = uuid.uuid4()
+        doc_1 = {
+            '_id': str(item_id),
+            'type': 'picture'
+        }
+        tu.save_document(doc_1)
+
+        assert tu.item_exists(item_id, 'any')
+
+    def test_item_exists_returns_false_when_item_exists_but_doesnt_match_type(self):
+        item_id = uuid.uuid4()
+        doc_1 = {
+            '_id': str(item_id),
+            'type': 'picture'
+        }
+        tu.save_document(doc_1)
+
+        assert not tu.item_exists(item_id, 'exterminator')
+
+    def test_item_exists_returns_false_when_item_doesnt_exist_type_any(self):
         item_id = uuid.uuid4()
 
-        assert not tu.item_exists(item_id, 'anything')
+        assert not tu.item_exists(item_id, 'any')
+
+    def test_save_document_works_when_document_is_complete_and_not_preexisting(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id,
+                   'type': 'wookie'}
+        tu.save_document(dict_in)
+
+        assert tu.item_exists(doc_id, 'any')
+
+    def test_save_document_casts_id_to_string(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id,
+                   'type': 'wookie'}
+        tu.save_document(dict_in)
+
+        the_retrieved_doc = current_app.db[str(doc_id)]
+        assert type(the_retrieved_doc['_id']).__name__ == 'unicode'
+
+    def test_save_document_works_when_document_is_complete_and_type_matches(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id,
+                   'type': 'wookie'}
+        tu.save_document(dict_in)
+        dict_in['cat'] = 'felix'
+        tu.save_document(dict_in)
+
+        the_retrieved_doc = current_app.db[str(doc_id)]
+        assert the_retrieved_doc['type'] == 'wookie'
+        assert the_retrieved_doc['cat'] == 'felix'
+
+    def test_save_document_removes_dynamically_calculated_attributes(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id,
+                   'type': 'wookie'}
+        one_dynamic_attr_name = tu.dynamically_calculated_attributes[0]
+        dict_in[one_dynamic_attr_name] = 'something'
+        tu.save_document(dict_in)
+
+        the_saved_doc = current_app.db[str(doc_id)]
+
+        assert one_dynamic_attr_name not in the_saved_doc
+
+    def test_save_document_fails_when_no_id(self):
+        dict_in = {'type': 'wookie'}
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            tu.save_document(dict_in)
+
+        assert 'trying to save the document with no id' in str(exception_info.value)
+
+    def test_save_document_fails_when_no_type(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id}
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            tu.save_document(dict_in)
+
+        error_string = 'trying to save the document with no value for type: {0}'.format(str(doc_id))
+        assert error_string in str(exception_info.value)
+
+    def test_save_document_fails_when_document_is_complete_and_type_doesnt_match(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id,
+                   'type': 'wookie'}
+        tu.save_document(dict_in)
+        dict_in['type'] = 'ewok'
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            tu.save_document(dict_in)
+
+        error_string = 'attempting to change the document type for document {0}'.format(str(doc_id))
+        assert error_string in str(exception_info.value)

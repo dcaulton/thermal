@@ -60,12 +60,20 @@ def get_paging_info(**kwargs):
 def get_url_base():
     return request.environ['wsgi.url_scheme'] + '://' + request.environ['HTTP_HOST']
 
-def item_exists(item_id, item_type):
+# TODO add testing
+def item_exists(item_id, item_type='any'):
+    '''
+    Checks if an item exists in the db for the supplied item_id and item_type.  Returns True if it exists, False otherwise
+    If item_type is supplied as 'any', then it returns True if any document exists with that id, False otherwise.
+    '''
     item_id = str(item_id)  # cast to a string in case it's a uuid
     if item_id and item_id in current_app.db:
-        item_dict = current_app.db[item_id]
-        if item_dict['type'] == item_type:
+        if item_type == 'any':
             return True
+        else:
+            item_dict = current_app.db[item_id]
+            if item_dict['type'] == item_type:
+                return True
     return False
 
 def doc_attribute_can_be_set(key_name):
@@ -92,7 +100,13 @@ def save_document(document_in):
     Has safeguards to avoid changing document type
     Has safeguards to avoid saving derived properties
     '''
+    if '_id' not in document_in:  # TODO add test
+         raise DocumentConfigurationError('trying to save the document with no id')
+    if type(document_in['_id']).__name__ == 'UUID':  # cast id to string if it's a uuid, couchdb needs that
+        document_in['_id'] = str(document_in['_id'])
     the_id = document_in['_id']
+    if 'type' not in document_in:  # TODO add test
+         raise DocumentConfigurationError('trying to save the document with no value for type: {0}'.format(str(the_id)))
     if the_id in current_app.db:
         existing_document = current_app.db[the_id]
         if existing_document['type'] != document_in['type']:
