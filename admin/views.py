@@ -33,7 +33,6 @@ def index():
 
 # TODO add a test on the service side to check the integrity of settings.current_group_id on settings save.
 #   we don't need to worry about deletes, just updates
-# TODO add tests for these views
 @admin.route('/settings', methods=['GET'])
 def get_settings():
     '''

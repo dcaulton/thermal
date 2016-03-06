@@ -23,7 +23,6 @@ def index():
     return Response(json.dumps(top_level_links), status=200, mimetype='application/json')
 
 
-#@analysis.route('/scale_image/<image_id>', defaults={'image_id': None})
 @analysis.route('/scale_image')
 @analysis.route('/scale_image/<image_id>')
 def call_scale_image(image_id=None):

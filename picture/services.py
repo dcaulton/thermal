@@ -3,7 +3,8 @@ import os
 from flask import current_app
 
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import (get_document,
+from thermal.utils import (cast_uuid_to_string,
+                           get_document,
                            get_documents_from_criteria,
                            item_exists,
                            save_document)
@@ -28,6 +29,8 @@ def find_picture(picture_id):
 
 
 def save_picture_document(the_dict):
+    if '_id' not in the_dict:
+        the_dict['_id'] == cast_uuid_to_string(uuid.uuid4())
     the_id = the_dict['_id']
     if item_exists(the_id, 'any'):
         raise DocumentConfigurationError('trying to save the pic with a preexisting id: {0}'.format(str(the_id)))

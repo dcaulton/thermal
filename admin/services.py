@@ -54,7 +54,7 @@ def get_group_document_with_child_objects(group_id):
     return group_dict
 
 
-def get_picture_objects_for_group(group_id):  # TODO add testing
+def get_picture_objects_for_group(group_id):
     '''
     Gets all the pictures belonging to a group, groups them in an array under the snaps they belong to
     '''
@@ -89,7 +89,7 @@ def get_group_document_with_child_links(group_id):
     return group_dict
 
 
-def get_picture_links_for_group(group_id):  # TODO add testing
+def get_picture_links_for_group(group_id):
     '''
     Gets all the pictures belonging to a given group id
     '''

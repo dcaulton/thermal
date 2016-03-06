@@ -100,7 +100,7 @@ def get_paging_info_from_request(request):
         items_per_page = request.args['items_per_page']
     return (page, items_per_page)
 
-def cast_uuid_to_string(item_id):  # TODO add testing
+def cast_uuid_to_string(item_id):
     if type(item_id).__name__ == 'UUID':
         item_id = str(item_id)
     return item_id

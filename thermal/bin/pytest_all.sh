@@ -11,6 +11,10 @@ py.test --cov-report= \
 py.test --cov-report= \
         --cov-config ./.coveragerc \
         --cov-append \
+        --cov=calibration calibration
+py.test --cov-report= \
+        --cov-config ./.coveragerc \
+        --cov-append \
         --cov=camera camera
 py.test --cov-report= \
         --cov-config ./.coveragerc \
