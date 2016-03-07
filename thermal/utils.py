@@ -12,8 +12,11 @@ dynamically_calculated_attributes = ['current_group_link', 'picture_links', 'sna
 # TODO have this add virtual properties?
 def get_documents_from_criteria(args_dict):
     '''
-    Takes key value pairs in an args dict and does a query against the database, testing for equality on all pairs.
-    Also supports a few special kwargs to handle things like testing for a key not being null, or paging
+    Takes key value pairs in an args dict, builds in a map string assuming equality checks on each key and value.
+    Then it does a query against the database.
+    Also supports a few special meta values which are not passed directly into the map string.
+    - gallery_url_not_null: adds a test for 'doc.gallery_url != null'  (the only non-equality test we care about for now)
+    - page_number, items_per_page - used to perform paging
     '''
     documents_dict = {}
     criteria_list = []
@@ -37,6 +40,10 @@ def get_documents_from_criteria(args_dict):
     return documents_dict
 
 def get_paging_info_from_args_dict(args_dict):
+    '''
+    Fetches any paging information from the args dict and removes those entries from the dict.
+    Starts with page_number and items_per_page, returns a boolean indicating if paging is wanted, and start and end indices
+    '''
     paging_requested = False
     start_index = 0
     end_index = 0
@@ -84,20 +91,23 @@ def item_exists(item_id, item_type='any'):
 def doc_attribute_can_be_set(key_name):
     '''
     Checks if a supplied key name can be saved with a document to the database.
-    Not record-specific, we don't really have models with this application
+    Not record-specific, we don't really have models with this application.
     '''
     if key_name not in ['_id', '_rev', 'type'] and key_name not in dynamically_calculated_attributes:
         return True
     return False
 
 def cast_uuid_to_string(item_id):
+    '''
+    Forces a uuid to a string.  Doesn't touch other types of values.
+    '''
     if type(item_id).__name__ == 'UUID':
         item_id = str(item_id)
     return item_id
 
 def get_document(doc_id):
     '''
-    Fetches a document with the supplied id from the database
+    Fetches a document with the supplied id from the database.
     '''
     doc_id = cast_uuid_to_string(doc_id)
     if item_exists(doc_id):
@@ -140,8 +150,12 @@ def save_document(document_in):
             del document_in[dca]
     current_app.db[the_id] = document_in
 
-# TODO throw an error for request args that are present but not specified in args_to_check
 def gather_and_enforce_request_args(args_to_check):
+    '''
+    Single point of calling for gather_and_enforce args calls.
+    Decides whether to route to the 'get everything and paging data' submethod, or the one which offers full controls over
+    required/optional, defaults, how to cast the values, etc.
+    '''
     if args_to_check == ['ANY_SEARCHABLE']:
         return gather_and_enforce_request_args_any_searchable(args_to_check)
     else:
@@ -159,13 +173,16 @@ def gather_and_enforce_request_args_any_searchable(args_to_check):
         return_dict[key] = request.args[key]
     return return_dict
 
-def gather_and_enforce_request_args_any_writable(args_to_check):
-    pass
-
+# TODO throw an error for request args that are present but not specified in args_to_check
 def gather_and_enforce_request_args_enumerated(args_to_check):
-    # name, cast_function, required, default are allowed fields.
+    '''
+    Looks at parameters in the request.args and accumulates them to a dict.
+    Accepts an array of dicts, each dict having parm name, a function to cast or convert it, if it's required, and a default value.
+    Relies on _get_parameter to actually pull values from request.args and cast them.
+    '''
     # name is the only one that is required
     return_dict = {}
+#    requested_keys = request.args.keys()  # TODO this logic, is causing problems with tests for now, needs fixing
 
     for arg in args_to_check:
         if arg['name']:
@@ -196,6 +213,11 @@ def gather_and_enforce_request_args_enumerated(args_to_check):
         else:
             if required:
                 raise DocumentConfigurationError('required parameter {0} not supplied in request'.format(parameter_name))
+
+#        if parameter_name in requested_keys:
+#            requested_keys.remove(parameter_name)
+#    if len(requested_keys):  # error if extra parameters have been supplied
+#        raise DocumentConfigurationError('unexpected arguments supplied: {0}'.format(str(requested_keys)))
     return return_dict
 
 def _get_parameter(parameter_name, default=None, cast_function=None, raise_value_error=False):

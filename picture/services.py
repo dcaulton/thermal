@@ -10,13 +10,13 @@ from thermal.utils import (cast_uuid_to_string,
                            save_document)
 
 
-def find_pictures(args_dict, **kwargs):
+def find_pictures(args_dict):
     '''
     Finds all pictures matching the parameters passed in with the kwargs dict
     It's just a think wrapper around get_documents_from_criteria
     '''
     args_dict['type'] = 'picture'
-    pictures_dict = get_documents_from_criteria(args_dict, **kwargs)
+    pictures_dict = get_documents_from_criteria(args_dict)
     return pictures_dict
 
 
