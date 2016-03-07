@@ -40,19 +40,19 @@ def get_paging_info(**kwargs):
     paging_requested = False
     start_index = 0
     end_index = 0
-    if 'page' in kwargs and kwargs['page'] and 'items_per_page' in kwargs and kwargs['items_per_page']:
+    if 'page_number' in kwargs and kwargs['page_number'] and 'items_per_page' in kwargs and kwargs['items_per_page']:
         try:
             items_per_page = int(kwargs['items_per_page'])
         except ValueError as e:
             raise DocumentConfigurationError('invalid number specified for items_per_page: {0}'.format(kwargs['items_per_page']))
         try:
-            page = int(kwargs['page'])
+            page_number = int(kwargs['page_number'])
         except ValueError as e:
-            raise DocumentConfigurationError('invalid number specified for page: {0}'.format(kwargs['page']))
-        start_index = (page - 1) * items_per_page
+            raise DocumentConfigurationError('invalid number specified for page_number: {0}'.format(kwargs['page_number']))
+        start_index = (page_number - 1) * items_per_page
         end_index = start_index + items_per_page - 1
-        if page < 1:
-            raise DocumentConfigurationError('page number must be a number greater than zero')
+        if page_number < 1:
+            raise DocumentConfigurationError('page_number must be a number greater than zero')
         if items_per_page < 1:
             raise DocumentConfigurationError('items_per_page must be a number greater than zero')
         paging_requested = True
@@ -95,11 +95,11 @@ def get_paging_info_from_request(request):
     # page = get_parameter('page', default=0, cast_to_type=int)
     # items_per_page = get_parameter('items_per_page', default=0, cast_to_type=int)
     # TODO use get_parameter to cast to ints and default to zero
-    (page, items_per_page) = (0, 0)
-    if 'page' in request.args.keys() and 'items_per_page' in request.args.keys():
-        page = request.args['page']
+    (page_number, items_per_page) = (0, 0)
+    if 'page_number' in request.args.keys() and 'items_per_page' in request.args.keys():
+        page_number = request.args['page']
         items_per_page = request.args['items_per_page']
-    return (page, items_per_page)
+    return (page_number, items_per_page)
 
 def cast_uuid_to_string(item_id):
     if type(item_id).__name__ == 'UUID':

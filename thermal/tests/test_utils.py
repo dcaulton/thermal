@@ -14,7 +14,7 @@ import thermal.utils as tu
 class TestUtilsUnit(object):
 
     def test_get_paging_info_returns_ok_with_good_paging_info(self):
-        kwargs = {'page': '1', 'items_per_page': '2'}
+        kwargs = {'page_number': '1', 'items_per_page': '2'}
 
         (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
         assert paging_requested
@@ -22,25 +22,25 @@ class TestUtilsUnit(object):
         assert end_index == 1
 
     def test_get_paging_info_fails_with_nonnumeric_page_number(self):
-        kwargs = {'page': 'x', 'items_per_page': '2'}
+        kwargs = {'page_number': 'x', 'items_per_page': '2'}
         with pytest.raises(DocumentConfigurationError) as exception_info:
             (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
-        assert 'invalid number specified for page' in str(exception_info.value)
+        assert 'invalid number specified for page_number' in str(exception_info.value)
 
     def test_get_paging_info_fails_with_negative_page_number(self):
-        kwargs = {'page': '-1', 'items_per_page': '2'}
+        kwargs = {'page_number': '-1', 'items_per_page': '2'}
         with pytest.raises(DocumentConfigurationError) as exception_info:
             (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
-        assert 'page number must be a number greater than zero' in str(exception_info.value)
+        assert 'page_number must be a number greater than zero' in str(exception_info.value)
 
     def test_get_paging_info_fails_with_nonnumeric_items_per_page(self):
-        kwargs = {'page': '1', 'items_per_page': 'x'}
+        kwargs = {'page_number': '1', 'items_per_page': 'x'}
         with pytest.raises(DocumentConfigurationError) as exception_info:
             (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
         assert 'invalid number specified for items_per_page' in str(exception_info.value)
 
     def test_get_paging_info_fails_with_negative_items_per_page(self):
-        kwargs = {'page': '1', 'items_per_page': '-2'}
+        kwargs = {'page_number': '1', 'items_per_page': '-2'}
         with pytest.raises(DocumentConfigurationError) as exception_info:
             (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
         assert 'items_per_page must be a number greater than zero' in str(exception_info.value)
@@ -131,9 +131,9 @@ class TestUtilsIntegration(object):
         the_doc = {'doctor': 'strangelove'}
         current_app.db[id_2] = the_doc
 
-        args_dict = {'doctor': 'strangelove'}
+        args_dict = {'doctor': 'strangelove', 'gallery_url_not_null': True}
 
-        documents = tu.get_documents_from_criteria(args_dict, gallery_url_not_null=True)
+        documents = tu.get_documents_from_criteria(args_dict)
 
         assert len(documents.keys()) == 1
         assert id_1 in documents
