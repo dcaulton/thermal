@@ -1,3 +1,4 @@
+import __builtin__
 from collections import OrderedDict
 
 from flask import current_app, request
@@ -92,8 +93,8 @@ def doc_attribute_can_be_set(key_name):
 def get_paging_info_from_request(request):
     # TODO this just serves admin.  And it's clunky with the strings.  We need to merge it with the other paging info stuff
     # but the below breaks it for now
-    # page = get_parameter('page', default=0, cast_to_type=int)
-    # items_per_page = get_parameter('items_per_page', default=0, cast_to_type=int)
+    # page = get_parameter('page', default=0, cast_function=int)
+    # items_per_page = get_parameter('items_per_page', default=0, cast_function=int)
     # TODO use get_parameter to cast to ints and default to zero
     (page_number, items_per_page) = (0, 0)
     if 'page_number' in request.args.keys() and 'items_per_page' in request.args.keys():
@@ -151,27 +152,69 @@ def save_document(document_in):
             del document_in[dca]
     current_app.db[the_id] = document_in
 
-def get_parameter(parameter_name, default=None, cast_to_type=None, raise_value_error=False):
+def gather_and_enforce_request_args(args_to_check):
+    # name, cast_function, required, default are allowed fields.
+    # name is the only one that is required
+    return_dict = {}
+
+    for arg in args_to_check:
+        if arg['name']:
+            parameter_name = arg['name']
+        else:
+            raise DocumentConfigurationError('bad call to gather_and_enforce_request_args: no name supplied')
+
+        if arg['cast_function']:
+            try:
+                cast_function = getattr(__builtin__, arg['cast_function'])
+            except Exception as e:
+                error_msg = 'bad call to gather_and_enforce_request_args: no cast function found '\
+                            'for {0}'.format(arg['cast_function'])
+                raise DocumentConfigurationError(error_msg)
+        else:
+            cast_function = None
+
+        if arg['required']:
+            required = arg['required']
+        else:
+            required = False
+
+        if arg['default']:
+            default = arg['default']
+        else:
+            default = None
+
+        if parameter_name in request.args:
+            return_dict['parameter_name'] = _get_parameter(parameter_name,
+                                                           default=default,
+                                                           cast_function=cast_function,
+                                                           raise_value_error=True)
+        else:
+            if required:
+                raise DocumentConfigurationError('required parameter {0} not supplied in request'.format(parameter_name))
+    return return_dict
+
+
+def _get_parameter(parameter_name, default=None, cast_function=None, raise_value_error=False):
     '''
     Fetches a value from the request args
     You can specify a default value.  If you do not it uses None
     You can specify a default data type.  If you do not it uses string
     If no parameter for that name is found it returns the default
-    If you specify a cast_to_type it will attempt to cast the string to that type.  
+    If you specify a cast_function it will attempt to cast the string using the supplied function
       - If the cast fails and you don't specify raise_value_error it returns the default value
       - If the cast fails and you do specify raise_value_error it raises a ValueError with info in its detail message
     '''
     return_value = default
     if parameter_name in request.args:
         return_value = request.args.get(parameter_name)
-        if cast_to_type:
+        if cast_function:
             try:
-                return_value = cast_to_type(return_value)
+                return_value = cast_function(return_value)
             except ValueError as e:
                 if raise_value_error:
                     error_string = "problem casting parameter {0} (value {1}) as type {2}".format(str(parameter_name),
                                                                                                   str(return_value),
-                                                                                                  str(cast_to_type.__name__))
+                                                                                                  str(cast_function.__name__))
                     raise ValueError(error_string)
                 else:
                     return_value = default

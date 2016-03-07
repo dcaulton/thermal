@@ -6,7 +6,7 @@ from flask import current_app, Blueprint, request, Response, url_for
 
 from admin.services import get_settings_document
 from camera.tasks import take_picam_still, take_thermal_still, take_both_still, take_both_still_test
-from thermal.utils import get_parameter, get_url_base
+from thermal.utils import _get_parameter, get_url_base
 
 camera = Blueprint('camera', __name__)
 
@@ -104,7 +104,7 @@ def get_delay_parameter():
     Extracts the delay parameter from the GET parameters.
     Has a hardcoded default of 'shoot immediately'
     '''
-    return get_parameter('delay', default=0, cast_to_type=int)
+    return _get_parameter('delay', default=0, cast_function=int)
 
 
 def get_repeat_parameter():
@@ -112,7 +112,7 @@ def get_repeat_parameter():
     Extracts the repeat parameter from the GET parameters.
     Has a hardcoded default of 'one picture only, no repeating behavior'
     '''
-    return get_parameter('repeat', default=0, cast_to_type=int)
+    return _get_parameter('repeat', default=0, cast_function=int)
 
 
 def get_scale_image_parameter():
@@ -122,4 +122,4 @@ def get_scale_image_parameter():
     Has a hardcoded default of 'yes, scale and colorize it up'
     So you have to pass it something like 0 or '' to suppress
     '''
-    return get_parameter('scale_image', default=True, cast_to_type=bool)
+    return _get_parameter('scale_image', default=True, cast_function=bool)

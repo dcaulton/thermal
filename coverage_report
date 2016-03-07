@@ -17,7 +17,7 @@ picture/services.py          36      5    86%   33, 45-49
 picture/views.py             18      0   100%   
 thermal/appmodule.py         55      7    87%   43-49, 78-79
 thermal/exceptions.py         6      0   100%   
-thermal/utils.py            109      7    94%   32-33, 98-102
+thermal/utils.py            134     30    78%   33-34, 99-103, 158-194
 thermal/views.py              8      0   100%   
 -------------------------------------------------------
-TOTAL                       990    305    69%   
+TOTAL                      1015    328    68%   

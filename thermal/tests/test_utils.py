@@ -62,45 +62,45 @@ class TestUtilsUnit(object):
         with current_app.test_request_context('/whatever?the_parameter=the_value'):
             from flask import request  # I know, crazy, but you need to import request here, not at the top of the module
             assert 'the_parameter' in request.args
-            fetched_value = tu.get_parameter('the_parameter')
+            fetched_value = tu._get_parameter('the_parameter')
             assert fetched_value == 'the_value'
 
     def test_get_parameter_fetches_None_when_no_parameter_and_no_default(self):
         with current_app.test_request_context('/whatever?the_parameter=the_value'):
-            fetched_value = tu.get_parameter('mike_ptyson')
+            fetched_value = tu._get_parameter('mike_ptyson')
             assert fetched_value == None
 
     def test_get_parameter_fetches_default_when_no_parameter_and_default_specified(self):
         with current_app.test_request_context('/whatever?the_parameter=the_value'):
-            fetched_value = tu.get_parameter('mike_ptyson', default='john_abercrombie')
+            fetched_value = tu._get_parameter('mike_ptyson', default='john_abercrombie')
             assert fetched_value == 'john_abercrombie'
 
     def test_get_parameter_returns_string_by_default(self):
         with current_app.test_request_context('/whatever?the_parameter=66'):
-            fetched_value = tu.get_parameter('the_parameter')
+            fetched_value = tu._get_parameter('the_parameter')
             assert type(fetched_value).__name__ == 'unicode'
             assert fetched_value == '66'
 
     def test_get_parameter_can_cast_a_value_to_int(self):
         with current_app.test_request_context('/whatever?the_parameter=66'):
-            fetched_value = tu.get_parameter('the_parameter', cast_to_type=int)
+            fetched_value = tu._get_parameter('the_parameter', cast_function=int)
             assert type(fetched_value).__name__ == 'int'
             assert fetched_value == 66
 
     def test_get_parameter_returns_none_when_cast_fails_and_no_default_and_no_raise_value_error(self):
         with current_app.test_request_context('/whatever?the_parameter=baloney'):
-            fetched_value = tu.get_parameter('the_parameter', cast_to_type=int)
+            fetched_value = tu._get_parameter('the_parameter', cast_function=int)
             assert fetched_value == None
 
     def test_get_parameter_returns_default_when_cast_fails_and_default_specified_and_no_raise_value_error(self):
         with current_app.test_request_context('/whatever?the_parameter=baloney'):
-            fetched_value = tu.get_parameter('the_parameter', default='monkey_chow', cast_to_type=int)
+            fetched_value = tu._get_parameter('the_parameter', default='monkey_chow', cast_function=int)
             assert fetched_value == 'monkey_chow'
 
     def test_get_parameter_raises_valueerror_when_cast_fails_and_default_specified_and_raise_value_error_requested(self):
         with current_app.test_request_context('/whatever?the_parameter=baloney'):
             with pytest.raises(ValueError) as exception_info:
-                fetched_value = tu.get_parameter('the_parameter', default='monkey_chow', cast_to_type=int, raise_value_error=True)
+                fetched_value = tu._get_parameter('the_parameter', default='monkey_chow', cast_function=int, raise_value_error=True)
             assert 'problem casting parameter the_parameter (value baloney) as type int' in str(exception_info.value)
 
 

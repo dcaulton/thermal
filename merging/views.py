@@ -3,7 +3,7 @@ import uuid
 
 from flask import Blueprint, request, Response, url_for
 from merging.services import merge_images_task
-from thermal.utils import get_parameter, get_url_base, item_exists
+from thermal.utils import _get_parameter, get_url_base, item_exists
 
 merging = Blueprint('merging', __name__)
 
@@ -25,8 +25,8 @@ def call_merge_images():
     '''
     Merges to images into a third one
     '''
-    img1_id = get_parameter('img1_id', default=None)
-    img2_id = get_parameter('img2_id', default=None)
+    img1_id = _get_parameter('img1_id', default=None)
+    img2_id = _get_parameter('img2_id', default=None)
 
     if not item_exists(img1_id, 'picture'):  # TODO add testing for no picture id and invalid picture id
         err_msg = 'Source image 1 not found.  A valid id for a source image must be supplied to this endpoint as a get parameter'\
