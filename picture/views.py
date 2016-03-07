@@ -5,6 +5,7 @@ from flask import Blueprint, request, Response
 
 from picture.services import find_pictures, find_picture
 from thermal.exceptions import NotFoundError
+from thermal.utils import gather_and_enforce_request_args
 
 picture = Blueprint('picture', __name__)
 
@@ -15,11 +16,9 @@ picture = Blueprint('picture', __name__)
 def list_pictures():
     '''
     Lists all pictures
-    Supports filtering on any picture attribute via get parms
+    Supports paging and filtering on any picture attribute via get parms
     '''
-    search_dict = {}
-    for key in request.args.keys():
-        search_dict[key] = request.args[key]
+    search_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
     pictures = find_pictures(search_dict)
     return Response(json.dumps(pictures), status=200, mimetype='application/json')
 

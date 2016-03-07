@@ -63,9 +63,7 @@ def list_groups():
     '''
     Lists all groups
     '''
-    search_dict = {}
-    for key in request.args.keys():
-        search_dict[key] = request.args[key]
+    search_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
     groups = find_groups(search_dict)
     return Response(json.dumps(groups), status=200, mimetype='application/json')
 
@@ -99,8 +97,7 @@ def get_group_pictures(group_id):
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
-        args_dict = gather_and_enforce_request_args([{'name': 'page_number', 'default': 0, 'cast_function': int},
-                                                     {'name': 'items_per_page', 'default': 0, 'cast_function': int}])
+        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
         args_dict['group_id'] = group_id
         pictures_dict = find_pictures(args_dict)
     except Exception as e:
@@ -116,8 +113,7 @@ def get_group_gallery(group_id):
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
-        args_dict = gather_and_enforce_request_args([{'name': 'page_number', 'default': 0, 'cast_function': int},
-                                                     {'name': 'items_per_page', 'default': 0, 'cast_function': int}])
+        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
         args_dict['group_id'] = group_id
         args_dict['gallery_url_not_null'] = True
         pictures_dict = find_pictures(args_dict)

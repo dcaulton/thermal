@@ -10,7 +10,7 @@ dynamically_calculated_attributes = ['current_group_link', 'picture_links', 'sna
 
 
 # TODO have this add virtual properties?
-def get_documents_from_criteria(args_dict, **kwargs):
+def get_documents_from_criteria(args_dict):
     '''
     Takes key value pairs in an args dict and does a query against the database, testing for equality on all pairs.
     Also supports a few special kwargs to handle things like testing for a key not being null, or paging
@@ -142,6 +142,27 @@ def save_document(document_in):
 
 # TODO throw an error for request args that are present but not specified in args_to_check
 def gather_and_enforce_request_args(args_to_check):
+    if args_to_check == ['ANY_SEARCHABLE']:
+        return gather_and_enforce_request_args_any_searchable(args_to_check)
+    else:
+        return gather_and_enforce_request_args_enumerated(args_to_check)
+
+def gather_and_enforce_request_args_any_searchable(args_to_check):
+    '''
+    Gathers up any request.args that are supplied and puts them into a dict
+    Also gathers paging info and puts them in the dict
+    Does not check for args that don't belong or have any meaning to this system
+    '''
+    return_dict = gather_and_enforce_request_args([{'name': 'page_number', 'default': 0, 'cast_function': int},
+                                                   {'name': 'items_per_page', 'default': 0, 'cast_function': int}])
+    for key in request.args.keys():
+        return_dict[key] = request.args[key]
+    return return_dict
+
+def gather_and_enforce_request_args_any_writable(args_to_check):
+    pass
+
+def gather_and_enforce_request_args_enumerated(args_to_check):
     # name, cast_function, required, default are allowed fields.
     # name is the only one that is required
     return_dict = {}
