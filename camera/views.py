@@ -32,15 +32,18 @@ def picam_still():
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
-    snap_id = uuid.uuid4()
-    group_id = get_settings_document()['current_group_id']
-    # TODO dry this out, we gather delay+repeat three times in this view
-    args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
-                                                 {'name': 'repeat', 'default': 0, 'cast_function': int}])
-    delay = args_dict['delay']
-    repeat = args_dict['repeat']
-    ret_dict = take_picam_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat)
-    return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
+    try:
+        snap_id = uuid.uuid4()
+        group_id = get_settings_document()['current_group_id']
+        # TODO dry this out, we gather delay+repeat three times in this view
+        args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
+                                                     {'name': 'repeat', 'default': 0, 'cast_function': int}])
+        delay = args_dict['delay']
+        repeat = args_dict['repeat']
+        ret_dict = take_picam_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat)
+        return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @camera.route('/thermal_still')
@@ -50,16 +53,19 @@ def thermal_still():
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
-    snap_id = uuid.uuid4()
-    group_id = get_settings_document()['current_group_id']
-    args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
-                                                 {'name': 'repeat', 'default': 0, 'cast_function': int},
-                                                 {'name': 'scale_image', 'default': True, 'cast_function': bool}])
-    delay = args_dict['delay']
-    repeat = args_dict['repeat']
-    scale_image = args_dict['scale_image']
-    ret_dict = take_thermal_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat, scale_image=scale_image)
-    return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
+    try:
+        snap_id = uuid.uuid4()
+        group_id = get_settings_document()['current_group_id']
+        args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
+                                                     {'name': 'repeat', 'default': 0, 'cast_function': int},
+                                                     {'name': 'scale_image', 'default': True, 'cast_function': bool}])
+        delay = args_dict['delay']
+        repeat = args_dict['repeat']
+        scale_image = args_dict['scale_image']
+        ret_dict = take_thermal_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat, scale_image=scale_image)
+        return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @camera.route('/both_still')
@@ -70,21 +76,24 @@ def both_still():
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
-    snap_id = uuid.uuid4()
-    group_id = get_settings_document()['current_group_id']
-    args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
-                                                 {'name': 'repeat', 'default': 0, 'cast_function': int}])
-    delay = args_dict['delay']
-    repeat = args_dict['repeat']
+    try:
+        snap_id = uuid.uuid4()
+        group_id = get_settings_document()['current_group_id']
+        args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
+                                                     {'name': 'repeat', 'default': 0, 'cast_function': int}])
+        delay = args_dict['delay']
+        repeat = args_dict['repeat']
 
-    both_still_dict = take_both_still(
-        snap_id=snap_id,
-        group_id=group_id,
-        delay=delay,
-        repeat=repeat
-    )
+        both_still_dict = take_both_still(
+            snap_id=snap_id,
+            group_id=group_id,
+            delay=delay,
+            repeat=repeat
+        )
 
-    return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
+        return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @camera.route('/both_still_test')
@@ -92,18 +101,21 @@ def both_still_test():
     '''
     for experimental both_still
     '''
-    snap_id = uuid.uuid4()
-    group_id = get_settings_document()['current_group_id']
-    args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
-                                                 {'name': 'repeat', 'default': 0, 'cast_function': int}])
-    delay = args_dict['delay']
-    repeat = args_dict['repeat']
+    try:
+        snap_id = uuid.uuid4()
+        group_id = get_settings_document()['current_group_id']
+        args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
+                                                     {'name': 'repeat', 'default': 0, 'cast_function': int}])
+        delay = args_dict['delay']
+        repeat = args_dict['repeat']
 
-    both_still_dict = take_both_still_test(
-        snap_id=snap_id,
-        group_id=group_id,
-        delay=delay,
-        repeat=repeat
-    )
+        both_still_dict = take_both_still_test(
+            snap_id=snap_id,
+            group_id=group_id,
+            delay=delay,
+            repeat=repeat
+        )
 
-    return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
+        return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')

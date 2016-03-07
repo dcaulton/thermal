@@ -38,8 +38,11 @@ def get_settings():
     '''
     Returns the settings document (it's a singleton)
     '''
-    settings = get_settings_document()
-    return Response(json.dumps(settings), status=200, mimetype='application/json')
+    try:
+        settings = get_settings_document()
+        return Response(json.dumps(settings), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @admin.route('/settings', methods=['PUT'])
@@ -47,15 +50,18 @@ def update_settings():
     '''
     Updates the settings document
     '''
-    settings = get_settings_document()
-    if request.headers['Content-Type'] == 'application/json':
-        for k in request.json.keys():
-            if doc_attribute_can_be_set(k):
-                settings[k] = request.json[k]
-        save_document(settings)
-        return Response(json.dumps(settings), status=200, mimetype='application/json')
-    err_msg = 'no valid settings parameters supplied'
-    return Response(json.dumps(err_msg), status=409, mimetype='application/json')
+    try:
+        settings = get_settings_document()
+        if request.headers['Content-Type'] == 'application/json':
+            for k in request.json.keys():
+                if doc_attribute_can_be_set(k):
+                    settings[k] = request.json[k]
+            save_document(settings)
+            return Response(json.dumps(settings), status=200, mimetype='application/json')
+        err_msg = 'no valid settings parameters supplied'
+        return Response(json.dumps(err_msg), status=409, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @admin.route('/groups')
@@ -63,9 +69,12 @@ def list_groups():
     '''
     Lists all groups
     '''
-    search_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-    groups = find_groups(search_dict)
-    return Response(json.dumps(groups), status=200, mimetype='application/json')
+    try:
+        search_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
+        groups = find_groups(search_dict)
+        return Response(json.dumps(groups), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @admin.route('/groups/<group_id>', methods=['GET'])
@@ -84,9 +93,9 @@ def get_group(group_id):
             group_dict = get_group_document_with_child_links(group_id)
         else:
             group_dict = get_group_document(group_id)
-    except NotFoundError as e:
+        return Response(json.dumps(group_dict), status=200, mimetype='application/json')
+    except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
-    return Response(json.dumps(group_dict), status=200, mimetype='application/json')
 
 
 @admin.route('/groups/<group_id>/pictures', methods=['GET'])
@@ -100,9 +109,9 @@ def get_group_pictures(group_id):
         args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
         args_dict['group_id'] = group_id
         pictures_dict = find_pictures(args_dict)
+        return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
-    return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
 
 @admin.route('/groups/<group_id>/gallery', methods=['GET'])
@@ -117,9 +126,9 @@ def get_group_gallery(group_id):
         args_dict['group_id'] = group_id
         args_dict['gallery_url_not_null'] = True
         pictures_dict = find_pictures(args_dict)
+        return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
-    return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
 
 
 @admin.route('/groups/<group_id>', methods=['PUT'])
@@ -127,14 +136,17 @@ def update_group(group_id):
     '''
     Updates group record
     '''
-    group_dict = get_group_document(group_id)
-    if request.headers['Content-Type'] == 'application/json':
-        for k in request.json.keys():
-            if doc_attribute_can_be_set(k):
-                group_dict[k] = request.json[k]
-        save_document(group_dict)
-        return Response(json.dumps(group_dict), status=200, mimetype='application/json')
-    return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
+    try:
+        group_dict = get_group_document(group_id)
+        if request.headers['Content-Type'] == 'application/json':
+            for k in request.json.keys():
+                if doc_attribute_can_be_set(k):
+                    group_dict[k] = request.json[k]
+            save_document(group_dict)
+            return Response(json.dumps(group_dict), status=200, mimetype='application/json')
+        return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @admin.route('/groups', methods=['POST'])
@@ -142,14 +154,17 @@ def save_group():
     '''
     Creates a new group record, saves it as the new current group in the settings document
     '''
-    settings = get_settings_document()
-    group_dict = default_group_dict()
-    if request.headers['Content-Type'] == 'application/json':
-        for k in request.json.keys():
-            if doc_attribute_can_be_set(k):
-                group_dict[k] = request.json[k]
-        save_document(group_dict)
-        settings['current_group_id'] = group_dict['_id']
-        save_document(settings)
-        return Response(json.dumps(group_dict), status=200, mimetype='application/json')
-    return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
+    try:
+        settings = get_settings_document()
+        group_dict = default_group_dict()
+        if request.headers['Content-Type'] == 'application/json':
+            for k in request.json.keys():
+                if doc_attribute_can_be_set(k):
+                    group_dict[k] = request.json[k]
+            save_document(group_dict)
+            settings['current_group_id'] = group_dict['_id']
+            save_document(settings)
+            return Response(json.dumps(group_dict), status=200, mimetype='application/json')
+        return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
