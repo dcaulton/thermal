@@ -9,18 +9,18 @@ from thermal.exceptions import DocumentConfigurationError, NotFoundError
 dynamically_calculated_attributes = ['current_group_link', 'picture_links', 'snap_list']
 
 
+# TODO have this add virtual properties?
 def get_documents_from_criteria(args_dict, **kwargs):
     '''
     Takes key value pairs in an args dict and does a query against the database, testing for equality on all pairs.
     Also supports a few special kwargs to handle things like testing for a key not being null, or paging
     '''
-    # TODO have this add virtual properties
     documents_dict = {}
     criteria_list = []
     if 'gallery_url_not_null' in args_dict:
         criteria_list.append("doc.gallery_url != null")
         del args_dict['gallery_url_not_null']
-    (paging_requested, start_index, end_index) = get_paging_info(**kwargs)
+    (paging_requested, start_index, end_index) = get_paging_info_from_args_dict(args_dict)
 
     for key in args_dict:
         criteria_list.append("doc.{0} == '{1}'".format(key, args_dict[key]))
@@ -36,20 +36,21 @@ def get_documents_from_criteria(args_dict, **kwargs):
             documents_dict[row['value']['_id']] = row['value']
     return documents_dict
 
-
-def get_paging_info(**kwargs):
+def get_paging_info_from_args_dict(args_dict):
     paging_requested = False
     start_index = 0
     end_index = 0
-    if 'page_number' in kwargs and kwargs['page_number'] and 'items_per_page' in kwargs and kwargs['items_per_page']:
+    if 'page_number' in args_dict and args_dict['page_number'] and 'items_per_page' in args_dict and args_dict['items_per_page']:
         try:
-            items_per_page = int(kwargs['items_per_page'])
+            items_per_page = int(args_dict['items_per_page'])
+            del args_dict['items_per_page']
         except ValueError as e:
-            raise DocumentConfigurationError('invalid number specified for items_per_page: {0}'.format(kwargs['items_per_page']))
+            raise DocumentConfigurationError('invalid number specified for items_per_page: {0}'.format(args_dict['items_per_page']))
         try:
-            page_number = int(kwargs['page_number'])
+            page_number = int(args_dict['page_number'])
+            del args_dict['page_number']
         except ValueError as e:
-            raise DocumentConfigurationError('invalid number specified for page_number: {0}'.format(kwargs['page_number']))
+            raise DocumentConfigurationError('invalid number specified for page_number: {0}'.format(args_dict['page_number']))
         start_index = (page_number - 1) * items_per_page
         end_index = start_index + items_per_page - 1
         if page_number < 1:
@@ -88,19 +89,6 @@ def doc_attribute_can_be_set(key_name):
     if key_name not in ['_id', '_rev', 'type'] and key_name not in dynamically_calculated_attributes:
         return True
     return False
-
-# TODO we need a more systematic way of dealing with expected and unexpected get/post parameters
-def get_paging_info_from_request(request):
-    # TODO this just serves admin.  And it's clunky with the strings.  We need to merge it with the other paging info stuff
-    # but the below breaks it for now
-    # page = get_parameter('page', default=0, cast_function=int)
-    # items_per_page = get_parameter('items_per_page', default=0, cast_function=int)
-    # TODO use get_parameter to cast to ints and default to zero
-    (page_number, items_per_page) = (0, 0)
-    if 'page_number' in request.args.keys() and 'items_per_page' in request.args.keys():
-        page_number = request.args['page']
-        items_per_page = request.args['items_per_page']
-    return (page_number, items_per_page)
 
 def cast_uuid_to_string(item_id):
     if type(item_id).__name__ == 'UUID':
@@ -166,12 +154,6 @@ def gather_and_enforce_request_args(args_to_check):
 
         if 'cast_function' in arg:
             cast_function = arg['cast_function']
-#            try:
-#                cast_function = getattr(__builtin__, arg['cast_function'])
-#            except Exception as e:
-#                error_msg = 'bad call to gather_and_enforce_request_args: no cast function found '\
-#                            'for {0}'.format(arg['cast_function'])
-#                raise DocumentConfigurationError(error_msg)
         else:
             cast_function = None
 
@@ -194,7 +176,6 @@ def gather_and_enforce_request_args(args_to_check):
             if required:
                 raise DocumentConfigurationError('required parameter {0} not supplied in request'.format(parameter_name))
     return return_dict
-
 
 def _get_parameter(parameter_name, default=None, cast_function=None, raise_value_error=False):
     '''

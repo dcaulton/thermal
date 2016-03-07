@@ -11,7 +11,7 @@ from admin.services import (default_group_dict,
 from picture.services import find_pictures
 from thermal.exceptions import NotFoundError
 from thermal.utils import (doc_attribute_can_be_set,
-                           get_paging_info_from_request,
+                           gather_and_enforce_request_args,
                            get_url_base,
                            dynamically_calculated_attributes)
 
@@ -99,9 +99,10 @@ def get_group_pictures(group_id):
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
-        args_dict = {'group_id': group_id}
-        (page_number, items_per_page) = get_paging_info_from_request(request)
-        pictures_dict = find_pictures(args_dict, page_number=page_number, items_per_page=items_per_page)
+        args_dict = gather_and_enforce_request_args([{'name': 'page_number', 'default': 0, 'cast_function': int},
+                                                     {'name': 'items_per_page', 'default': 0, 'cast_function': int}])
+        args_dict['group_id'] = group_id
+        pictures_dict = find_pictures(args_dict)
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
@@ -115,10 +116,11 @@ def get_group_gallery(group_id):
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
-        args_dict = {'group_id': group_id,
-                     'gallery_url_not_null': True}
-        (page_number, items_per_page) = get_paging_info_from_request(request)
-        pictures_dict = find_pictures(args_dict, page_number=page_number, items_per_page=items_per_page)
+        args_dict = gather_and_enforce_request_args([{'name': 'page_number', 'default': 0, 'cast_function': int},
+                                                     {'name': 'items_per_page', 'default': 0, 'cast_function': int}])
+        args_dict['group_id'] = group_id
+        args_dict['gallery_url_not_null'] = True
+        pictures_dict = find_pictures(args_dict)
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
     return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')

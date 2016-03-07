@@ -13,36 +13,36 @@ import thermal.utils as tu
 
 class TestUtilsUnit(object):
 
-    def test_get_paging_info_returns_ok_with_good_paging_info(self):
-        kwargs = {'page_number': '1', 'items_per_page': '2'}
+    def test_get_paging_info_from_args_dict_returns_ok_with_good_paging_info(self):
+        args_dict = {'page_number': '1', 'items_per_page': '2'}
 
-        (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
+        (paging_requested, start_index, end_index) = tu.get_paging_info_from_args_dict(args_dict)
         assert paging_requested
         assert start_index == 0
         assert end_index == 1
 
-    def test_get_paging_info_fails_with_nonnumeric_page_number(self):
-        kwargs = {'page_number': 'x', 'items_per_page': '2'}
+    def test_get_paging_info_from_args_dict_fails_with_nonnumeric_page_number(self):
+        args_dict = {'page_number': 'x', 'items_per_page': '2'}
         with pytest.raises(DocumentConfigurationError) as exception_info:
-            (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
+            (paging_requested, start_index, end_index) = tu.get_paging_info_from_args_dict(args_dict)
         assert 'invalid number specified for page_number' in str(exception_info.value)
 
-    def test_get_paging_info_fails_with_negative_page_number(self):
-        kwargs = {'page_number': '-1', 'items_per_page': '2'}
+    def test_get_paging_from_args_dict_info_fails_with_negative_page_number(self):
+        args_dict = {'page_number': '-1', 'items_per_page': '2'}
         with pytest.raises(DocumentConfigurationError) as exception_info:
-            (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
+            (paging_requested, start_index, end_index) = tu.get_paging_info_from_args_dict(args_dict)
         assert 'page_number must be a number greater than zero' in str(exception_info.value)
 
-    def test_get_paging_info_fails_with_nonnumeric_items_per_page(self):
-        kwargs = {'page_number': '1', 'items_per_page': 'x'}
+    def test_get_paging_info_from_args_dict_fails_with_nonnumeric_items_per_page(self):
+        args_dict = {'page_number': '1', 'items_per_page': 'x'}
         with pytest.raises(DocumentConfigurationError) as exception_info:
-            (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
+            (paging_requested, start_index, end_index) = tu.get_paging_info_from_args_dict(args_dict)
         assert 'invalid number specified for items_per_page' in str(exception_info.value)
 
-    def test_get_paging_info_fails_with_negative_items_per_page(self):
-        kwargs = {'page_number': '1', 'items_per_page': '-2'}
+    def test_get_paging_info_from_args_dict_fails_with_negative_items_per_page(self):
+        args_dict = {'page_number': '1', 'items_per_page': '-2'}
         with pytest.raises(DocumentConfigurationError) as exception_info:
-            (paging_requested, start_index, end_index) = tu.get_paging_info(**kwargs)
+            (paging_requested, start_index, end_index) = tu.get_paging_info_from_args_dict(args_dict)
         assert 'items_per_page must be a number greater than zero' in str(exception_info.value)
 
     def test_doc_attribute_can_be_set_works_for_normal_and_forbidden_keys(self):

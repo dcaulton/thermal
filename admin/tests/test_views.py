@@ -214,78 +214,51 @@ class TestViewsUnit(object):
 
 
     @patch('admin.views.find_pictures')
-    @patch('admin.views.get_paging_info_from_request')
+    @patch('admin.views.gather_and_enforce_request_args')
     @patch('admin.views.get_group_document')
     def test_get_group_pictures_calls_appropriate_methods(self,
                                                           av_get_group_document,
-                                                          av_get_paging_info_from_request,
+                                                          av_gather_and_enforce_request_args,
                                                           av_find_pictures):
         av_get_group_document.return_value = {'_id': '123'}
-        av_get_paging_info_from_request.return_value = (2, 3)
+        av_gather_and_enforce_request_args.return_value = {'page_number': 2, 'items_per_page': 3}
         av_find_pictures.return_value = {'some_key': 'some_value'}
 
         resp_object = av.get_group_pictures('current')
         response_data_dict = json.loads(resp_object.data)
 
         av_get_group_document.assert_called_once_with('current')
-        av_find_pictures.assert_called_once_with({'group_id': '123'}, page_number=2, items_per_page=3)
+        av_gather_and_enforce_request_args.assert_called_once_with(ANY)
+        av_find_pictures.assert_called_once_with({'group_id': '123',
+                                                  'page_number': 2,
+                                                  'items_per_page': 3})
         assert resp_object.status_code == 200
         assert 'some_key' in response_data_dict
         assert len(response_data_dict.keys()) == 1
 
     @patch('admin.views.find_pictures')
-    @patch('admin.views.get_paging_info_from_request')
-    @patch('admin.views.get_group_document')
-    def test_get_group_pictures_handles_crash_in_find_pictures(self,
-                                                               av_get_group_document,
-                                                               av_get_paging_info_from_request,
-                                                               av_find_pictures):
-        av_get_group_document.return_value = {'_id': '123'}
-        av_get_paging_info_from_request.return_value = (2, 'irish')
-        av_find_pictures.side_effect = DocumentConfigurationError('invalid number specified for items_per_page: irish')
-
-        resp_object = av.get_group_pictures('current')
-
-        av_find_pictures.assert_called_once_with({'group_id': '123'}, page_number=2, items_per_page='irish')
-        assert resp_object.status_code == 409
-        assert resp_object.data == '"invalid number specified for items_per_page: irish"'
-
-    @patch('admin.views.find_pictures')
-    @patch('admin.views.get_paging_info_from_request')
+    @patch('admin.views.gather_and_enforce_request_args')
     @patch('admin.views.get_group_document')
     def test_get_group_gallery_calls_appropriate_methods(self,
                                                          av_get_group_document,
-                                                         av_get_paging_info_from_request,
+                                                         av_gather_and_enforce_request_args,
                                                          av_find_pictures):
         av_get_group_document.return_value = {'_id': '123'}
-        av_get_paging_info_from_request.return_value = (2, 3)
+        av_gather_and_enforce_request_args.return_value = {'page_number': 2, 'items_per_page': 3}
         av_find_pictures.return_value = {'some_key': 'some_value'}
 
         resp_object = av.get_group_gallery('current')
         response_data_dict = json.loads(resp_object.data)
 
         av_get_group_document.assert_called_once_with('current')
-        av_find_pictures.assert_called_once_with({'group_id': '123', 'gallery_url_not_null': True}, page_number=2, items_per_page=3)
+        av_gather_and_enforce_request_args.assert_called_once_with(ANY)
+        av_find_pictures.assert_called_once_with({'group_id': '123',
+                                                  'gallery_url_not_null': True,
+                                                  'page_number': 2,
+                                                  'items_per_page': 3})
         assert resp_object.status_code == 200
         assert 'some_key' in response_data_dict
         assert len(response_data_dict.keys()) == 1
-
-    @patch('admin.views.find_pictures')
-    @patch('admin.views.get_paging_info_from_request')
-    @patch('admin.views.get_group_document')
-    def test_get_group_gallery_handles_crash_in_find_pictures(self,
-                                                              av_get_group_document,
-                                                              av_get_paging_info_from_request,
-                                                              av_find_pictures):
-        av_get_group_document.return_value = {'_id': '123'}
-        av_get_paging_info_from_request.return_value = (2, 'irish')
-        av_find_pictures.side_effect = DocumentConfigurationError('invalid number specified for items_per_page: irish')
-
-        resp_object = av.get_group_gallery('current')
-
-        av_find_pictures.assert_called_once_with({'group_id': '123', 'gallery_url_not_null': True}, page_number=2, items_per_page='irish')
-        assert resp_object.status_code == 409
-        assert resp_object.data == '"invalid number specified for items_per_page: irish"'
 
 
     @patch('admin.views.save_document')
