@@ -286,7 +286,7 @@ class TestViewsUnit(object):
         response_data_dict = json.loads(resp_object.data)
 
         av_get_group_document.assert_called_once_with('current')
-        av_find_pictures.assert_called_once_with({'group_id': '123'}, gallery_url_not_null=True, page=2, items_per_page=3)
+        av_find_pictures.assert_called_once_with({'group_id': '123', 'gallery_url_not_null': True}, page=2, items_per_page=3)
         assert resp_object.status_code == 200
         assert 'some_key' in response_data_dict
         assert len(response_data_dict.keys()) == 1
@@ -304,7 +304,7 @@ class TestViewsUnit(object):
 
         resp_object = av.get_group_gallery('current')
 
-        av_find_pictures.assert_called_once_with({'group_id': '123'}, gallery_url_not_null=True, page=2, items_per_page='irish')
+        av_find_pictures.assert_called_once_with({'group_id': '123', 'gallery_url_not_null': True}, page=2, items_per_page='irish')
         assert resp_object.status_code == 409
         assert resp_object.data == '"invalid number specified for items_per_page: irish"'
 

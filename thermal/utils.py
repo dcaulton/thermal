@@ -16,8 +16,9 @@ def get_documents_from_criteria(args_dict, **kwargs):
     # TODO have this add virtual properties
     documents_dict = {}
     criteria_list = []
-    if 'gallery_url_not_null' in kwargs:
+    if 'gallery_url_not_null' in args_dict:
         criteria_list.append("doc.gallery_url != null")
+        del args_dict['gallery_url_not_null']
     (paging_requested, start_index, end_index) = get_paging_info(**kwargs)
 
     for key in args_dict:
