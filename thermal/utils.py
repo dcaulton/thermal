@@ -152,6 +152,7 @@ def save_document(document_in):
             del document_in[dca]
     current_app.db[the_id] = document_in
 
+# TODO throw an error for request args that are present but not specified in args_to_check
 def gather_and_enforce_request_args(args_to_check):
     # name, cast_function, required, default are allowed fields.
     # name is the only one that is required
@@ -163,22 +164,23 @@ def gather_and_enforce_request_args(args_to_check):
         else:
             raise DocumentConfigurationError('bad call to gather_and_enforce_request_args: no name supplied')
 
-        if arg['cast_function']:
-            try:
-                cast_function = getattr(__builtin__, arg['cast_function'])
-            except Exception as e:
-                error_msg = 'bad call to gather_and_enforce_request_args: no cast function found '\
-                            'for {0}'.format(arg['cast_function'])
-                raise DocumentConfigurationError(error_msg)
+        if 'cast_function' in arg:
+            cast_function = arg['cast_function']
+#            try:
+#                cast_function = getattr(__builtin__, arg['cast_function'])
+#            except Exception as e:
+#                error_msg = 'bad call to gather_and_enforce_request_args: no cast function found '\
+#                            'for {0}'.format(arg['cast_function'])
+#                raise DocumentConfigurationError(error_msg)
         else:
             cast_function = None
 
-        if arg['required']:
+        if 'required' in arg:
             required = arg['required']
         else:
             required = False
 
-        if arg['default']:
+        if 'default' in arg:
             default = arg['default']
         else:
             default = None

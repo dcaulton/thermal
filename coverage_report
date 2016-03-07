@@ -10,14 +10,14 @@ calibration/views.py         33     15    55%   17-23, 28, 33, 38, 43, 48, 53, 5
 camera/cameras.py            40     19    53%   19, 31, 34, 41-43, 46-60, 73-77
 camera/services.py           58      4    93%   50, 63-65
 camera/tasks.py             146     72    51%   238-300, 323-436
-camera/views.py              47      9    81%   19-25, 87-99
+camera/views.py              45     10    78%   19-25, 95-109
 merging/services.py          39      5    87%   17, 22, 27, 37, 45
-merging/views.py             23     15    35%   16-20, 28-51
+merging/views.py             24     16    33%   16-20, 28-53
 picture/services.py          36      5    86%   33, 45-49
 picture/views.py             18      0   100%   
 thermal/appmodule.py         55      7    87%   43-49, 78-79
 thermal/exceptions.py         6      0   100%   
-thermal/utils.py            134     30    78%   33-34, 99-103, 158-194
+thermal/utils.py            130     26    80%   33-34, 99-103, 159-196
 thermal/views.py              8      0   100%   
 -------------------------------------------------------
-TOTAL                      1015    328    68%   
+TOTAL                      1010    326    68%   
