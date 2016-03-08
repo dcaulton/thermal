@@ -94,28 +94,3 @@ def both_still():
         return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
-
-
-@camera.route('/both_still_test')
-def both_still_test():
-    '''
-    for experimental both_still
-    '''
-    try:
-        snap_id = uuid.uuid4()
-        group_id = get_settings_document()['current_group_id']
-        args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
-                                                     {'name': 'repeat', 'default': 0, 'cast_function': int}])
-        delay = args_dict['delay']
-        repeat = args_dict['repeat']
-
-        both_still_dict = take_both_still_test(
-            snap_id=snap_id,
-            group_id=group_id,
-            delay=delay,
-            repeat=repeat
-        )
-
-        return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
