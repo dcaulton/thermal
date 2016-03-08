@@ -76,19 +76,6 @@ def both_still():
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
-    snap_id = uuid.uuid4()
-    group_id = get_settings_document()['current_group_id']
-    args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
-                                                 {'name': 'repeat', 'default': 0, 'cast_function': int}])
-    delay = args_dict['delay']
-    repeat = args_dict['repeat']
-
-    both_still_dict = take_both_still(
-        snap_id=snap_id,
-        group_id=group_id,
-        delay=delay,
-        repeat=repeat
-    )
     try:
         snap_id = uuid.uuid4()
         group_id = get_settings_document()['current_group_id']
