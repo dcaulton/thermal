@@ -2,11 +2,11 @@ Name                      Stmts   Miss  Cover   Missing
 -------------------------------------------------------
 admin/services.py           129     55    57%   52-54, 61-80, 87-89, 97-106, 191-193, 206-229
 admin/tasks.py               12      1    92%   34
-admin/views.py               95     19    80%   26-31, 44-45, 63-64, 76-77, 113-114, 130-131, 147-149, 168-170
+admin/views.py               94      2    98%   149, 170
 analysis/services.py        111     61    45%   20-25, 30, 35, 39-73, 78-84, 88-101, 106, 111, 118, 135, 137, 145-146, 157, 176, 180-203
 analysis/views.py            35     21    40%   18-23, 32-44, 53-69
 calibration/services.py       4      4     0%   1-6
-calibration/views.py         33     15    55%   17-23, 28, 33, 38, 43, 48, 53, 58, 63, 68, 73, 78, 83
+calibration/views.py         69     51    26%   17-23, 28-31, 36-39, 44-47, 52-55, 60-63, 68-71, 76-79, 84-87, 92-95, 100-103, 108-111, 116-119
 camera/cameras.py            40     19    53%   19, 31, 34, 41-43, 46-60, 73-77
 camera/services.py           58      4    93%   50, 63-65
 camera/tasks.py             146     72    51%   238-300, 323-436
@@ -14,10 +14,10 @@ camera/views.py              57     19    67%   19-25, 45-46, 67-68, 95-96, 104-
 merging/services.py          39      5    87%   17, 22, 27, 37, 45
 merging/views.py             27     19    30%   16-20, 28-56
 picture/services.py          36      5    86%   33, 45-49
-picture/views.py             20      2    90%   25-26
+picture/views.py             18      0   100%   
 thermal/appmodule.py         55      7    87%   43-49, 78-79
 thermal/exceptions.py         6      0   100%   
-thermal/utils.py            135     28    79%   36-37, 159-162, 170-174, 184-221
+thermal/utils.py            135     28    79%   37-38, 160-163, 171-175, 185-222
 thermal/views.py              8      0   100%   
 -------------------------------------------------------
-TOTAL                      1046    356    66%   
+TOTAL                      1079    373    65%   

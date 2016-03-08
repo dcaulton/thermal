@@ -6,7 +6,7 @@ import uuid
 from flask import current_app
 
 import picture.views as pv
-from thermal.exceptions import NotFoundError
+from thermal.exceptions import NotFoundError, ThermalBaseError
 
 
 class TestViewsUnit(object):
@@ -50,3 +50,13 @@ class TestViewsUnit(object):
             assert '6767' in response_data_dict
             assert '7878' in response_data_dict
             assert len(response_data_dict.keys()) == 2
+
+    @patch('picture.views.gather_and_enforce_request_args')
+    def test_list_pictures_catches_exceptions(self,
+                                              pv_gather_and_enforce_request_args):
+
+        pv_gather_and_enforce_request_args.side_effect = ThermalBaseError('phenomenon')
+
+        resp_object = pv.list_pictures()
+        assert resp_object.data == '"phenomenon"'
+        assert resp_object.status_code == 400

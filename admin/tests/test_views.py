@@ -109,7 +109,7 @@ class TestViewsUnit(object):
 
         av_get_settings_document.side_effect = ThermalBaseError('Someones got it in for me, theyre planting stories in the press')
 
-        resp_object = av.get_settings()
+        resp_object = av.update_settings()
         assert resp_object.data == '"Someones got it in for me, theyre planting stories in the press"'
         assert resp_object.status_code == 400
 

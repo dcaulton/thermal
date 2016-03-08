@@ -25,59 +25,95 @@ def index():
 
 @calibration.route('/distortion_sets/')
 def list_distortion_sets():
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['GET'])
 def get_distortion_set(distortion_set_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['PUT'])
 def update_distortion_set(distortion_set_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['POST'])
 def create_distortion_set(distortion_set_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/distortion_pairs')
 def list_distortion_pairs():
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['GET'])
 def get_distortion_pair(distortion_pair_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['PUT'])
 def update_distortion_pairs(distortion_pair_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['POST'])
 def create_distortion_pair(distortion_pair_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/calibration_sessions')
 def list_calibration_sessions():
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['GET'])
 def get_calibration_sessions(calibration_session_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['PUT'])
 def update_calibration_session(calibration_session_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['POST'])
 def create_calibration_session(calibration_session_id):
-    pass
+    try:
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
