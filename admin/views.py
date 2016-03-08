@@ -9,7 +9,6 @@ from admin.services import (default_group_dict,
                             get_group_document_with_child_objects,
                             save_document)
 from picture.services import find_pictures
-from thermal.exceptions import NotFoundError
 from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_url_base,
@@ -68,6 +67,7 @@ def update_settings():
 def list_groups():
     '''
     Lists all groups
+    Includes paging and searching on any field in the group document
     '''
     try:
         search_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
@@ -102,6 +102,7 @@ def get_group(group_id):
 def get_group_pictures(group_id):
     '''
     Fetches pictures for a supplied group id
+    Includes paging and searching on any field in the picture document
     '''
     try:
         group_dict = get_group_document(group_id)
@@ -118,6 +119,7 @@ def get_group_pictures(group_id):
 def get_group_gallery(group_id):
     '''
     Fetches the photo gallery for a supplied group id
+    Includes paging and searching on any field in the picture document
     '''
     try:
         group_dict = get_group_document(group_id)

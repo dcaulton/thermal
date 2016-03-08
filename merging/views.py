@@ -1,7 +1,7 @@
 import json
 import uuid
 
-from flask import Blueprint, request, Response, url_for
+from flask import Blueprint, Response, url_for
 from merging.services import merge_images_task
 from thermal.utils import gather_and_enforce_request_args, get_url_base, item_exists
 

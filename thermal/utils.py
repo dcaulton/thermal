@@ -10,6 +10,7 @@ dynamically_calculated_attributes = ['current_group_link', 'picture_links', 'sna
 
 
 # TODO have this add virtual properties?
+# TODO escape the strings enough to keep bobby tables out of our hair
 def get_documents_from_criteria(args_dict):
     '''
     Takes key value pairs in an args dict, builds in a map string assuming equality checks on each key and value.

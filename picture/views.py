@@ -1,10 +1,8 @@
 import json
 
-import couchdb
-from flask import Blueprint, request, Response
+from flask import Blueprint, Response
 
 from picture.services import find_pictures, find_picture
-from thermal.exceptions import NotFoundError
 from thermal.utils import gather_and_enforce_request_args
 
 picture = Blueprint('picture', __name__)
