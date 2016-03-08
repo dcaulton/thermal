@@ -6,7 +6,7 @@ import uuid
 from flask import current_app, request
 
 import admin.views as av
-from thermal.exceptions import DocumentConfigurationError, NotFoundError
+from thermal.exceptions import DocumentConfigurationError, NotFoundError, ThermalBaseError
 
 
 class TestViewsUnit(object):
@@ -40,6 +40,15 @@ class TestViewsUnit(object):
             assert '2323' in response_data_dict
             assert len(response_data_dict.keys()) == 2
 
+    @patch('admin.views.gather_and_enforce_request_args')
+    def test_list_groups_catches_exceptions(self,
+                                            av_gather_and_enforce_request_args):
+
+        av_gather_and_enforce_request_args.side_effect = ThermalBaseError('Blowing down the backroads heading south')
+
+        resp_object = av.list_groups()
+        assert resp_object.data == '"Blowing down the backroads heading south"'
+        assert resp_object.status_code == 400
 
     @patch('admin.views.get_settings_document')
     def test_get_settings_calls_get_settings_document(self,
@@ -54,6 +63,15 @@ class TestViewsUnit(object):
         assert 'h' in response_data_dict
         assert len(response_data_dict.keys()) == 1
 
+    @patch('admin.views.get_settings_document')
+    def test_get_settings_catches_exceptions(self,
+                                             av_get_settings_document):
+
+        av_get_settings_document.side_effect = ThermalBaseError('blowing every time you move your teeth')
+
+        resp_object = av.get_settings()
+        assert resp_object.data == '"blowing every time you move your teeth"' 
+        assert resp_object.status_code == 400
 
     @patch('admin.views.save_document')
     @patch('admin.views.get_settings_document')
@@ -85,14 +103,24 @@ class TestViewsUnit(object):
             av_doc_attribute_can_be_set.assert_called_once_with('ali')
             av_save_document.assert_called_once_with({'starfish': 'patrick', 'ali': 'g'})
 
+    @patch('admin.views.get_settings_document')
+    def test_update_settings_catches_exceptions(self,
+                                                av_get_settings_document):
+
+        av_get_settings_document.side_effect = ThermalBaseError('Someones got it in for me, theyre planting stories in the press')
+
+        resp_object = av.get_settings()
+        assert resp_object.data == '"Someones got it in for me, theyre planting stories in the press"'
+        assert resp_object.status_code == 400
+
 
     @patch('admin.views.save_document')
     @patch('admin.views.doc_attribute_can_be_set')
     @patch('admin.views.get_group_document')
-    def test_update_groups_sets_allowed_values(self,
-                                               av_get_group_document,
-                                               av_doc_attribute_can_be_set,
-                                               av_save_document):
+    def test_update_group_sets_allowed_values(self,
+                                              av_get_group_document,
+                                              av_doc_attribute_can_be_set,
+                                              av_save_document):
         av_get_group_document.return_value = {'eeny': 'meeny', 'teensy': 'weensy'}
         av_doc_attribute_can_be_set.return_value = True
         with current_app.test_client() as c:
@@ -107,9 +135,9 @@ class TestViewsUnit(object):
 
     @patch('admin.views.save_document')
     @patch('admin.views.get_group_document')
-    def test_update_groups_doesnt_set_disallowed_values(self,
-                                                        av_get_group_document,
-                                                        av_save_document):
+    def test_update_group_doesnt_set_disallowed_values(self,
+                                                       av_get_group_document,
+                                                       av_save_document):
         av_get_group_document.return_value = {'eeny': 'meeny', 'teensy': 'weensy'}
         with current_app.test_client() as c:
             resp_object = c.put('/api/v1/admin/groups/876',
@@ -118,6 +146,26 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 200
             av_get_group_document.assert_called_once_with('876')
             av_save_document.assert_called_once_with({'eeny': 'meeny', 'teensy': 'weensy'})
+
+    @patch('admin.views.get_group_document')
+    def test_update_group_catches_exceptions(self,
+                                             av_get_group_document):
+
+        av_get_group_document.side_effect = ThermalBaseError('Blowing through the curtains in your room')
+
+        resp_object = av.update_group('brockman')
+        assert resp_object.data == '"Blowing through the curtains in your room"'
+        assert resp_object.status_code == 400
+
+    @patch('admin.views.get_settings_document')
+    def test_save_group_catches_exceptions(self,
+                                           av_get_settings_document):
+
+        av_get_settings_document.side_effect = ThermalBaseError('You tamed the lion in my cage')
+
+        resp_object = av.save_group()
+        assert resp_object.data == '"You tamed the lion in my cage"'
+        assert resp_object.status_code == 400
 
 
     @patch('admin.views.get_group_document_with_child_objects')
@@ -236,6 +284,16 @@ class TestViewsUnit(object):
         assert 'some_key' in response_data_dict
         assert len(response_data_dict.keys()) == 1
 
+    @patch('admin.views.get_group_document')
+    def test_get_group_pictures_catches_exceptions(self,
+                                                   av_get_group_document):
+
+        av_get_group_document.side_effect = ThermalBaseError('flies buzzing around your eyes')
+
+        resp_object = av.get_group_pictures('yyz')
+        assert resp_object.data == '"flies buzzing around your eyes"'
+        assert resp_object.status_code == 400
+
     @patch('admin.views.find_pictures')
     @patch('admin.views.gather_and_enforce_request_args')
     @patch('admin.views.get_group_document')
@@ -260,6 +318,15 @@ class TestViewsUnit(object):
         assert 'some_key' in response_data_dict
         assert len(response_data_dict.keys()) == 1
 
+    @patch('admin.views.get_group_document')
+    def test_get_group_gallery_catches_exceptions(self,
+                                                  av_get_group_document):
+
+        av_get_group_document.side_effect = ThermalBaseError('beware of lightning that might strike')
+
+        resp_object = av.get_group_gallery('barchetta')
+        assert resp_object.data == '"beware of lightning that might strike"'
+        assert resp_object.status_code == 400
 
     @patch('admin.views.save_document')
     @patch('admin.views.doc_attribute_can_be_set')
@@ -289,6 +356,22 @@ class TestViewsUnit(object):
             group_save_call = call(group_dict_for_call)
             settings_save_call = call({'bread': 'pudding', 'current_group_id': group_id})
             av_save_document.assert_has_calls([group_save_call, settings_save_call])
+
+    @patch('admin.views.get_url_base')
+    def test_index_shows_links(self, av_get_url_base):
+        av_get_url_base.return_value = 'prawn'
+        with current_app.test_client() as c:
+            resp_object = c.get('/api/v1/admin/')
+
+            response_data_dict = json.loads(resp_object.data)
+
+            assert resp_object.status_code == 200
+            assert 'settings' in response_data_dict
+            assert 'prawn' in response_data_dict['settings']
+            assert 'groups' in response_data_dict
+            assert 'prawn' in response_data_dict['groups']
+            assert len(response_data_dict.keys()) == 2
+            av_get_url_base.assert_called_once_with()
 
 
 class TestViewsIntegration(object):
