@@ -180,8 +180,15 @@ def gather_and_enforce_request_args_enumerated(args_to_check):
     Looks at parameters in the request.args and accumulates them to a dict.
     Accepts an array of dicts, each dict having parm name, a function to cast or convert it, if it's required, and a default value.
     Relies on _get_parameter to actually pull values from request.args and cast them.
+    For any parameter:
+      - if required and absent: throw a DocumentConfigurationError
+      - if required and present: get it
+      - if optional and present: get it
+      - if optional and absent and no default is specified: dont get it
+      - if optional and absent and a default is specified: get it
+      - if there is a value and a cast function and the value fails the cast: throw a ValueError
     '''
-    # name is the only one that is required
+    # name is the only field that is required
     return_dict = {}
 #    requested_keys = request.args.keys()  # TODO this logic, is causing problems with tests for now, needs fixing
 
@@ -206,14 +213,15 @@ def gather_and_enforce_request_args_enumerated(args_to_check):
         else:
             default = None
 
-        if parameter_name in request.args:
-            return_dict['parameter_name'] = _get_parameter(parameter_name,
-                                                           default=default,
-                                                           cast_function=cast_function,
-                                                           raise_value_error=True)
+        if parameter_name not in request.args and required:
+            raise DocumentConfigurationError('required parameter {0} not supplied in request'.format(parameter_name))
+        elif parameter_name not in request.args and not required and not 'default' in arg:
+            pass
         else:
-            if required:
-                raise DocumentConfigurationError('required parameter {0} not supplied in request'.format(parameter_name))
+            return_dict[parameter_name] = _get_parameter(parameter_name,
+                                                         default=default,
+                                                         cast_function=cast_function,
+                                                         raise_value_error=True)
 
 #        if parameter_name in requested_keys:
 #            requested_keys.remove(parameter_name)

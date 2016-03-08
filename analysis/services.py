@@ -35,43 +35,70 @@ def edge_detect_task(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tigh
     edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id, tight_id)
 
 
-def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
+def build_blurred_cv2_image(img_id_in, alternate_img_id_in):
     if item_exists(alternate_img_id_in, 'picture'):
         img_id_in = alternate_img_id_in
     pic_dict_in = find_picture(img_id_in)
     image_in = cv2.imread(pic_dict_in['uri'])
     gray = cv2.cvtColor(image_in, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-    # apply Canny edge detection using a wide threshold, tight
-    # threshold, and automatically determined threshold
+    return blurred
+
+def edge_detect_auto(img_id_in, alternate_img_id_in, auto_id):
+    blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
+    # apply Canny edge detection using an automatically determined threshold
     auto = auto_canny(blurred)
-    auto = auto_canny(image_in)
+    auto = auto_canny(image_in)  # is this correct?
     auto_filename = build_picture_name(auto_id)
     auto_path_out = build_picture_path(picture_name=auto_filename, snap_id=pic_dict_in['snap_id'])
     cv2.imwrite(auto_path_out, auto)
-    auto_dict_out = make_edge_picture_dict(pic_id=auto_id, pic_filename=auto_filename, pic_path=auto_path_out,
-                                           snap_id=pic_dict_in['snap_id'], group_id=pic_dict_in['group_id'],
-                                           source_pic_id=img_id_in, edge_detect_type='auto')
+    auto_dict_out = make_edge_picture_dict(pic_id=auto_id,
+                                           pic_filename=auto_filename,
+                                           pic_path=auto_path_out,
+                                           snap_id=pic_dict_in['snap_id'],
+                                           group_id=pic_dict_in['group_id'],
+                                           source_pic_id=img_id_in,
+                                           edge_detect_type='auto')
     save_picture_document(auto_dict_out)
-    if wide_id:
-        wide = cv2.Canny(blurred, 10, 200)
-        wide_filename = build_picture_name(wide_id)
-        wide_path_out = build_picture_path(picture_name=wide_filename, snap_id=pic_dict_in['snap_id'])
-        cv2.imwrite(wide_path_out, wide)
-        wide_dict_out = make_edge_picture_dict(pic_id=wide_id, pic_filename=wide_filename, pic_path=wide_path_out,
-                                               snap_id=pic_dict_in['snap_id'], group_id=pic_dict_in['group_id'],
-                                               source_pic_id=img_id_in, edge_detect_type='wide')
-        save_picture_document(wide_dict_out)
-    if tight_id:
-        tight = cv2.Canny(blurred, 225, 250)
-        tight_filename = build_picture_name(tight_id)
-        tight_path_out = build_picture_path(picture_name=tight_filename, snap_id=pic_dict_in['snap_id'])
-        cv2.imwrite(tight_path_out, tight)
-        tight_dict_out = make_edge_picture_dict(pic_id=tight_id, pic_filename=tight_filename, pic_path=tight_path_out,
-                                                snap_id=pic_dict_in['snap_id'], group_id=pic_dict_in['group_id'],
-                                                source_pic_id=img_id_in, edge_detect_type='tight')
-        save_picture_document(tight_dict_out)
 
+def edge_detect_wide(img_id_in, alternate_img_id_in, wide_id):
+    blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
+    # apply Canny edge detection using a wide threshold
+    wide = cv2.Canny(blurred, 10, 200)
+    wide_filename = build_picture_name(wide_id)
+    wide_path_out = build_picture_path(picture_name=wide_filename, snap_id=pic_dict_in['snap_id'])
+    cv2.imwrite(wide_path_out, wide)
+    wide_dict_out = make_edge_picture_dict(pic_id=wide_id,
+                                           pic_filename=wide_filename,
+                                           pic_path=wide_path_out,
+                                           snap_id=pic_dict_in['snap_id'],
+                                           group_id=pic_dict_in['group_id'],
+                                           source_pic_id=img_id_in,
+                                           edge_detect_type='wide')
+    save_picture_document(wide_dict_out)
+
+def edge_detect_tight(img_id_in, alternate_img_id_in, tight_id):
+    blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
+    # apply Canny edge detection using a tight threshold
+    tight = cv2.Canny(blurred, 225, 250)
+    tight_filename = build_picture_name(tight_id)
+    tight_path_out = build_picture_path(picture_name=tight_filename, snap_id=pic_dict_in['snap_id'])
+    cv2.imwrite(tight_path_out, tight)
+    tight_dict_out = make_edge_picture_dict(pic_id=tight_id,
+                                            pic_filename=tight_filename,
+                                            pic_path=tight_path_out,
+                                            snap_id=pic_dict_in['snap_id'],
+                                            group_id=pic_dict_in['group_id'],
+                                            source_pic_id=img_id_in,
+                                            edge_detect_type='tight')
+    save_picture_document(tight_dict_out)
+
+def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
+    edge_detect_auto(img_id_in, alternate_img_id_in, auto_id)
+    if wide_id:
+        edge_detect_wide(img_id_in, alternate_img_id_in, wide_id)
+    if tight_id:
+        edge_detect_tight(img_id_in, alternate_img_id_in, tight_id)
 
 def auto_canny(image, sigma=0.33):
     # compute the median of the single channel pixel intensities
@@ -129,32 +156,12 @@ def scale_image(img_id_in, img_id_out, group_id, **kwargs):
 
     image_in = Image.open(pic_path_in)
 
-    # scale image
-    scale_method = Image.BICUBIC
-    if scale_type and 'bilinear' in scale_type:
-        scale_method == Image.BILINEAR
-    if scale_type and 'antialias' in scale_type:
-        scale_method == Image.ANTIALIAS
-    width = current_app.config['STILL_IMAGE_WIDTH']
-    height = current_app.config['STILL_IMAGE_HEIGHT']
-    image_scaled = image_in.resize((width, height), scale_method)
+    image_scaled = scale_image_subtask(scale_type, image_in)
 
-    # TODO: below is terribly inefficient.  After I look at PIL internals I should be able to do better
-    # blur image
-    if scale_type and 'blur' in scale_type:
-        for i in range(1, 10):
-            image_scaled = image_scaled.filter(ImageFilter.BLUR)
+    image_scaled = blur_image(scale_type, image_scaled)
 
-    # colorize image
-    if scale_type and 'colorize' in scale_type:
-        (colorize_range_low, colorize_range_high) = ('#000080', '#FFD700')
-        if 'colorize_range_low' in group_document and 'colorize_range_high' in group_document:
-            colorize_range_low = group_document['colorize_range_low']
-            colorize_range_high = group_document['colorize_range_high']
-        image_colorized = ImageOps.colorize(image_scaled, colorize_range_low, colorize_range_high)
-        image_colorized.save(pic_path_out)
-    else:
-        image_scaled.save(pic_path_out)
+    image_colorized = colorize_image(scale_type, group_document, image_scaled)
+    image_colorized.save(pic_path_out)
 
     img_dict_out = {
         '_id': str(img_id_out),
@@ -170,6 +177,34 @@ def scale_image(img_id_in, img_id_out, group_id, **kwargs):
     }
     save_picture_document(img_dict_out)
 
+def blur_image(scale_type, image):
+    # TODO: below is terribly inefficient.  After I look at PIL internals I should be able to do better
+    if scale_type and 'blur' in scale_type:
+        for i in range(1, 10):
+            image = image.filter(ImageFilter.BLUR)
+    return image
+
+def scale_image_subtask(scale_type, image_in):
+    scale_method = Image.BICUBIC
+    if scale_type and 'bilinear' in scale_type:
+        scale_method == Image.BILINEAR
+    if scale_type and 'antialias' in scale_type:
+        scale_method == Image.ANTIALIAS
+    width = current_app.config['STILL_IMAGE_WIDTH']
+    height = current_app.config['STILL_IMAGE_HEIGHT']
+    image_scaled = image_in.resize((width, height), scale_method)
+    return image_scaled
+
+def colorize_image(scale_type, group_document, image_in):
+    if scale_type and 'colorize' in scale_type:
+        (colorize_range_low, colorize_range_high) = ('#000080', '#FFD700')
+        if 'colorize_range_low' in group_document and 'colorize_range_high' in group_document:
+            colorize_range_low = group_document['colorize_range_low']
+            colorize_range_high = group_document['colorize_range_high']
+        image_colorized = ImageOps.colorize(image_in, colorize_range_low, colorize_range_high)
+        return image_colorized
+    else:
+        return image_in
 
 @celery.task
 def distort_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):

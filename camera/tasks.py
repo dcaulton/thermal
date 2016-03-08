@@ -178,33 +178,33 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
                 group_id=group_id,
                 pic_id=thermal_pic_id
             ),
-            take_picam_still_chained.s(
-                snap_id=snap_id,
-                group_id=group_id,
-                normal_exposure_pic_id=normal_exposure_picam_pic_id,
-                long_exposure_pic_id=long_exposure_picam_pic_id
-            ),
-            scale_image_chained.s(
-                img_id_in=thermal_pic_id,
-                img_id_out=scaled_for_thermal_merge_pic_id,
-                group_id=group_id
-            ),
-            distort_image_chained.s(
-                img_id_in=scaled_for_thermal_merge_pic_id,
-                img_id_out=distorted_for_thermal_merge_pic_id,
-                group_id=group_id
-            ),
-            merge_images_chained.s(
-                img1_primary_id_in=normal_exposure_picam_pic_id,
-                img1_alternate_id_in=long_exposure_picam_pic_id,
-                img2_id_in=distorted_for_thermal_merge_pic_id,
-                img_id_out=merged_pic_id,
-                group_id=group_id
-            ),
-            send_mail_chained.s(
-                snap_id=snap_id,
-                group_id=group_id
-            ),
+#            take_picam_still_chained.s(
+#                snap_id=snap_id,
+#                group_id=group_id,
+#                normal_exposure_pic_id=normal_exposure_picam_pic_id,
+#                long_exposure_pic_id=long_exposure_picam_pic_id
+#            ),
+#            scale_image_chained.s(
+#                img_id_in=thermal_pic_id,
+#                img_id_out=scaled_for_thermal_merge_pic_id,
+#                group_id=group_id
+#            ),
+#            distort_image_chained.s(
+#                img_id_in=scaled_for_thermal_merge_pic_id,
+#                img_id_out=distorted_for_thermal_merge_pic_id,
+#                group_id=group_id
+#            ),
+#            merge_images_chained.s(
+#                img1_primary_id_in=normal_exposure_picam_pic_id,
+#                img1_alternate_id_in=long_exposure_picam_pic_id,
+#                img2_id_in=distorted_for_thermal_merge_pic_id,
+#                img_id_out=merged_pic_id,
+#                group_id=group_id
+#            ),
+#            send_mail_chained.s(
+#                snap_id=snap_id,
+#                group_id=group_id
+#            ),
             file_wrap_up_chained.s(
                 snap_id=snap_id,
                 group_id=group_id
@@ -231,223 +231,223 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
     }
 
 
-def take_both_still_test(snap_id, group_id, delay=0, repeat=0):
-    '''
-    Testing some fixed distortion logic
-    '''
-    thermal_pic_ids = []
-    normal_exposure_picam_pic_ids = []
-    long_exposure_picam_pic_ids = []
-    scaled_for_thermal_merge_pic_ids = []
-    distorted_for_thermal_merge_pic_ids = []
-    merged_pic_ids = []
-    snap_ids = []
-
-    for i in [x * delay for x in range(1, repeat + 2)]:
-        thermal_pic_id = uuid.uuid4()
-        normal_exposure_picam_pic_id = uuid.uuid4()
-        long_exposure_picam_pic_id = uuid.uuid4()
-        scaled_for_thermal_merge_pic_id = uuid.uuid4()
-        distorted_for_thermal_merge_pic_id = uuid.uuid4()
-        merged_pic_id = uuid.uuid4()
-        chain(
-            thermal_still_task.s(
-                snap_id=snap_id,
-                group_id=group_id,
-                pic_id=thermal_pic_id
-            ),
-            take_picam_still_chained.s(
-                snap_id=snap_id,
-                group_id=group_id,
-                normal_exposure_pic_id=normal_exposure_picam_pic_id,
-                long_exposure_pic_id=long_exposure_picam_pic_id
-            ),
-            scale_image_chained.s(
-                img_id_in=thermal_pic_id,
-                img_id_out=scaled_for_thermal_merge_pic_id,
-                group_id=group_id
-            ),
-            distort_image_chained.s(
-                img_id_in=scaled_for_thermal_merge_pic_id,
-                img_id_out=distorted_for_thermal_merge_pic_id,
-                group_id=group_id
-            ),
-            merge_images_chained.s(
-                img1_primary_id_in=normal_exposure_picam_pic_id,
-                img1_alternate_id_in=long_exposure_picam_pic_id,
-                img2_id_in=distorted_for_thermal_merge_pic_id,
-                img_id_out=merged_pic_id,
-                group_id=group_id
-            ),
-            send_mail_chained.s(
-                snap_id=snap_id,
-                group_id=group_id
-            ),
-            file_wrap_up_chained.s(
-                snap_id=snap_id,
-                group_id=group_id
-            )
-        ).apply_async(countdown=i)
-        thermal_pic_ids.append(str(thermal_pic_id))
-        normal_exposure_picam_pic_ids.append(str(normal_exposure_picam_pic_id))
-        long_exposure_picam_pic_ids.append(str(long_exposure_picam_pic_id))
-        scaled_for_thermal_merge_pic_ids.append(str(scaled_for_thermal_merge_pic_id))
-        distorted_for_thermal_merge_pic_ids.append(str(distorted_for_thermal_merge_pic_id))
-        merged_pic_ids.append(str(merged_pic_id))
-        snap_ids.append(str(snap_id))
-        snap_id = uuid.uuid4()
-
-    return {
-        'snap_ids': snap_ids,
-        'group_id': group_id,
-        'normal_exposure_picam_ids': normal_exposure_picam_pic_ids,
-        'long_exposure_picam_ids': long_exposure_picam_pic_ids,
-        'thermal_ids': thermal_pic_ids,
-        'scaled_for_thermal_merge_ids': scaled_for_thermal_merge_pic_ids,
-        'distorted_for_thermal_merge_ids': distorted_for_thermal_merge_pic_ids,
-        'merged_ids': merged_pic_ids
-    }
-
-
-def take_both_still_edge_detect(snap_id, group_id, delay=0, repeat=0):
-    '''
-    Wrapper method to handle the celery scheduling of the taking of a 'both' still with standard subtasks.
-    A both still and subtasks consists of:
-      - Lepton still
-      - Enlarge and colorize Lepton still
-      - Picam still
-      - Merge picam still and 'Enlarged and colorized Lepton still'
-      - Optionally email the result to recipients specified on the group file
-    Calls the synchronous take_picam_still method.
-    '''
-    thermal_pic_ids = []
-    normal_exposure_picam_pic_ids = []
-    long_exposure_picam_pic_ids = []
-    scaled_for_thermal_merge_pic_ids = []
-    merged_pic_ids = []
-    picam_auto_pic_ids = []
-    picam_wide_pic_ids = []
-    picam_tight_pic_ids = []
-    thermal_auto_small_pic_ids = []
-    thermal_wide_small_pic_ids = []
-    thermal_tight_small_pic_ids = []
-    thermal_auto_large_pic_ids = []
-    thermal_wide_large_pic_ids = []
-    thermal_tight_large_pic_ids = []
-    snap_ids = []
-
-    for i in [x * delay for x in range(1, repeat + 2)]:
-        thermal_pic_id = uuid.uuid4()
-        normal_exposure_picam_pic_id = uuid.uuid4()
-        long_exposure_picam_pic_id = uuid.uuid4()
-        scaled_for_thermal_merge_pic_id = uuid.uuid4()
-        merged_pic_id = uuid.uuid4()
-        picam_auto_id = uuid.uuid4()
-        picam_wide_id = uuid.uuid4()
-        picam_tight_id = uuid.uuid4()
-        thermal_auto_small_id = uuid.uuid4()
-        thermal_wide_small_id = uuid.uuid4()
-        thermal_tight_small_id = uuid.uuid4()
-        thermal_auto_large_id = uuid.uuid4()
-        thermal_wide_large_id = uuid.uuid4()
-        thermal_tight_large_id = uuid.uuid4()
-        chain(
-            thermal_still_task.s(
-                snap_id=snap_id,
-                group_id=group_id,
-                pic_id=thermal_pic_id
-            ),
-            take_picam_still_chained.s(
-                snap_id=snap_id,
-                group_id=group_id,
-                normal_exposure_pic_id=normal_exposure_picam_pic_id,
-                long_exposure_pic_id=long_exposure_picam_pic_id
-            ),
-            edge_detect_chained.s(
-                img_id_in=normal_exposure_picam_pic_id,
-                alternate_img_id_in=long_exposure_picam_pic_id,
-                auto_id=picam_auto_id,
-                wide_id=picam_wide_id,
-                tight_id=picam_tight_id
-            ),
-            edge_detect_chained.s(
-                img_id_in=thermal_pic_id,
-                alternate_img_id_in='',
-                auto_id=thermal_auto_small_id,
-                wide_id=thermal_wide_small_id,
-                tight_id=thermal_tight_small_id
-            ),
-            scale_image_chained.s(
-                img_id_in=thermal_auto_small_id,
-                img_id_out=thermal_auto_large_id,
-                group_id=group_id,
-                scale_type='bicubic_blur'
-            ),
-            scale_image_chained.s(
-                img_id_in=thermal_wide_small_id,
-                img_id_out=thermal_wide_large_id,
-                group_id=group_id,
-                scale_type='bicubic_blur'
-            ),
-            scale_image_chained.s(
-                img_id_in=thermal_tight_small_id,
-                img_id_out=thermal_tight_large_id,
-                group_id=group_id,
-                scale_type='bicubic_blur'
-            ),
-            scale_image_chained.s(
-                img_id_in=thermal_pic_id,
-                img_id_out=scaled_for_thermal_merge_pic_id,
-                group_id=group_id,
-            ),
-            merge_images_chained.s(
-                img1_primary_id_in=normal_exposure_picam_pic_id,
-                img1_alternate_id_in=long_exposure_picam_pic_id,
-                img2_id_in=scaled_for_thermal_merge_pic_id,
-                img_id_out=merged_pic_id,
-                group_id=group_id
-            ),
-            send_mail_chained.s(
-                snap_id=snap_id,
-                group_id=group_id
-            ),
-            file_wrap_up_chained.s(
-                snap_id=snap_id,
-                group_id=group_id
-            )
-        ).apply_async(countdown=i)
-        thermal_pic_ids.append(str(thermal_pic_id))
-        normal_exposure_picam_pic_ids.append(str(normal_exposure_picam_pic_id))
-        long_exposure_picam_pic_ids.append(str(long_exposure_picam_pic_id))
-        scaled_for_thermal_merge_pic_ids.append(str(scaled_for_thermal_merge_pic_id))
-        merged_pic_ids.append(str(merged_pic_id))
-        snap_ids.append(str(snap_id))
-        picam_auto_pic_ids.append(str(picam_auto_id))
-        picam_wide_pic_ids.append(str(picam_wide_id))
-        picam_tight_pic_ids.append(str(picam_tight_id))
-        thermal_auto_small_pic_ids.append(str(thermal_auto_small_id))
-        thermal_wide_small_pic_ids.append(str(thermal_wide_small_id))
-        thermal_tight_small_pic_ids.append(str(thermal_tight_small_id))
-        thermal_auto_large_pic_ids.append(str(thermal_auto_large_id))
-        thermal_wide_large_pic_ids.append(str(thermal_wide_large_id))
-        thermal_tight_large_pic_ids.append(str(thermal_tight_large_id))
-        snap_id = uuid.uuid4()
-
-    return {
-        'snap_ids': snap_ids,
-        'group_id': group_id,
-        'normal_exposure_picam_ids': normal_exposure_picam_pic_ids,
-        'long_exposure_picam_ids': long_exposure_picam_pic_ids,
-        'thermal_ids': thermal_pic_ids,
-        'scaled_for_thermal_merge_ids': scaled_for_thermal_merge_pic_ids,
-        'merged_ids': merged_pic_ids,
-        'picam_auto_pic_ids': picam_auto_pic_ids,
-        'picam_wide_pic_ids': picam_wide_pic_ids,
-        'picam_tight_pic_ids': picam_tight_pic_ids,
-        'thermal_auto_small_pic_ids': thermal_auto_small_pic_ids,
-        'thermal_wide_small_pic_ids': thermal_wide_small_pic_ids,
-        'thermal_tight_small_pic_ids': thermal_tight_small_pic_ids,
-        'thermal_auto_large_pic_ids': thermal_auto_large_pic_ids,
-        'thermal_wide_large_pic_ids': thermal_wide_large_pic_ids,
-        'thermal_tight_large_pic_ids': thermal_tight_large_pic_ids
-    }
+#def take_both_still_test(snap_id, group_id, delay=0, repeat=0):
+#    '''
+#    Testing some fixed distortion logic
+#    '''
+#    thermal_pic_ids = []
+#    normal_exposure_picam_pic_ids = []
+#    long_exposure_picam_pic_ids = []
+#    scaled_for_thermal_merge_pic_ids = []
+#    distorted_for_thermal_merge_pic_ids = []
+#    merged_pic_ids = []
+#    snap_ids = []
+#
+#    for i in [x * delay for x in range(1, repeat + 2)]:
+#        thermal_pic_id = uuid.uuid4()
+#        normal_exposure_picam_pic_id = uuid.uuid4()
+#        long_exposure_picam_pic_id = uuid.uuid4()
+#        scaled_for_thermal_merge_pic_id = uuid.uuid4()
+#        distorted_for_thermal_merge_pic_id = uuid.uuid4()
+#        merged_pic_id = uuid.uuid4()
+#        chain(
+#            thermal_still_task.s(
+#                snap_id=snap_id,
+#                group_id=group_id,
+#                pic_id=thermal_pic_id
+#            ),
+#            take_picam_still_chained.s(
+#                snap_id=snap_id,
+#                group_id=group_id,
+#                normal_exposure_pic_id=normal_exposure_picam_pic_id,
+#                long_exposure_pic_id=long_exposure_picam_pic_id
+#            ),
+#            scale_image_chained.s(
+#                img_id_in=thermal_pic_id,
+#                img_id_out=scaled_for_thermal_merge_pic_id,
+#                group_id=group_id
+#            ),
+#            distort_image_chained.s(
+#                img_id_in=scaled_for_thermal_merge_pic_id,
+#                img_id_out=distorted_for_thermal_merge_pic_id,
+#                group_id=group_id
+#            ),
+#            merge_images_chained.s(
+#                img1_primary_id_in=normal_exposure_picam_pic_id,
+#                img1_alternate_id_in=long_exposure_picam_pic_id,
+#                img2_id_in=distorted_for_thermal_merge_pic_id,
+#                img_id_out=merged_pic_id,
+#                group_id=group_id
+#            ),
+#            send_mail_chained.s(
+#                snap_id=snap_id,
+#                group_id=group_id
+#            ),
+#            file_wrap_up_chained.s(
+#                snap_id=snap_id,
+#                group_id=group_id
+#            )
+#        ).apply_async(countdown=i)
+#        thermal_pic_ids.append(str(thermal_pic_id))
+#        normal_exposure_picam_pic_ids.append(str(normal_exposure_picam_pic_id))
+#        long_exposure_picam_pic_ids.append(str(long_exposure_picam_pic_id))
+#        scaled_for_thermal_merge_pic_ids.append(str(scaled_for_thermal_merge_pic_id))
+#        distorted_for_thermal_merge_pic_ids.append(str(distorted_for_thermal_merge_pic_id))
+#        merged_pic_ids.append(str(merged_pic_id))
+#        snap_ids.append(str(snap_id))
+#        snap_id = uuid.uuid4()
+#
+#    return {
+#        'snap_ids': snap_ids,
+#        'group_id': group_id,
+#        'normal_exposure_picam_ids': normal_exposure_picam_pic_ids,
+#        'long_exposure_picam_ids': long_exposure_picam_pic_ids,
+#        'thermal_ids': thermal_pic_ids,
+#        'scaled_for_thermal_merge_ids': scaled_for_thermal_merge_pic_ids,
+#        'distorted_for_thermal_merge_ids': distorted_for_thermal_merge_pic_ids,
+#        'merged_ids': merged_pic_ids
+#    }
+#
+#
+#def take_both_still_edge_detect(snap_id, group_id, delay=0, repeat=0):
+#    '''
+#    Wrapper method to handle the celery scheduling of the taking of a 'both' still with standard subtasks.
+#    A both still and subtasks consists of:
+#      - Lepton still
+#      - Enlarge and colorize Lepton still
+#      - Picam still
+#      - Merge picam still and 'Enlarged and colorized Lepton still'
+#      - Optionally email the result to recipients specified on the group file
+#    Calls the synchronous take_picam_still method.
+#    '''
+#    thermal_pic_ids = []
+#    normal_exposure_picam_pic_ids = []
+#    long_exposure_picam_pic_ids = []
+#    scaled_for_thermal_merge_pic_ids = []
+#    merged_pic_ids = []
+#    picam_auto_pic_ids = []
+#    picam_wide_pic_ids = []
+#    picam_tight_pic_ids = []
+#    thermal_auto_small_pic_ids = []
+#    thermal_wide_small_pic_ids = []
+#    thermal_tight_small_pic_ids = []
+#    thermal_auto_large_pic_ids = []
+#    thermal_wide_large_pic_ids = []
+#    thermal_tight_large_pic_ids = []
+#    snap_ids = []
+#
+#    for i in [x * delay for x in range(1, repeat + 2)]:
+#        thermal_pic_id = uuid.uuid4()
+#        normal_exposure_picam_pic_id = uuid.uuid4()
+#        long_exposure_picam_pic_id = uuid.uuid4()
+#        scaled_for_thermal_merge_pic_id = uuid.uuid4()
+#        merged_pic_id = uuid.uuid4()
+#        picam_auto_id = uuid.uuid4()
+#        picam_wide_id = uuid.uuid4()
+#        picam_tight_id = uuid.uuid4()
+#        thermal_auto_small_id = uuid.uuid4()
+#        thermal_wide_small_id = uuid.uuid4()
+#        thermal_tight_small_id = uuid.uuid4()
+#        thermal_auto_large_id = uuid.uuid4()
+#        thermal_wide_large_id = uuid.uuid4()
+#        thermal_tight_large_id = uuid.uuid4()
+#        chain(
+#            thermal_still_task.s(
+#                snap_id=snap_id,
+#                group_id=group_id,
+#                pic_id=thermal_pic_id
+#            ),
+#            take_picam_still_chained.s(
+#                snap_id=snap_id,
+#                group_id=group_id,
+#                normal_exposure_pic_id=normal_exposure_picam_pic_id,
+#                long_exposure_pic_id=long_exposure_picam_pic_id
+#            ),
+#            edge_detect_chained.s(
+#                img_id_in=normal_exposure_picam_pic_id,
+#                alternate_img_id_in=long_exposure_picam_pic_id,
+#                auto_id=picam_auto_id,
+#                wide_id=picam_wide_id,
+#                tight_id=picam_tight_id
+#            ),
+#            edge_detect_chained.s(
+#                img_id_in=thermal_pic_id,
+#                alternate_img_id_in='',
+#                auto_id=thermal_auto_small_id,
+#                wide_id=thermal_wide_small_id,
+#                tight_id=thermal_tight_small_id
+#            ),
+#            scale_image_chained.s(
+#                img_id_in=thermal_auto_small_id,
+#                img_id_out=thermal_auto_large_id,
+#                group_id=group_id,
+#                scale_type='bicubic_blur'
+#            ),
+#            scale_image_chained.s(
+#                img_id_in=thermal_wide_small_id,
+#                img_id_out=thermal_wide_large_id,
+#                group_id=group_id,
+#                scale_type='bicubic_blur'
+#            ),
+#            scale_image_chained.s(
+#                img_id_in=thermal_tight_small_id,
+#                img_id_out=thermal_tight_large_id,
+#                group_id=group_id,
+#                scale_type='bicubic_blur'
+#            ),
+#            scale_image_chained.s(
+#                img_id_in=thermal_pic_id,
+#                img_id_out=scaled_for_thermal_merge_pic_id,
+#                group_id=group_id,
+#            ),
+#            merge_images_chained.s(
+#                img1_primary_id_in=normal_exposure_picam_pic_id,
+#                img1_alternate_id_in=long_exposure_picam_pic_id,
+#                img2_id_in=scaled_for_thermal_merge_pic_id,
+#                img_id_out=merged_pic_id,
+#                group_id=group_id
+#            ),
+#            send_mail_chained.s(
+#                snap_id=snap_id,
+#                group_id=group_id
+#            ),
+#            file_wrap_up_chained.s(
+#                snap_id=snap_id,
+#                group_id=group_id
+#            )
+#        ).apply_async(countdown=i)
+#        thermal_pic_ids.append(str(thermal_pic_id))
+#        normal_exposure_picam_pic_ids.append(str(normal_exposure_picam_pic_id))
+#        long_exposure_picam_pic_ids.append(str(long_exposure_picam_pic_id))
+#        scaled_for_thermal_merge_pic_ids.append(str(scaled_for_thermal_merge_pic_id))
+#        merged_pic_ids.append(str(merged_pic_id))
+#        snap_ids.append(str(snap_id))
+#        picam_auto_pic_ids.append(str(picam_auto_id))
+#        picam_wide_pic_ids.append(str(picam_wide_id))
+#        picam_tight_pic_ids.append(str(picam_tight_id))
+#        thermal_auto_small_pic_ids.append(str(thermal_auto_small_id))
+#        thermal_wide_small_pic_ids.append(str(thermal_wide_small_id))
+#        thermal_tight_small_pic_ids.append(str(thermal_tight_small_id))
+#        thermal_auto_large_pic_ids.append(str(thermal_auto_large_id))
+#        thermal_wide_large_pic_ids.append(str(thermal_wide_large_id))
+#        thermal_tight_large_pic_ids.append(str(thermal_tight_large_id))
+#        snap_id = uuid.uuid4()
+#
+#    return {
+#        'snap_ids': snap_ids,
+#        'group_id': group_id,
+#        'normal_exposure_picam_ids': normal_exposure_picam_pic_ids,
+#        'long_exposure_picam_ids': long_exposure_picam_pic_ids,
+#        'thermal_ids': thermal_pic_ids,
+#        'scaled_for_thermal_merge_ids': scaled_for_thermal_merge_pic_ids,
+#        'merged_ids': merged_pic_ids,
+#        'picam_auto_pic_ids': picam_auto_pic_ids,
+#        'picam_wide_pic_ids': picam_wide_pic_ids,
+#        'picam_tight_pic_ids': picam_tight_pic_ids,
+#        'thermal_auto_small_pic_ids': thermal_auto_small_pic_ids,
+#        'thermal_wide_small_pic_ids': thermal_wide_small_pic_ids,
+#        'thermal_tight_small_pic_ids': thermal_tight_small_pic_ids,
+#        'thermal_auto_large_pic_ids': thermal_auto_large_pic_ids,
+#        'thermal_wide_large_pic_ids': thermal_wide_large_pic_ids,
+#        'thermal_tight_large_pic_ids': thermal_tight_large_pic_ids
+#    }
