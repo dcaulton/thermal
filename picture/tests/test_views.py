@@ -6,7 +6,7 @@ import uuid
 from flask import current_app, Response
 
 import picture.views as pv
-from thermal.exceptions import NotFoundError, ThermalBaseError
+from thermal.exceptions import NotFoundError
 
 
 class TestViewsUnit(object):
@@ -36,28 +36,12 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 404
         assert resp_object.data == '"no picture there, friend"'
 
-
-    @patch('picture.views.search_generic')
-    def test_list_pictures_searches_for_pictures(self,
-                                                 pv_search_generic):
-        pv_search_generic.return_value = {'6767': {'_id': '6767'},
-                                          '7878': {'_id': '7878'}}
+    @patch('picture.views.generic_list_view')
+    def test_list_pictures_calls_generic_list_view(self,
+                                                   pv_generic_list_view):
+        pv_generic_list_view.return_value = {'6767': {'_id': '6767'},
+                                             '7878': {'_id': '7878'}}
     
         resp_object = pv.list_pictures()
 
-        pv_search_generic.assert_called_once_with(document_type='picture')
-        response_data_dict = json.loads(resp_object.data)
-        assert resp_object.status_code == 200
-        assert '6767' in response_data_dict
-        assert '7878' in response_data_dict
-        assert len(response_data_dict.keys()) == 2
-
-    @patch('picture.views.search_generic')
-    def test_list_pictures_catches_exceptions(self,
-                                              pv_search_generic):
-
-        pv_search_generic.side_effect = ThermalBaseError('phenomenon')
-
-        resp_object = pv.list_pictures()
-        assert resp_object.data == '"phenomenon"'
-        assert resp_object.status_code == 400
+        pv_generic_list_view.assert_called_once_with(document_type='picture')

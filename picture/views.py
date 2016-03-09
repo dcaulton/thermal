@@ -4,23 +4,19 @@ from flask import Blueprint, Response
 
 from thermal.services import search_generic
 from thermal.utils import gather_and_enforce_request_args, get_document_with_exception
+from thermal.views import generic_list_view
+
 
 picture = Blueprint('picture', __name__)
 
 
-# TODO add a meta object to the response which indicates paging info
-#  That should be pretty high level, it will be a wrapper around all our 'return Response' calls
 @picture.route('/')
 def list_pictures():
     '''
     Lists all pictures
     Supports paging and filtering on any picture attribute via get parms
     '''
-    try:
-        pictures = search_generic(document_type='picture')
-        return Response(json.dumps(pictures), status=200, mimetype='application/json')
-    except Exception as e:  # TODO add tests, bad paging info or strings that kill the map string could cause abends
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    generic_list_view(document_type='picture')
 
 
 @picture.route('/<picture_id>')
