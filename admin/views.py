@@ -8,11 +8,12 @@ from admin.services import (default_group_dict,
                             get_group_document_with_child_links,
                             get_group_document_with_child_objects,
                             save_document)
-from picture.services import find_pictures
+from thermal.services import find_generic, search_generic
 from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_url_base,
                            dynamically_calculated_attributes)
+
 
 admin = Blueprint('admin', __name__)
 
@@ -107,9 +108,8 @@ def get_group_pictures(group_id):
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
-        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-        args_dict['group_id'] = group_id
-        pictures_dict = find_pictures(args_dict)
+        pictures_dict = search_generic(document_type='picture',
+                                       args_dict={'group_id': group_id})
         return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
@@ -124,10 +124,9 @@ def get_group_gallery(group_id):
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
-        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-        args_dict['group_id'] = group_id
-        args_dict['gallery_url_not_null'] = True
-        pictures_dict = find_pictures(args_dict)
+        pictures_dict = search_generic(document_type='picture',
+                                       args_dict={'group_id': group_id,
+                                                  'gallery_url_not_null': True})
         return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')

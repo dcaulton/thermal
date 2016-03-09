@@ -11,7 +11,6 @@ import conftest
 from picture.services import (build_picture_name,
                               build_picture_path,
                               find_picture,
-                              find_pictures,
                               save_picture_document,
                               update_picture_document)
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
@@ -24,11 +23,11 @@ class TestSettingsUnit(object):
     @patch('admin.services.update_picture_document')
     @patch('boto.connect_s3')
     @patch('boto.s3.key.Key')
-    @patch('admin.services.find_pictures')
+    @patch('admin.services.search_generic')
     @patch('admin.services.get_group_document')
     def test_upload_files_to_s3_calls_expected_methods(self,
                                                        as_get_group_document,
-                                                       as_find_pictures,
+                                                       as_search_generic,
                                                        boto_s3_key_key,
                                                        boto_connect_s3,
                                                        as_update_picture_document):
@@ -54,7 +53,7 @@ class TestSettingsUnit(object):
         }
         as_get_group_document.return_value = {'use_gallery': True,
                                               'image_sources_for_gallery': 'merge'}
-        as_find_pictures.return_value = the_pictures
+        as_search_generic.return_value = the_pictures
         the_mock_bucket = MockObject()
         the_mock_connection = MockObject()
         the_mock_connection.get_bucket = Mock(return_value=the_mock_bucket)
@@ -71,7 +70,8 @@ class TestSettingsUnit(object):
         adms.upload_files_to_s3(snap_id, group_id)
 
         as_get_group_document.assert_called_once_with(group_id)
-        as_find_pictures.assert_called_once_with({'snap_id': str(snap_id)})
+        as_search_generic.assert_called_once_with(document_type='picture',
+                                                  args_dict={'snap_id': str(snap_id)})
         connect_s3_call = call(current_app.config['S3_ACCESS_KEY_ID'], current_app.config['S3_SECRET_ACCESS_KEY'])
         boto_s3_key_key.assert_called_once_with(the_mock_bucket)
         boto_connect_s3.assert_has_calls([connect_s3_call])
@@ -188,7 +188,8 @@ class TestSettingsIntegration(object):
             assert str(snap_id) in pic_doc['uri']
 
         assert os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
-        adms.clean_up_files(snap_id, group_id)
+        with current_app.test_request_context('/whatever'):  # needs a context because clean_up_files calls search_generic
+            adms.clean_up_files(snap_id, group_id)
 
         for pic_id in pic_ids:
             pic_doc = find_picture(pic_id)

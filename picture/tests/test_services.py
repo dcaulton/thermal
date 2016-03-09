@@ -77,65 +77,6 @@ class TestPictureIntegration(object):
         with pytest.raises(DocumentConfigurationError):
             ps.save_picture_document(picture_doc)
 
-    def test_find_pictures_works_with_snap_id(self):
-        snap_id_1 = uuid.uuid4()
-        snap_id_2 = uuid.uuid4()
-        pic_id_1 = uuid.uuid4()
-        pic_id_2 = uuid.uuid4()
-        pic_id_3 = uuid.uuid4()
-        pic_doc_1 = {
-            '_id': str(pic_id_1),
-            'snap_id': str(snap_id_1),
-            'type': 'picture'
-        }
-        ps.save_picture_document(pic_doc_1)
-        pic_doc_2 = {
-            '_id': str(pic_id_2),
-            'snap_id': str(snap_id_2),
-            'type': 'picture'
-        }
-        ps.save_picture_document(pic_doc_2)
-        pic_doc_3 = {
-            '_id': str(pic_id_3),
-            'snap_id': str(snap_id_1),
-            'type': 'picture'
-        }
-        ps.save_picture_document(pic_doc_3)
-        pictures_dict = ps.find_pictures({'snap_id': str(snap_id_1)})
-        expected_dict = {str(pic_id_1): {'_id': str(pic_id_1),
-                                         '_rev': ANY,
-                                         'snap_id': str(snap_id_1),
-                                         'type': 'picture'},
-                         str(pic_id_3): {'_id': str(pic_id_3),
-                                         '_rev': ANY,
-                                         'snap_id': str(snap_id_1),
-                                         'type': 'picture'}
-                         }
-        assert pictures_dict == expected_dict
-
-    def test_find_pictures_only_fetches_pictures(self):
-        snap_id_1 = uuid.uuid4()
-        id_1 = uuid.uuid4()
-        id_2 = uuid.uuid4()
-        doc_1 = {
-            '_id': str(id_1),
-            'snap_id': str(snap_id_1),
-            'type': 'picture'
-        }
-        ps.save_picture_document(doc_1)
-        doc_2 = {
-            '_id': str(id_2),
-            'snap_id': str(snap_id_1),
-            'type': 'not_picture'
-        }
-        current_app.db[str(id_2)] = doc_2
-        pictures_dict = ps.find_pictures({'snap_id': str(snap_id_1)})
-        expected_dict = {str(id_1): {'_id': str(id_1),
-                                     '_rev': ANY,
-                                     'snap_id': str(snap_id_1),
-                                     'type': 'picture'}}
-        assert pictures_dict == expected_dict
-
     def test_build_picture_name_builds_picture_name_with_jpg(self):
         picture_id = uuid.uuid4()
         picture_name = ps.build_picture_name(picture_id)

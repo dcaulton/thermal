@@ -3,7 +3,7 @@ from mock import ANY, call, Mock, patch
 import pytest
 import uuid
 
-from flask import current_app
+from flask import current_app, Response
 
 import picture.views as pv
 from thermal.exceptions import NotFoundError, ThermalBaseError
@@ -37,25 +37,26 @@ class TestViewsUnit(object):
         assert resp_object.data == '"no picture there, friend"'
 
 
-    @patch('picture.views.find_pictures')
-    def test_list_pictures_matches_pictures_on_search_param(self,
-                                                            pv_find_pictures):
-        pv_find_pictures.return_value = {'6767': {'_id': '6767'},
-                                         '7878': {'_id': '7878'}}
-        with current_app.test_client() as c:
-            resp_object = c.get('/api/v1/pictures/?food=rutabega')
-            pv_find_pictures.assert_called_once_with({'food': 'rutabega', 'page_number': 0, 'items_per_page': 0})
-            response_data_dict = json.loads(resp_object.data)
-            assert resp_object.status_code == 200
-            assert '6767' in response_data_dict
-            assert '7878' in response_data_dict
-            assert len(response_data_dict.keys()) == 2
+    @patch('picture.views.search_generic')
+    def test_list_pictures_searches_for_pictures(self,
+                                                 pv_search_generic):
+        pv_search_generic.return_value = {'6767': {'_id': '6767'},
+                                          '7878': {'_id': '7878'}}
+    
+        resp_object = pv.list_pictures()
 
-    @patch('picture.views.gather_and_enforce_request_args')
+        pv_search_generic.assert_called_once_with(document_type='picture')
+        response_data_dict = json.loads(resp_object.data)
+        assert resp_object.status_code == 200
+        assert '6767' in response_data_dict
+        assert '7878' in response_data_dict
+        assert len(response_data_dict.keys()) == 2
+
+    @patch('picture.views.search_generic')
     def test_list_pictures_catches_exceptions(self,
-                                              pv_gather_and_enforce_request_args):
+                                              pv_search_generic):
 
-        pv_gather_and_enforce_request_args.side_effect = ThermalBaseError('phenomenon')
+        pv_search_generic.side_effect = ThermalBaseError('phenomenon')
 
         resp_object = pv.list_pictures()
         assert resp_object.data == '"phenomenon"'

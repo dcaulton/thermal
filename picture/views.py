@@ -2,7 +2,8 @@ import json
 
 from flask import Blueprint, Response
 
-from picture.services import find_pictures, find_picture
+from picture.services import find_picture
+from thermal.services import find_generic, search_generic
 from thermal.utils import gather_and_enforce_request_args
 
 picture = Blueprint('picture', __name__)
@@ -17,8 +18,7 @@ def list_pictures():
     Supports paging and filtering on any picture attribute via get parms
     '''
     try:
-        search_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-        pictures = find_pictures(search_dict)
+        pictures = search_generic(document_type='picture')
         return Response(json.dumps(pictures), status=200, mimetype='application/json')
     except Exception as e:  # TODO add tests, bad paging info or strings that kill the map string could cause abends
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')

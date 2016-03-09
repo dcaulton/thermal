@@ -1,23 +1,24 @@
 Name                      Stmts   Miss  Cover   Missing
 -------------------------------------------------------
-admin/services.py           129     55    57%   52-54, 61-80, 87-89, 97-106, 191-193, 206-229
+admin/services.py           130     55    58%   53-55, 62-81, 88-90, 98-107, 195-197, 210-234
 admin/tasks.py               12      1    92%   34
-admin/views.py               94      2    98%   149, 170
+admin/views.py               89      2    98%   148, 169
 analysis/services.py        131     68    48%   20-25, 30, 35, 39-45, 48-62, 65-78, 81-94, 97-101, 105-111, 115-128, 133, 138, 145, 183-184, 190, 192, 207, 211, 215-238
 analysis/views.py            35     21    40%   18-23, 32-44, 53-69
-calibration/services.py       4      4     0%   1-6
-calibration/views.py         69     51    26%   17-23, 28-31, 36-39, 44-47, 52-55, 60-63, 68-71, 76-79, 84-87, 92-95, 100-103, 108-111, 116-119
+calibration/services.py      31     21    32%   12-14, 17-20, 23-25, 28-31, 34-36, 39-42
+calibration/views.py         79     60    24%   22-28, 33-38, 43-47, 52-55, 60-63, 68-73, 78-82, 87-90, 95-98, 103-108, 113-117, 122-125, 130-133
 camera/cameras.py            40     19    53%   19, 31, 34, 41-43, 46-60, 73-77
 camera/services.py           58      4    93%   50, 63-65
 camera/tasks.py              72      0   100%   
 camera/views.py              46      0   100%   
 merging/services.py          39      5    87%   17, 22, 27, 37, 45
 merging/views.py             27     19    30%   16-20, 28-56
-picture/services.py          36      5    86%   33, 45-49
+picture/services.py          31      5    84%   22, 34-38
 picture/views.py             18      0   100%   
 thermal/appmodule.py         55      7    87%   43-49, 78-79
 thermal/exceptions.py         6      0   100%   
+thermal/services.py          21     14    33%   20-25, 29-32, 49-55
 thermal/utils.py            139      3    98%   37-38, 65
 thermal/views.py              8      0   100%   
 -------------------------------------------------------
-TOTAL                      1018    264    74%   
+TOTAL                      1067    304    72%   

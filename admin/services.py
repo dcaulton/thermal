@@ -6,18 +6,19 @@ import boto
 from flask import current_app, url_for
 from flask.ext.mail import Message
 
-from picture.services import (find_pictures,
-                              build_picture_path,
+from picture.services import (build_picture_path,
                               build_picture_name,
                               update_picture_document)
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
+from thermal.services import find_generic, search_generic
 from thermal.utils import (get_documents_from_criteria,
                            get_document,
                            get_singleton_document,
                            get_url_base, 
                            item_exists,
                            save_document)
+
 
 
 def get_settings_document():
@@ -162,7 +163,9 @@ def upload_files_to_s3(snap_id, group_id):
     group_document = get_group_document(group_id)
     if group_document['use_gallery']:
         image_sources_for_gallery = group_document['image_sources_for_gallery'].split(',')
-        pictures = find_pictures({'snap_id': str(snap_id)})
+        pictures = search_generic(document_type='picture',
+                                  args_dict={'snap_id': str(snap_id)})
+
         # TODO the following assumes s3 and internet are working fine, make it more robust, with py.test tests too
         conn = boto.connect_s3(current_app.config['S3_ACCESS_KEY_ID'], current_app.config['S3_SECRET_ACCESS_KEY'])
         bucket = conn.get_bucket(current_app.config['S3_BUCKET_NAME'])
@@ -185,7 +188,8 @@ def clean_up_files(snap_id, group_id):
     group_document = get_group_document(group_id)
     if 'image_sources_to_delete' in group_document:
         image_sources_to_delete = group_document['image_sources_to_delete'].split(',')
-    pictures = find_pictures({'snap_id': str(snap_id)})
+    pictures = search_generic(document_type='picture',
+                              args_dict={'snap_id': str(snap_id)})
     for pic_id in pictures.keys():
         if pictures[pic_id]['source'] in image_sources_to_delete:
             os.remove(pictures[pic_id]['uri'])
@@ -216,7 +220,8 @@ def send_mail(snap_id, group_id):
         msg = Message(subject, sender=sender_addr, recipients=recipients)
         msg.body = "this is the image for snap id {0}\n\n".format(snap_id)
 
-        pictures = find_pictures({'snap_id': str(snap_id)})
+        pictures = search_generic(document_type='picture',
+                                  args_dict={'snap_id': str(snap_id)})
         picture_types = group_document['send_email_contents'].split(',')
         for pic_id in pictures.keys():
             if pictures[pic_id]['source'] in picture_types:

@@ -10,18 +10,7 @@ from thermal.utils import (cast_uuid_to_string,
                            save_document)
 
 
-def find_pictures(args_dict):
-    '''
-    Finds all pictures matching the parameters passed in with the kwargs dict
-    It's just a think wrapper around get_documents_from_criteria
-    '''
-    args_dict['type'] = 'picture'
-    pictures_dict = get_documents_from_criteria(args_dict)
-    return pictures_dict
-
-
 def find_picture(picture_id):
-#    picture_id = str(picture_id) 
     if not item_exists(picture_id, 'picture'):
         raise NotFoundError("picture not found for id {0}".format(picture_id))
     picture_dict = get_document(picture_id)
