@@ -8,37 +8,10 @@ import pytest
 import picture.services as ps
 import conftest
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import save_document
+from thermal.utils import get_document, save_document
 
 
 class TestPictureIntegration(object):
-    def test_find_picture_finds_the_correct_picture_document(self):
-        the_pic_id = str(uuid.uuid4())
-        picture_doc = {
-            '_id': the_pic_id,
-            'type': 'picture'
-        }
-        save_document(picture_doc)
-
-        new_picture_doc = ps.find_picture(the_pic_id)
-        assert new_picture_doc['_id'] == the_pic_id
-        assert new_picture_doc['type'] == 'picture'
-        assert '_rev' in new_picture_doc
-
-    def test_find_picture_fails_if_no_document_exists_for_picture_id(self):
-        the_id = str(uuid.uuid4())
-        with pytest.raises(NotFoundError):
-            the_returned_doc = ps.find_picture(the_id)
-
-    def test_find_picture_fails_if_document_of_the_wrong_type_exists_for_picture_id(self):
-        the_pic_id = str(uuid.uuid4())
-        picture_doc = {
-            '_id': the_pic_id,
-            'type': 'violinist'
-        }
-        save_document(picture_doc)
-        with pytest.raises(NotFoundError):
-            the_returned_doc = ps.find_picture(the_pic_id)
 
     def test_save_picture_document_works(self):
         the_pic_id = str(uuid.uuid4())
@@ -47,7 +20,7 @@ class TestPictureIntegration(object):
             'type': 'picture'
         }
         ps.save_picture_document(picture_doc)
-        new_picture_doc = ps.find_picture(the_pic_id)
+        new_picture_doc = get_document(the_pic_id)
         assert new_picture_doc['_id'] == the_pic_id
 
     def test_save_picture_document_fails_if_picture_already_in_db(self):

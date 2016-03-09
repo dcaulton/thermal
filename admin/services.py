@@ -11,7 +11,7 @@ from picture.services import (build_picture_path,
                               update_picture_document)
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.services import find_generic, search_generic
+from thermal.services import search_generic
 from thermal.utils import (get_documents_from_criteria,
                            get_document,
                            get_singleton_document,

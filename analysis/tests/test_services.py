@@ -7,7 +7,7 @@ import pytest
 
 from admin.services import get_group_document
 import analysis.services as ans
-from picture.services import build_picture_path, find_picture, save_picture_document
+from picture.services import build_picture_path, save_picture_document
 from thermal.appmodule import celery
 
 
@@ -21,10 +21,10 @@ class TestServicesUnit(object):
         snap_id = uuid.uuid4()
         ans.save_picture_document = Mock()
         the_picture_path = build_picture_path(picture_name='whatever', snap_id=snap_id, create_directory=False)
-        ans.find_picture = Mock(return_value={'filename': 'whatever',
-                                              'group_id': str(group_id),
-                                              'snap_id': str(snap_id),
-                                              'uri': the_picture_path})
+        ans.get_document_with_exception = Mock(return_value={'filename': 'whatever',
+                                                             'group_id': str(group_id),
+                                                             'snap_id': str(snap_id),
+                                                             'uri': the_picture_path})
         ans.get_group_document = Mock(return_value={'_id': str(group_id),
                                                     'colorize_range_low': 1.1,
                                                     'colorize_range_high': 2.2})
@@ -55,7 +55,7 @@ class TestServicesUnit(object):
         ans.scale_image(img_id_in, img_id_out, 'whatever')
 
         ans.get_group_document.assert_called_once_with('whatever')
-        ans.find_picture.assert_called_once_with(str(img_id_in))
+        ans.get_document_with_exception.assert_called_once_with(str(img_id_in), 'picture')
         Image.open.assert_called_once_with(ans.build_picture_path(picture_name='whatever', snap_id=snap_id))
         MockImage.resize.assert_called_once_with((image_width, image_height), Image.BICUBIC)
         ImageOps.colorize.assert_called_once_with(the_mock_image, 1.1, 2.2)

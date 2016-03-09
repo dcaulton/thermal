@@ -11,28 +11,28 @@ from thermal.exceptions import NotFoundError, ThermalBaseError
 
 class TestViewsUnit(object):
 
-    @patch('picture.views.find_picture')
-    def test_get_picture_calls_find_picture_method(self,
-                                                   pv_find_picture):
-        pv_find_picture.return_value = {'e': 'd'}
+    @patch('picture.views.get_document_with_exception')
+    def test_get_picture_calls_get_document_with_exception_method(self,
+                                                                  pv_get_document_with_exception):
+        pv_get_document_with_exception.return_value = {'e': 'd'}
 
         resp_object = pv.get_picture('4231')
         response_data_dict = json.loads(resp_object.data)
 
-        pv_find_picture.assert_called_once_with('4231')
+        pv_get_document_with_exception.assert_called_once_with('4231', 'picture')
         assert resp_object.status_code == 200
         assert 'e' in response_data_dict
         assert len(response_data_dict.keys()) == 1
 
-    @patch('picture.views.find_picture')
+    @patch('picture.views.get_document_with_exception')
     def test_get_picture_fails_as_expected(self,
-                                           pv_find_picture):
-        pv_find_picture.side_effect = NotFoundError('no picture there, friend')
+                                           pv_get_document_with_exception):
+        pv_get_document_with_exception.side_effect = NotFoundError('no picture there, friend')
 
         resp_object = pv.get_picture('4231')
         response_data_dict = json.loads(resp_object.data)
 
-        pv_find_picture.assert_called_once_with('4231')
+        pv_get_document_with_exception.assert_called_once_with('4231', 'picture')
         assert resp_object.status_code == 404
         assert resp_object.data == '"no picture there, friend"'
 

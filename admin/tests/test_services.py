@@ -10,11 +10,10 @@ import admin.services as adms
 import conftest
 from picture.services import (build_picture_name,
                               build_picture_path,
-                              find_picture,
                               save_picture_document,
                               update_picture_document)
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.utils import save_document
+from thermal.utils import get_document, save_document
 
 
 class TestSettingsUnit(object):
@@ -183,7 +182,7 @@ class TestSettingsIntegration(object):
         group_id = adms.get_group_document('current')['_id']
         pic_ids = self.build_three_pictures(snap_id)
         for pic_id in pic_ids:
-            pic_doc = find_picture(pic_id)
+            pic_doc = get_document(pic_id)
             assert os.path.isfile(pic_doc['uri'])
             assert str(snap_id) in pic_doc['uri']
 
@@ -192,7 +191,7 @@ class TestSettingsIntegration(object):
             adms.clean_up_files(snap_id, group_id)
 
         for pic_id in pic_ids:
-            pic_doc = find_picture(pic_id)
+            pic_doc = get_document(pic_id)
             filename = build_picture_name(pic_id)
             expected_picture_path = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], filename)
             assert pic_doc['uri'] == expected_picture_path

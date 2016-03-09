@@ -8,7 +8,7 @@ from admin.services import (default_group_dict,
                             get_group_document_with_child_links,
                             get_group_document_with_child_objects,
                             save_document)
-from thermal.services import find_generic, search_generic
+from thermal.services import search_generic
 from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_url_base,

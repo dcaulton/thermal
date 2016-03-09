@@ -7,10 +7,9 @@ from PIL import Image, ImageChops
 from admin.services import get_group_document
 from picture.services import (build_picture_path,
                               build_picture_name,
-                              find_picture,
                               save_picture_document)
 from thermal.appmodule import celery
-from thermal.utils import item_exists
+from thermal.utils import get_document_with_exception, item_exists
 
 
 def do_stuff():
@@ -44,9 +43,9 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
     else:
         merge_method = getattr(ImageChops, 'screen')
 
-    img1_dict_in = find_picture(str(img1_id_in))
+    img1_dict_in = get_document_with_exception(str(img1_id_in), 'picture')
     img1_filename_in = img1_dict_in['filename']
-    img2_dict_in = find_picture(str(img2_id_in))
+    img2_dict_in = get_document_with_exception(str(img2_id_in), 'picture')
     img2_filename_in = img2_dict_in['filename']
     img_filename_out = build_picture_name(img_id_out)
     pic1_path_in = build_picture_path(picture_name=img1_filename_in, snap_id=img1_dict_in['snap_id'])

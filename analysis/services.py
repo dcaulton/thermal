@@ -10,10 +10,9 @@ from PIL import Image, ImageFilter, ImageStat, ImageOps
 from admin.services import get_group_document
 from picture.services import (build_picture_path,
                               build_picture_name,
-                              find_picture,
                               save_picture_document)
 from thermal.appmodule import celery
-from thermal.utils import item_exists
+from thermal.utils import get_document_with_exception, item_exists
 
 
 def check_if_image_is_too_dark(filename, brightness_threshold):
@@ -38,7 +37,7 @@ def edge_detect_task(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tigh
 def build_blurred_cv2_image(img_id_in, alternate_img_id_in):
     if item_exists(alternate_img_id_in, 'picture'):
         img_id_in = alternate_img_id_in
-    pic_dict_in = find_picture(img_id_in)
+    pic_dict_in = get_document_with_exception(img_id_in, 'picture')
     image_in = cv2.imread(pic_dict_in['uri'])
     gray = cv2.cvtColor(image_in, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (3, 3), 0)
@@ -148,7 +147,7 @@ def scale_image(img_id_in, img_id_out, group_id, **kwargs):
     # TODO add a test to show that scale_type makes it in through kwargs
     group_document = get_group_document(group_id)
     group_id = group_document['_id']
-    img_dict_in = find_picture(str(img_id_in))
+    img_dict_in = get_document_with_exception(str(img_id_in), 'picture')
     img_filename_in = img_dict_in['filename']
     img_filename_out = build_picture_name(img_id_out)
     pic_path_in = img_dict_in['uri']
@@ -214,7 +213,7 @@ def distort_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):
 def distort_image_shepards_fixed(img_id_in, img_id_out, group_id, **kwargs):
     group_document = get_group_document(group_id)
     group_id = group_document['_id']
-    img_dict_in = find_picture(str(img_id_in))
+    img_dict_in = get_document_with_exception(str(img_id_in), 'picture')
     img_filename_out = build_picture_name(img_id_out)
     pic_path_in = img_dict_in['uri']
     pic_path_out = build_picture_path(picture_name=img_filename_out, snap_id=img_dict_in['snap_id'])

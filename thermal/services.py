@@ -25,7 +25,7 @@ def search_generic(document_type, args_dict={}):
     return documents_dict
 
 
-def find_generic(item_id, document_type):
+def get_generic(item_id, document_type):
     if not item_exists(item_id, document_tupe):
         raise NotFoundError("{0} not found for id {1}".format(document_type, item_id))
     item_dict = get_document(item_id)

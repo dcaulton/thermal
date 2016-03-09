@@ -111,6 +111,16 @@ def cast_uuid_to_string(item_id):
         item_id = str(item_id)
     return item_id
 
+def get_document_with_exception(doc_id, document_type='any'):
+    '''
+    Fetches a document with the supplied id from the database.
+    Throws a NotFoundError if a document of that type isn't available.  Accepts 'any' as a wildcard for document type
+    '''
+    doc_id = cast_uuid_to_string(doc_id)
+    if not item_exists(doc_id, document_type):
+        raise NotFoundError("No document of type {0} found for id {1}".format(document_type, doc_id))
+    return get_document(doc_id)
+
 def get_document(doc_id):
     '''
     Fetches a document with the supplied id from the database.

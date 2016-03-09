@@ -4,17 +4,8 @@ from flask import current_app
 
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 from thermal.utils import (cast_uuid_to_string,
-                           get_document,
-                           get_documents_from_criteria,
                            item_exists,
                            save_document)
-
-
-def find_picture(picture_id):
-    if not item_exists(picture_id, 'picture'):
-        raise NotFoundError("picture not found for id {0}".format(picture_id))
-    picture_dict = get_document(picture_id)
-    return picture_dict
 
 
 def save_picture_document(the_dict):

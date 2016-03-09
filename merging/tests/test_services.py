@@ -7,7 +7,7 @@ import pytest
 
 from admin.services import get_group_document
 import merging.services as ms
-from picture.services import find_picture, save_picture_document
+from picture.services import save_picture_document
 from thermal.appmodule import celery
 
 
@@ -21,7 +21,9 @@ class TestServicesUnit(object):
         group_id = uuid.uuid4()
         snap_id = uuid.uuid4()
         ms.save_picture_document = Mock()
-        ms.find_picture = Mock(return_value={'filename': 'whatever', 'group_id': str(group_id), 'snap_id': str(snap_id)})
+        ms.get_document_with_exception = Mock(return_value={'filename': 'whatever',
+                                                             'group_id': str(group_id),
+                                                             'snap_id': str(snap_id)})
         ms.get_group_document = Mock(return_value={'_id': str(group_id), 'merge_type': 'canine'})
         ms.item_exists = Mock(return_value=False)
         the_mock_image = MockImage()
@@ -57,8 +59,8 @@ class TestServicesUnit(object):
 
         ms.get_group_document.assert_called_once_with(group_id)
         ms.item_exists.assert_called_once_with(img1_alternate_id_in, 'picture')
-        find_picture_calls = [call(str(img1_primary_id_in)), call(str(img2_id_in))]
-        ms.find_picture.assert_has_calls(find_picture_calls)
+        get_document_with_exception_calls = [call(str(img1_primary_id_in), 'picture'), call(str(img2_id_in), 'picture')]
+        ms.get_document_with_exception.assert_has_calls(get_document_with_exception_calls)
         image_open_calls = [call(img1_primary_path_in), call(img2_path_in)]
         Image.open.assert_has_calls(image_open_calls)
         convert_calls = [call('RGBA'), call('RGBA')]
