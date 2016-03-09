@@ -5,6 +5,7 @@ import uuid
 
 from flask import current_app
 
+from thermal.exceptions import NotFoundError, ThermalBaseError
 import thermal.views as tv
 
 
@@ -28,11 +29,11 @@ class TestViewsUnit(object):
 
     @patch('thermal.views.search_generic')
     def test_generic_list_view_calls_search_generic(self,
-                                                    av_find_groups):
-        tv_search_generic.side_effect.return_value = {'1212': {'_id': '1212'},
-                                                      '2323': {'_id': '2323'}}
+                                                    tv_search_generic):
+        tv_search_generic.return_value = {'1212': {'_id': '1212'},
+                                          '2323': {'_id': '2323'}}
         resp_object = tv.generic_list_view(document_type='something')
-        tv.generic_list_view.assert_called_once_with(document_type='something')
+        tv.search_generic.assert_called_once_with(document_type='something')
         response_data_dict = json.loads(resp_object.data)
         assert resp_object.status_code == 200
         assert '1212' in response_data_dict
@@ -48,3 +49,28 @@ class TestViewsUnit(object):
         resp_object = tv.generic_list_view(document_type='picture')
         assert resp_object.data == '"phenomenon"'
         assert resp_object.status_code == 400
+
+    @patch('thermal.views.get_document_with_exception')
+    def test_generic_get_view_calls_get_document_with_exception_method(self,
+                                                                       tv_get_document_with_exception):
+        tv_get_document_with_exception.return_value = {'e': 'd'}
+
+        resp_object = tv.generic_get_view(item_id='4231', document_type='dirty_look')
+        response_data_dict = json.loads(resp_object.data)
+
+        tv_get_document_with_exception.assert_called_once_with('4231', 'dirty_look')
+        assert resp_object.status_code == 200
+        assert 'e' in response_data_dict
+        assert len(response_data_dict.keys()) == 1
+
+    @patch('thermal.views.get_document_with_exception')
+    def test_generic_get_view_fails_as_expected(self,
+                                                tv_get_document_with_exception):
+        tv_get_document_with_exception.side_effect = NotFoundError('no picture there, friend')
+
+        resp_object = tv.generic_get_view(item_id='4231', document_type='misunderstanding')
+        response_data_dict = json.loads(resp_object.data)
+
+        tv_get_document_with_exception.assert_called_once_with('4231', 'misunderstanding')
+        assert resp_object.status_code == 404
+        assert resp_object.data == '"no picture there, friend"'

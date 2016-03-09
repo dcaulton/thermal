@@ -11,7 +11,7 @@ from thermal.utils import (cast_uuid_to_string,
                            save_document)
 
 
-def search_generic(document_type, args_dict={}):
+def search_generic(document_type='', args_dict={}):
     '''
     Finds all documents of the specified type matching the parameters passed in with the wargs dict
     It's just a wrapper around get_documents_from_criteria
@@ -30,19 +30,6 @@ def get_generic(item_id, document_type):
         raise NotFoundError("{0} not found for id {1}".format(document_type, item_id))
     item_dict = get_document(item_id)
     return item_doct
-
-
-#def save_picture_document(the_dict):
-#    if '_id' not in the_dict:
-#        the_dict['_id'] == cast_uuid_to_string(uuid.uuid4())
-#    the_id = the_dict['_id']
-#    if item_exists(the_id, 'any'):
-#        raise DocumentConfigurationError('trying to save the pic with a preexisting id: {0}'.format(str(the_id)))
-#    if 'type' in the_dict and the_dict['type'] != 'picture':
-#        raise DocumentConfigurationError('trying to save as a picture a document that is not of type picture: {0}'\
-#                                         .format(str(the_id)))
-#    else:
-#        save_document(the_dict)
 
 
 def update_generic_document(the_dict, document_type):

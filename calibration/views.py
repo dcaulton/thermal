@@ -30,12 +30,11 @@ def index():
 
 @calibration.route('/distortion_sets/')
 def list_distortion_sets():
-    try:
-        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-        distortion_sets = find_distortion_sets(args_dict)
-        return Response(json.dumps(distortion_sets), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    '''
+    Lists all distortion sets
+    Supports paging and filtering on any attribute via get parms
+    '''
+    generic_list_view(document_type='distortion_set')
 
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['GET'])
@@ -65,12 +64,11 @@ def create_distortion_set(distortion_set_id):
 
 @calibration.route('/distortion_pairs')
 def list_distortion_pairs():
-    try:
-        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-        distortion_pairs = find_distortion_pairs(args_dict)
-        return Response(json.dumps(distortion_pairs), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    '''
+    Lists all distortion pairs
+    Supports paging and filtering on any attribute via get parms
+    '''
+    generic_list_view(document_type='distortion_pair')
 
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['GET'])
@@ -100,12 +98,11 @@ def create_distortion_pair(distortion_pair_id):
 
 @calibration.route('/calibration_sessions')
 def list_calibration_sessions():
-    try:
-        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-        calibration_sessions = find_calibration_sessions(args_dict)
-        return Response(json.dumps(calibration_sessions), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    '''
+    Lists all calibration sessions
+    Supports paging and filtering on any attribute via get parms
+    '''
+    generic_list_view(document_type='calibration_session')
 
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['GET'])
