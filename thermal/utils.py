@@ -44,11 +44,12 @@ def get_paging_info_from_args_dict(args_dict):
     '''
     Fetches any paging information from the args dict and removes those entries from the dict.
     Starts with page_number and items_per_page, returns a boolean indicating if paging is wanted, and start and end indices
+    Will accept page_number=0, items_per_page=0, delete them from args dict and indicate no paging requested
     '''
     paging_requested = False
     start_index = 0
     end_index = 0
-    if 'page_number' in args_dict and args_dict['page_number'] and 'items_per_page' in args_dict and args_dict['items_per_page']:
+    if 'page_number' in args_dict and 'items_per_page' in args_dict:
         try:
             items_per_page = int(args_dict['items_per_page'])
             del args_dict['items_per_page']
@@ -59,6 +60,10 @@ def get_paging_info_from_args_dict(args_dict):
             del args_dict['page_number']
         except ValueError as e:
             raise DocumentConfigurationError('invalid number specified for page_number: {0}'.format(args_dict['page_number']))
+
+        if page_number == 0 and items_per_page == 0:  # If parameters are the defaults assume no paging requested
+            return (False, 0, 0)
+
         start_index = (page_number - 1) * items_per_page
         end_index = start_index + items_per_page - 1
         if page_number < 1:
@@ -158,20 +163,27 @@ def gather_and_enforce_request_args(args_to_check):
     required/optional, defaults, how to cast the values, etc.
     '''
     if args_to_check == ['ANY_SEARCHABLE']:
-        return gather_and_enforce_request_args_any_searchable(args_to_check)
+        return gather_and_enforce_request_args_any_searchable()
     else:
         return gather_and_enforce_request_args_enumerated(args_to_check)
 
-def gather_and_enforce_request_args_any_searchable(args_to_check):
+def gather_and_enforce_request_args_any_searchable():
     '''
     Gathers up any request.args that are supplied and puts them into a dict
     Also gathers paging info and puts them in the dict
     Does not check for args that don't belong or have any meaning to this system
     '''
-    return_dict = gather_and_enforce_request_args([{'name': 'page_number', 'default': 0, 'cast_function': int},
-                                                   {'name': 'items_per_page', 'default': 0, 'cast_function': int}])
-    for key in request.args.keys():
-        return_dict[key] = request.args[key]
+    return_dict = gather_and_enforce_request_args_enumerated([{'name': 'page_number',
+                                                               'default': 0,
+                                                               'cast_function': int,
+                                                               'required': False},
+                                                              {'name': 'items_per_page',
+                                                               'default': 0,
+                                                               'cast_function': int,
+                                                               'required': False}])
+    for key in request.args.keys():  # now that we have gotten paging data, move the rest of the args over as strings
+        if key not in return_dict:  # don't bring paging info over
+            return_dict[key] = request.args[key]
     return return_dict
 
 # TODO throw an error for request args that are present but not specified in args_to_check
@@ -184,16 +196,17 @@ def gather_and_enforce_request_args_enumerated(args_to_check):
       - if required and absent: throw a DocumentConfigurationError
       - if required and present: get it
       - if optional and present: get it
-      - if optional and absent and no default is specified: dont get it
-      - if optional and absent and a default is specified: get it
-      - if there is a value and a cast function and the value fails the cast: throw a ValueError
+      - if optional and absent and default specified: get the default
+      - if optional and absent and no default specified: dont get anything
+      - if there is a value and a cast function and the value fails the cast: pass through the ValueError from _get_parameter
     '''
     # name is the only field that is required
     return_dict = {}
 #    requested_keys = request.args.keys()  # TODO this logic, is causing problems with tests for now, needs fixing
 
+    # TODO require args_to_check to be iterable, throw DocumentConfigurationError if not
     for arg in args_to_check:
-        if arg['name']:
+        if 'name' in arg:
             parameter_name = arg['name']
         else:
             raise DocumentConfigurationError('bad call to gather_and_enforce_request_args: no name supplied')
@@ -215,7 +228,7 @@ def gather_and_enforce_request_args_enumerated(args_to_check):
 
         if parameter_name not in request.args and required:
             raise DocumentConfigurationError('required parameter {0} not supplied in request'.format(parameter_name))
-        elif parameter_name not in request.args and not required and not 'default' in arg:
+        elif parameter_name not in request.args and not required and 'default' not in arg:
             pass
         else:
             return_dict[parameter_name] = _get_parameter(parameter_name,

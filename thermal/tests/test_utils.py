@@ -103,8 +103,99 @@ class TestUtilsUnit(object):
                 fetched_value = tu._get_parameter('the_parameter', default='monkey_chow', cast_function=int, raise_value_error=True)
             assert 'problem casting parameter the_parameter (value baloney) as type int' in str(exception_info.value)
 
+    def test_gather_and_enforce_request_args_enumerated_throws_dce_when_no_name_supplied(self):
+        with current_app.test_request_context('/whatever?yoo=hoo'):
+            with pytest.raises(DocumentConfigurationError) as exception_info:
+                fetched_value = tu.gather_and_enforce_request_args_enumerated([{'required': True}])
+            assert 'bad call to gather_and_enforce_request_args: no name supplied' in str(exception_info.value)
+
+    def test_gather_and_enforce_request_args_enumerated_throws_dce_when_parm_required_and_absent(self):
+        with current_app.test_request_context('/whatever?yoo=hoo'):
+            with pytest.raises(DocumentConfigurationError) as exception_info:
+                fetched_value = tu.gather_and_enforce_request_args_enumerated([{'name': 'a', 'required': True}])
+            assert 'required parameter a not supplied in request' in str(exception_info.value)
+
+    def test_gather_and_enforce_request_args_enumerated_gets_parm_when_parm_required_and_present(self):
+        with current_app.test_request_context('/whatever?c=d'):
+            fetched_value = tu.gather_and_enforce_request_args_enumerated([{'name': 'c', 'required': True}])
+            assert fetched_value == {'c': 'd'}
+
+    def test_gather_and_enforce_request_args_enumerated_gets_parm_when_parm_optional_and_present(self):
+        with current_app.test_request_context('/whatever?party=started'):
+            fetched_value = tu.gather_and_enforce_request_args_enumerated([{'name': 'party'}])
+            assert fetched_value == {'party': 'started'}
+
+    def test_gather_and_enforce_request_args_enumerated_gets_default_when_parm_optional_and_absent_and_default(self):
+        with current_app.test_request_context('/whatever'):
+            fetched_value = tu.gather_and_enforce_request_args_enumerated([{'name': 'hammer', 'default': 'dont_hurt_em'}])
+            assert fetched_value == {'hammer': 'dont_hurt_em'}
+
+    def test_gather_and_enforce_request_args_enumerated_gets_nothing_when_parm_optional_and_absent_and_no_default(self):
+        with current_app.test_request_context('/whatever'):
+            fetched_value = tu.gather_and_enforce_request_args_enumerated([{'name': 'vanilla'}])
+            assert fetched_value == {}
+
+    def test_gather_and_enforce_request_args_enumerated_passes_error_when_cast_fails(self):
+        with current_app.test_request_context('/whatever?yoo=hoo'):
+            with pytest.raises(ValueError) as exception_info:
+                fetched_value = tu.gather_and_enforce_request_args_enumerated([{'name': 'yoo', 'cast_function': int}])
+            assert 'problem casting parameter yoo (value hoo) as type int' in str(exception_info.value)
+
+    @patch('thermal.utils._get_parameter')
+    def test_gather_and_enforce_request_args_enumerated_defaults_values_for_default_cast_function_and_raise_value(self,
+                                                                                                                  tu_get_parm):
+        tu_get_parm.return_value = 'ice'
+        with current_app.test_request_context('/whatever?vanilla=ice'):
+            fetched_value = tu.gather_and_enforce_request_args_enumerated([{'name': 'vanilla'}])
+            assert fetched_value == {'vanilla': 'ice'}
+            assert tu_get_parm.called_once_with('vanilla', default=None, cast_function=None, raise_value_error=True)
+
+    @patch('thermal.utils.gather_and_enforce_request_args_enumerated')
+    def test_gather_and_enforce_request_args_any_searchable_calls_gaera_enum(self,
+                                                                             tu_gather_and_enforce_request_args_enum):
+        tu_gather_and_enforce_request_args_enum.return_value = {'page_number': 3, 'items_per_page': 4}
+        with current_app.test_request_context('/whatever?page_number=1&items_per_page=2'):
+            ret_val = tu.gather_and_enforce_request_args_any_searchable()
+
+            the_call = call([{'name': 'page_number',
+                              'default': 0,
+                              'cast_function': int,
+                              'required': False},
+                              {'name': 'items_per_page',
+                              'default': 0,
+                              'cast_function': int,
+                              'required': False}])
+            tu_gather_and_enforce_request_args_enum.assert_has_calls([the_call])
+            assert ret_val == {'page_number': 3, 'items_per_page': 4}
+
+    @patch('thermal.utils.gather_and_enforce_request_args_any_searchable')
+    def test_gather_and_enforce_request_args_routes_to_gaera_any_searchable(self,
+                                                                            tu_gather_and_enforce_request_args_any_searchable):
+        tu_gather_and_enforce_request_args_any_searchable.return_value = {'a': 'b'}
+        with current_app.test_request_context('/whatever'):
+            ret_val = tu.gather_and_enforce_request_args(['ANY_SEARCHABLE'])
+            tu_gather_and_enforce_request_args_any_searchable.assert_called_once_with()
+
+    @patch('thermal.utils.gather_and_enforce_request_args_enumerated')
+    def test_gather_and_enforce_request_args_routes_to_gaera_enumerated(self,
+                                                                        tu_gather_and_enforce_request_args_enumerated):
+        tu_gather_and_enforce_request_args_enumerated.return_value = {'c': 'd'}
+        with current_app.test_request_context('/whatever'):
+            ret_val = tu.gather_and_enforce_request_args([{'name': 'steve'}])
+            tu_gather_and_enforce_request_args_enumerated.assert_called_once_with([{'name': 'steve'}])
+
 
 class TestUtilsIntegration(object):
+
+    def test_gather_and_enforce_request_args_any_searchable_gets_page_info_when_present(self):
+        with current_app.test_request_context('/whatever?page_number=1&items_per_page=2&something=else'):
+            ret_val = tu.gather_and_enforce_request_args_any_searchable()
+            assert ret_val == {'page_number': 1, 'items_per_page': 2, 'something': 'else'}
+
+    def test_gather_and_enforce_request_args_any_searchable_gets_zeroed_out_page_info_when_not_present(self):
+        with current_app.test_request_context('/whatever'):
+            ret_val = tu.gather_and_enforce_request_args_any_searchable()
+            assert ret_val == {'page_number': 0, 'items_per_page': 0}
 
     def test_get_documents_from_criteria_fetches_by_arbitrary_criterion(self):
         id_1 = str(uuid.uuid4())

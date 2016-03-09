@@ -18,7 +18,7 @@ class TestViewsUnit(object):
                                        '2323': {'_id': '2323'}}
         with current_app.test_client() as c:
             resp_object = c.get('/api/v1/admin/groups')
-            av_find_groups.assert_called_once_with({})
+            av_find_groups.assert_called_once_with({'page_number': 0, 'items_per_page': 0})
             response_data_dict = json.loads(resp_object.data)
             assert resp_object.status_code == 200
             assert '1212' in response_data_dict
@@ -33,7 +33,7 @@ class TestViewsUnit(object):
                                        '2323': {'_id': '2323'}}
         with current_app.test_client() as c:
             resp_object = c.get('/api/v1/admin/groups?use_gallery=false')
-            av_find_groups.assert_called_once_with({'use_gallery': 'false'})
+            av_find_groups.assert_called_once_with({'use_gallery': 'false', 'page_number': 0, 'items_per_page': 0})
             response_data_dict = json.loads(resp_object.data)
             assert resp_object.status_code == 200
             assert '1212' in response_data_dict

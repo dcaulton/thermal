@@ -44,7 +44,7 @@ class TestViewsUnit(object):
                                          '7878': {'_id': '7878'}}
         with current_app.test_client() as c:
             resp_object = c.get('/api/v1/pictures/?food=rutabega')
-            pv_find_pictures.assert_called_once_with({'food': 'rutabega'})
+            pv_find_pictures.assert_called_once_with({'food': 'rutabega', 'page_number': 0, 'items_per_page': 0})
             response_data_dict = json.loads(resp_object.data)
             assert resp_object.status_code == 200
             assert '6767' in response_data_dict
