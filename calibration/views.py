@@ -3,7 +3,12 @@ import uuid
 
 from flask import Blueprint, request, Response, url_for
 
-#from calibration.services import *
+from calibration.services import (find_calibration_sessions,
+                                  get_calibration_session_document,
+                                  find_distortion_pairs,
+                                  get_distortion_pair_document,
+                                  find_distortion_sets,
+                                  get_distortion_set_document)
 from thermal.utils import get_url_base
 
 calibration = Blueprint('calibration', __name__)
@@ -26,7 +31,9 @@ def index():
 @calibration.route('/distortion_sets/')
 def list_distortion_sets():
     try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
+        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
+        distortion_sets = find_distortion_sets(args_dict)
+        return Response(json.dumps(distortion_sets), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
@@ -34,7 +41,8 @@ def list_distortion_sets():
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['GET'])
 def get_distortion_set(distortion_set_id):
     try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
+        distortion_set_dict = get_distortion_set_document(distortion_set_id)
+        return Response(json.dumps(distortion_set_dict), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
@@ -58,7 +66,9 @@ def create_distortion_set(distortion_set_id):
 @calibration.route('/distortion_pairs')
 def list_distortion_pairs():
     try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
+        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
+        distortion_pairs = find_distortion_pairs(args_dict)
+        return Response(json.dumps(distortion_pairs), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
@@ -66,7 +76,8 @@ def list_distortion_pairs():
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['GET'])
 def get_distortion_pair(distortion_pair_id):
     try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
+        distortion_pair_dict = get_distortion_pair_document(distortion_pair_id)
+        return Response(json.dumps(distortion_pair_dict), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
@@ -90,7 +101,9 @@ def create_distortion_pair(distortion_pair_id):
 @calibration.route('/calibration_sessions')
 def list_calibration_sessions():
     try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
+        args_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
+        calibration_sessions = find_calibration_sessions(args_dict)
+        return Response(json.dumps(calibration_sessions), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
@@ -98,7 +111,8 @@ def list_calibration_sessions():
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['GET'])
 def get_calibration_sessions(calibration_session_id):
     try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
+        calibration_session_dict = get_calibration_session_document(calibration_session_id)
+        return Response(json.dumps(calibration_session_dict), status=200, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
