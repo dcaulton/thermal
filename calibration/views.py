@@ -3,13 +3,11 @@ import uuid
 
 from flask import Blueprint, request, Response, url_for
 
-from calibration.services import (find_calibration_sessions,
-                                  get_calibration_session_document,
-                                  find_distortion_pairs,
+from calibration.services import (get_calibration_session_document,
                                   get_distortion_pair_document,
-                                  find_distortion_sets,
                                   get_distortion_set_document)
 from thermal.utils import get_url_base
+from thermal.views import generic_list_view
 
 calibration = Blueprint('calibration', __name__)
 
