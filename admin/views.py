@@ -70,6 +70,8 @@ def list_groups():
     Lists all groups
     Includes paging and searching on any field in the group document
     '''
+    # If no settings or groups yet create a group
+    group_dict = get_group_document('current')
     return generic_list_view(document_type='group')
 
 

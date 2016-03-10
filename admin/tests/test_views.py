@@ -339,3 +339,4 @@ class TestViewsIntegration(object):
     pass
 # TODO this will need an integration test because that gallery_url_not_null is a little special
 # @admin.route('/groups/<group_id>/gallery', methods=['GET'])
+# test that get_group_pictures args_dict gets all the way through the generic view and search to the back end

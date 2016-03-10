@@ -27,21 +27,25 @@ class TestViewsUnit(object):
             assert 'calibration' in response_data_dict
             assert len(response_data_dict.keys()) == 7
 
-# TODO test_generic_list_view_does_paging    
-# TODO test_generic_list_view_finds_parameters_from_request_args
-# TODO test_generic_list_view_finds_parameters_from_args_dict
     @patch('thermal.views.search_generic')
     def test_generic_list_view_calls_search_generic(self,
                                                     tv_search_generic):
         tv_search_generic.return_value = {'1212': {'_id': '1212'},
                                           '2323': {'_id': '2323'}}
         resp_object = tv.generic_list_view(document_type='something')
-        tv.search_generic.assert_called_once_with(document_type='something')
+        tv.search_generic.assert_called_once_with(document_type='something', args_dict={})
         response_data_dict = json.loads(resp_object.data)
         assert resp_object.status_code == 200
         assert '1212' in response_data_dict
         assert '2323' in response_data_dict
         assert len(response_data_dict.keys()) == 2
+
+    @patch('thermal.views.search_generic')
+    def test_generic_list_view_calls_search_generic_with_supplied_args_dict(self,
+                                                                            tv_search_generic):
+        tv_search_generic.return_value = {}
+        resp_object = tv.generic_list_view(document_type='something', args_dict={'detroit': 'grand_poobahs'})
+        tv.search_generic.assert_called_once_with(document_type='something', args_dict={'detroit': 'grand_poobahs'})
 
     @patch('thermal.views.search_generic')
     def test_generic_list_view_catches_exceptions(self,
@@ -77,3 +81,9 @@ class TestViewsUnit(object):
         tv_get_document_with_exception.assert_called_once_with('4231', 'misunderstanding')
         assert resp_object.status_code == 404
         assert resp_object.data == '"no picture there, friend"'
+
+class TestViewsIntegration(object):
+    pass
+# TODO test_generic_list_view_does_paging    
+# TODO test_generic_list_view_finds_parameters_from_request_args
+# TODO test_generic_list_view_calls_search_generic_with_supplied_args_dict

@@ -25,10 +25,10 @@ def index():
 
 # TODO add a meta object to the response which indicates paging info
 #  That should be pretty high level, it will be a wrapper around all our 'return Response' calls
-def generic_list_view(document_type=''):
+def generic_list_view(document_type='', args_dict={}):
     try:
         # raise exception if no document type is not supplied
-        documents = search_generic(document_type=document_type)
+        documents = search_generic(document_type=document_type, args_dict=args_dict)
         return Response(json.dumps(documents), status=200, mimetype='application/json')
     except Exception as e:  # TODO add tests, bad paging info or strings that kill the map string could cause abends
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
