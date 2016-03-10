@@ -27,6 +27,9 @@ class TestViewsUnit(object):
             assert 'calibration' in response_data_dict
             assert len(response_data_dict.keys()) == 7
 
+# TODO test_generic_list_view_does_paging    
+# TODO test_generic_list_view_finds_parameters_from_request_args
+# TODO test_generic_list_view_finds_parameters_from_args_dict
     @patch('thermal.views.search_generic')
     def test_generic_list_view_calls_search_generic(self,
                                                     tv_search_generic):

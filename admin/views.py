@@ -2,7 +2,6 @@ from flask import Blueprint, request, Response, url_for
 import json
 
 from admin.services import (default_group_dict,
-                            find_groups,
                             get_settings_document,
                             get_group_document,
                             get_group_document_with_child_links,
@@ -13,6 +12,7 @@ from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_url_base,
                            dynamically_calculated_attributes)
+from thermal.views import generic_list_view
 
 
 admin = Blueprint('admin', __name__)
@@ -70,12 +70,7 @@ def list_groups():
     Lists all groups
     Includes paging and searching on any field in the group document
     '''
-    try:
-        search_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-        groups = find_groups(search_dict)
-        return Response(json.dumps(groups), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    generic_list_view(document_type='group')
 
 
 @admin.route('/groups/<group_id>', methods=['GET'])
@@ -105,6 +100,7 @@ def get_group_pictures(group_id):
     Fetches pictures for a supplied group id
     Includes paging and searching on any field in the picture document
     '''
+    # TODO build args_dict, then call generic_list_view with it
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']
@@ -121,6 +117,7 @@ def get_group_gallery(group_id):
     Fetches the photo gallery for a supplied group id
     Includes paging and searching on any field in the picture document
     '''
+    # TODO build args_dict, then call generic_list_view with it
     try:
         group_dict = get_group_document(group_id)
         group_id = group_dict['_id']

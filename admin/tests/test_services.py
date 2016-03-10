@@ -197,27 +197,3 @@ class TestSettingsIntegration(object):
             assert pic_doc['uri'] == expected_picture_path
             assert os.path.isfile(expected_picture_path)
         assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
-
-    def test_find_groups_fetches_all_groups_when_no_search_params_specified(self):
-        group_id_1 = uuid.uuid4()
-        group_id_2 = uuid.uuid4()
-        non_group_id = uuid.uuid4()
-        save_document({'_id': group_id_1, 'type': 'group'})
-        save_document({'_id': group_id_2, 'type': 'group'})
-        save_document({'_id': non_group_id, 'type': 'vegemite_sandwich'})
-        groups_dict = adms.find_groups()
-        assert str(group_id_1) in groups_dict
-        assert str(group_id_2) in groups_dict
-        assert str(non_group_id) not in groups_dict
-
-    def test_find_groups_filters_all_groups_when_search_params_specified(self):
-        group_id_1 = uuid.uuid4()
-        group_id_2 = uuid.uuid4()
-        group_id_3 = uuid.uuid4()
-        save_document({'_id': group_id_1, 'type': 'group', 'lisa': 'turtle'})
-        save_document({'_id': group_id_2, 'type': 'group', 'lisa': 'tortoise'})
-        save_document({'_id': group_id_3, 'type': 'group', 'lisa': 'turtle'})
-        groups_dict = adms.find_groups({'lisa': 'turtle'})
-        assert len(groups_dict.keys()) == 2
-        assert str(group_id_1) in groups_dict
-        assert str(group_id_3) in groups_dict

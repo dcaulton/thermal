@@ -11,44 +11,15 @@ from thermal.exceptions import DocumentConfigurationError, NotFoundError, Therma
 
 class TestViewsUnit(object):
 
-    @patch('admin.views.find_groups')
-    def test_list_groups_gets_groups(self,
-                                     av_find_groups):
-        av_find_groups.return_value = {'1212': {'_id': '1212'},
-                                       '2323': {'_id': '2323'}}
-        with current_app.test_client() as c:
-            resp_object = c.get('/api/v1/admin/groups')
-            av_find_groups.assert_called_once_with({'page_number': 0, 'items_per_page': 0})
-            response_data_dict = json.loads(resp_object.data)
-            assert resp_object.status_code == 200
-            assert '1212' in response_data_dict
-            assert '2323' in response_data_dict
-            assert len(response_data_dict.keys()) == 2
-
-
-    @patch('admin.views.find_groups')
-    def test_list_groups_matches_groups_on_search_param(self,
-                                                        av_find_groups):
-        av_find_groups.return_value = {'1212': {'_id': '1212'},
-                                       '2323': {'_id': '2323'}}
-        with current_app.test_client() as c:
-            resp_object = c.get('/api/v1/admin/groups?use_gallery=false')
-            av_find_groups.assert_called_once_with({'use_gallery': 'false', 'page_number': 0, 'items_per_page': 0})
-            response_data_dict = json.loads(resp_object.data)
-            assert resp_object.status_code == 200
-            assert '1212' in response_data_dict
-            assert '2323' in response_data_dict
-            assert len(response_data_dict.keys()) == 2
-
-    @patch('admin.views.gather_and_enforce_request_args')
-    def test_list_groups_catches_exceptions(self,
-                                            av_gather_and_enforce_request_args):
-
-        av_gather_and_enforce_request_args.side_effect = ThermalBaseError('Blowing down the backroads heading south')
+    @patch('admin.views.generic_list_view')
+    def test_list_groups_calls_generic_list_view(self,
+                                                 av_generic_list_view):
+        av_generic_list_view.return_value = {'6767': {'_id': '6767'},
+                                             '7878': {'_id': '7878'}}
 
         resp_object = av.list_groups()
-        assert resp_object.data == '"Blowing down the backroads heading south"'
-        assert resp_object.status_code == 400
+
+        av_generic_list_view.assert_called_once_with(document_type='group')
 
     @patch('admin.views.get_settings_document')
     def test_get_settings_calls_get_settings_document(self,

@@ -232,12 +232,3 @@ def send_mail(snap_id, group_id):
                     pics_have_been_attached = True
         if pics_have_been_attached:
             mail.send(msg)
-
-
-def find_groups(args_dict={}):
-    '''
-    Retrieves a dict of all groups.  Key is the group id, value is the dict for the group.
-    '''
-    args_dict['type'] = 'group'
-    groups_dict = get_documents_from_criteria(args_dict)
-    return groups_dict
