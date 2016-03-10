@@ -32,7 +32,7 @@ def list_distortion_sets():
     Lists all distortion sets
     Supports paging and filtering on any attribute via get parms
     '''
-    generic_list_view(document_type='distortion_set')
+    return generic_list_view(document_type='distortion_set')
 
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['GET'])
@@ -40,7 +40,7 @@ def get_distortion_set(distortion_set_id):
     '''
     Fetches an individual distortion set
     '''
-    generic_get_view(item_id=distortion_set_id, document_type='distortion_set')
+    return generic_get_view(item_id=distortion_set_id, document_type='distortion_set')
 
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['PUT'])
@@ -65,7 +65,7 @@ def list_distortion_pairs():
     Lists all distortion pairs
     Supports paging and filtering on any attribute via get parms
     '''
-    generic_list_view(document_type='distortion_pair')
+    return generic_list_view(document_type='distortion_pair')
 
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['GET'])
@@ -73,7 +73,7 @@ def get_distortion_pair(distortion_pair_id):
     '''
     Fetches an individual distortion pair
     '''
-    generic_get_view(item_id=distortion_pair_id, document_type='distortion_pair')
+    return generic_get_view(item_id=distortion_pair_id, document_type='distortion_pair')
 
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['PUT'])
@@ -98,7 +98,7 @@ def list_calibration_sessions():
     Lists all calibration sessions
     Supports paging and filtering on any attribute via get parms
     '''
-    generic_list_view(document_type='calibration_session')
+    return generic_list_view(document_type='calibration_session')
 
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['GET'])
@@ -106,7 +106,7 @@ def get_calibration_session(calibration_session_id):
     '''
     Fetches an individual calibration session
     '''
-    generic_get_view(item_id=calibration_session_id, document_type='calibration_session')
+    return generic_get_view(item_id=calibration_session_id, document_type='calibration_session')
 
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['PUT'])

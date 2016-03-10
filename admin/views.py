@@ -70,7 +70,7 @@ def list_groups():
     Lists all groups
     Includes paging and searching on any field in the group document
     '''
-    generic_list_view(document_type='group')
+    return generic_list_view(document_type='group')
 
 
 @admin.route('/groups/<group_id>', methods=['GET'])
