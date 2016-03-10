@@ -6,9 +6,9 @@ from PIL import Image, ImageChops
 
 from admin.services import get_group_document
 from picture.services import (build_picture_path,
-                              build_picture_name,
-                              save_picture_document)
+                              build_picture_name)
 from thermal.appmodule import celery
+from thermal.services import save_generic
 from thermal.utils import get_document_with_exception, item_exists
 
 
@@ -69,4 +69,4 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
         'uri': pic_path_out,
         'created': str(datetime.datetime.now())
     }
-    save_picture_document(img_dict_out)
+    save_generic(img_dict_out)

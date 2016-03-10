@@ -232,62 +232,32 @@ class TestViewsUnit(object):
             assert len(response_data_dict.keys()) == 1
 
 
-    @patch('admin.views.search_generic')
+    @patch('admin.views.generic_list_view')
     @patch('admin.views.get_group_document')
-    def test_get_group_pictures_calls_appropriate_methods(self,
-                                                          av_get_group_document,
-                                                          av_search_generic):
-        av_get_group_document.return_value = {'_id': '123'}
-        av_search_generic.return_value = {'some_key': 'some_value'}
+    def test_get_group_pictures_calls_generic_list_view(self,
+                                                        av_get_group_document,
+                                                        av_generic_list_view):
 
+        av_get_group_document.return_value = {'_id': '123'}
         resp_object = av.get_group_pictures('current')
-        response_data_dict = json.loads(resp_object.data)
 
         av_get_group_document.assert_called_once_with('current')
-        av_search_generic.assert_called_once_with(document_type='picture', 
-                                                  args_dict={'group_id': '123'})
-        assert resp_object.status_code == 200
-        assert 'some_key' in response_data_dict
-        assert len(response_data_dict.keys()) == 1
+        av_generic_list_view.assert_called_once_with(document_type='picture',
+                                                     args_dict={'group_id': '123'})
 
+    @patch('admin.views.generic_list_view')
     @patch('admin.views.get_group_document')
-    def test_get_group_pictures_catches_exceptions(self,
-                                                   av_get_group_document):
+    def test_get_group_gallery_calls_generic_list_view(self,
+                                                       av_get_group_document,
+                                                       av_generic_list_view):
 
-        av_get_group_document.side_effect = ThermalBaseError('flies buzzing around your eyes')
-
-        resp_object = av.get_group_pictures('yyz')
-        assert resp_object.data == '"flies buzzing around your eyes"'
-        assert resp_object.status_code == 400
-
-    @patch('admin.views.search_generic')
-    @patch('admin.views.get_group_document')
-    def test_get_group_gallery_calls_appropriate_methods(self,
-                                                         av_get_group_document,
-                                                         av_search_generic):
-        av_get_group_document.return_value = {'_id': '123'}
-        av_search_generic.return_value = {'some_key': 'some_value'}
-
+        av_get_group_document.return_value = {'_id': '456'}
         resp_object = av.get_group_gallery('current')
-        response_data_dict = json.loads(resp_object.data)
 
         av_get_group_document.assert_called_once_with('current')
-        av_search_generic.assert_called_once_with(document_type='picture',
-                                                  args_dict={'group_id': '123',
-                                                             'gallery_url_not_null': True})
-        assert resp_object.status_code == 200
-        assert 'some_key' in response_data_dict
-        assert len(response_data_dict.keys()) == 1
-
-    @patch('admin.views.get_group_document')
-    def test_get_group_gallery_catches_exceptions(self,
-                                                  av_get_group_document):
-
-        av_get_group_document.side_effect = ThermalBaseError('beware of lightning that might strike')
-
-        resp_object = av.get_group_gallery('barchetta')
-        assert resp_object.data == '"beware of lightning that might strike"'
-        assert resp_object.status_code == 400
+        av_generic_list_view.assert_called_once_with(document_type='picture',
+                                                     args_dict={'group_id': '456',
+                                                                'gallery_url_not_null': True})
 
     @patch('admin.views.save_document')
     @patch('admin.views.doc_attribute_can_be_set')

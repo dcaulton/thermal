@@ -9,17 +9,16 @@ import pytest
 import admin.services as adms
 import conftest
 from picture.services import (build_picture_name,
-                              build_picture_path,
-                              save_picture_document,
-                              update_picture_document)
+                              build_picture_path)
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
+from thermal.services import save_generic
 from thermal.utils import get_document, save_document
 
 
 class TestSettingsUnit(object):
     # TODO add test case for upload_to_s3 if we don't have use_gallery in the group doc
 
-    @patch('admin.services.update_picture_document')
+    @patch('admin.services.update_generic')
     @patch('boto.connect_s3')
     @patch('boto.s3.key.Key')
     @patch('admin.services.search_generic')
@@ -29,7 +28,7 @@ class TestSettingsUnit(object):
                                                        as_search_generic,
                                                        boto_s3_key_key,
                                                        boto_connect_s3,
-                                                       as_update_picture_document):
+                                                       as_update_generic):
         class MockObject(object):
             pass
         the_pictures = {
@@ -77,7 +76,7 @@ class TestSettingsUnit(object):
         the_mock_connection.get_bucket.assert_called_once_with(current_app.config['S3_BUCKET_NAME'])
         the_mock_destination.set_contents_from_filename.assert_called_once_with("uri_2")
         the_mock_destination.make_public.assert_called_once_with()
-        as_update_picture_document.assert_called_once_with(expected_updated_picture_document)
+        as_update_generic.assert_called_once_with(expected_updated_picture_document, 'picture')
 
 
 class TestSettingsIntegration(object):
@@ -170,7 +169,7 @@ class TestSettingsIntegration(object):
                 'source': 'whatever',
                 'type': 'picture'
             }
-            save_picture_document(the_doc)
+            save_generic(the_doc)
             pic_ids.append(pic_id)
             # touch the picture file in the temp directory
             with open(picture_path, 'a'):

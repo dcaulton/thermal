@@ -7,7 +7,6 @@ import pytest
 
 from admin.services import get_group_document
 import merging.services as ms
-from picture.services import save_picture_document
 from thermal.appmodule import celery
 
 
@@ -20,7 +19,7 @@ class TestServicesUnit(object):
 
         group_id = uuid.uuid4()
         snap_id = uuid.uuid4()
-        ms.save_picture_document = Mock()
+        ms.save_generic = Mock()
         ms.get_document_with_exception = Mock(return_value={'filename': 'whatever',
                                                              'group_id': str(group_id),
                                                              'snap_id': str(snap_id)})
@@ -67,4 +66,4 @@ class TestServicesUnit(object):
         MockImage.convert.assert_has_calls(convert_calls)
         ImageChops.canine.assert_called_once_with(the_mock_image, the_mock_image)
         MockImage.save.assert_called_once_with(pic_path_out)
-        ms.save_picture_document.assert_called_once_with(test_img_dict_out)
+        ms.save_generic.assert_called_once_with(test_img_dict_out)

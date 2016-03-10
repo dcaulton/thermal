@@ -7,8 +7,9 @@ import pytest
 
 from admin.services import get_group_document
 import analysis.services as ans
-from picture.services import build_picture_path, save_picture_document
+from picture.services import build_picture_path
 from thermal.appmodule import celery
+from thermal.services import save_generic
 
 
 class TestServicesUnit(object):
@@ -19,7 +20,7 @@ class TestServicesUnit(object):
 
         group_id = uuid.uuid4()
         snap_id = uuid.uuid4()
-        ans.save_picture_document = Mock()
+        ans.save_generic = Mock()
         the_picture_path = build_picture_path(picture_name='whatever', snap_id=snap_id, create_directory=False)
         ans.get_document_with_exception = Mock(return_value={'filename': 'whatever',
                                                              'group_id': str(group_id),
@@ -60,7 +61,7 @@ class TestServicesUnit(object):
         MockImage.resize.assert_called_once_with((image_width, image_height), Image.BICUBIC)
         ImageOps.colorize.assert_called_once_with(the_mock_image, 1.1, 2.2)
         MockImage.save.assert_called_once_with(pic_path_out)
-        ans.save_picture_document.assert_called_once_with(test_img_dict_out)
+        ans.save_generic.assert_called_once_with(test_img_dict_out)
 
 # test scale image with no colorize
 # test scale image with bilinear

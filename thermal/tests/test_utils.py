@@ -50,14 +50,6 @@ class TestUtilsUnit(object):
         assert not tu.doc_attribute_can_be_set('_id')
         assert not tu.doc_attribute_can_be_set('_rev')
 
-    def test_save_document_fails_if_document_type_is_being_altered(self):
-        the_id = str(uuid.uuid4())
-        the_doc = {'_id': the_id, 'type': 'something'}
-        current_app.db[the_id] = the_doc
-        the_doc['type'] = 'something else'
-        with pytest.raises(DocumentConfigurationError):
-            tu.save_document(the_doc)
-
     def test_get_parameter_fetches_parameter_when_all_is_well(self):
         with current_app.test_request_context('/whatever?the_parameter=the_value'):
             from flask import request  # I know, crazy, but you need to import request here, not at the top of the module
@@ -264,7 +256,7 @@ class TestUtilsIntegration(object):
 
         assert not tu.item_exists(item_id, 'any')
 
-    def test_save_document_works_when_document_is_complete_and_not_preexisting(self):
+    def test_save_document_works_when_document_is_complete(self):
         doc_id = uuid.uuid4()
         dict_in = {'_id': doc_id,
                    'type': 'wookie'}
@@ -280,18 +272,6 @@ class TestUtilsIntegration(object):
 
         the_retrieved_doc = current_app.db[str(doc_id)]
         assert type(the_retrieved_doc['_id']).__name__ == 'unicode'
-
-    def test_save_document_works_when_document_is_complete_and_type_matches(self):
-        doc_id = uuid.uuid4()
-        dict_in = {'_id': doc_id,
-                   'type': 'wookie'}
-        tu.save_document(dict_in)
-        dict_in['cat'] = 'felix'
-        tu.save_document(dict_in)
-
-        the_retrieved_doc = current_app.db[str(doc_id)]
-        assert the_retrieved_doc['type'] == 'wookie'
-        assert the_retrieved_doc['cat'] == 'felix'
 
     def test_save_document_removes_dynamically_calculated_attributes(self):
         doc_id = uuid.uuid4()
@@ -319,18 +299,6 @@ class TestUtilsIntegration(object):
             tu.save_document(dict_in)
 
         error_string = 'trying to save the document with no value for type: {0}'.format(str(doc_id))
-        assert error_string in str(exception_info.value)
-
-    def test_save_document_fails_when_document_is_complete_and_type_doesnt_match(self):
-        doc_id = uuid.uuid4()
-        dict_in = {'_id': doc_id,
-                   'type': 'wookie'}
-        tu.save_document(dict_in)
-        dict_in['type'] = 'ewok'
-        with pytest.raises(DocumentConfigurationError) as exception_info:
-            tu.save_document(dict_in)
-
-        error_string = 'attempting to change the document type for document {0}'.format(str(doc_id))
         assert error_string in str(exception_info.value)
 
     def test_get_singleton_document_fails_when_zero_documents_exist(self):

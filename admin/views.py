@@ -102,16 +102,11 @@ def get_group_pictures(group_id):
     Fetches pictures for a supplied group id
     Includes paging and searching on any field in the picture document
     '''
-    # TODO build args_dict, then call generic_list_view with it
-    try:
-        group_dict = get_group_document(group_id)
-        group_id = group_dict['_id']
-        pictures_dict = search_generic(document_type='picture',
-                                       args_dict={'group_id': group_id})
-        return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
-
+    # TODO in theory get_group_document could throw an exception that turns into a 500
+    group_dict = get_group_document(group_id)
+    group_id = group_dict['_id']
+    return generic_list_view(document_type='picture',
+                             args_dict={'group_id': group_id})
 
 @admin.route('/groups/<group_id>/gallery', methods=['GET'])
 def get_group_gallery(group_id):
@@ -119,17 +114,11 @@ def get_group_gallery(group_id):
     Fetches the photo gallery for a supplied group id
     Includes paging and searching on any field in the picture document
     '''
-    # TODO build args_dict, then call generic_list_view with it
-    try:
-        group_dict = get_group_document(group_id)
-        group_id = group_dict['_id']
-        pictures_dict = search_generic(document_type='picture',
-                                       args_dict={'group_id': group_id,
-                                                  'gallery_url_not_null': True})
-        return Response(json.dumps(pictures_dict), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
-
+    # TODO in theory get_group_document could throw an exception that turns into a 500
+    group_dict = get_group_document(group_id)
+    group_id = group_dict['_id']
+    return generic_list_view(document_type='picture',
+                             args_dict={'group_id': group_id, 'gallery_url_not_null': True})
 
 @admin.route('/groups/<group_id>', methods=['PUT'])
 def update_group(group_id):

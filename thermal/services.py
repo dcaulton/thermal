@@ -32,11 +32,16 @@ def get_generic(item_id, document_type):
     return item_doct
 
 
-def update_generic_document(the_dict, document_type):
-    the_id = the_dict['_id']
-    if not item_exists(the_id, document_type):
-        raise DocumentConfigurationError('trying to update a {0} when no {1} exists for that id: {2}'.format(document_type,
-                                                                                                             document_type,
-                                                                                                             str(the_id)))
+def update_generic(document_in, document_type):
+    if '_id' in document_in:
+        the_id = cast_uuid_to_string(document_in['_id'])
+        if not item_exists(the_id, 'any'):
+            raise DocumentConfigurationError('trying to update {0} when no document exists for that id'.format(the_id))
+        if not item_exists(the_id, document_type):
+            raise DocumentConfigurationError('trying to alter document type for id {0} during update'.format(the_id))
+        save_document(document_in)
     else:
-        save_document(the_dict)
+         raise DocumentConfigurationError('trying to update a document with no id')
+
+def save_generic(document_in):  # a wrapper function just to have consistent naming and function location
+    save_document(document_in)

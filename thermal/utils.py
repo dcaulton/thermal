@@ -146,10 +146,9 @@ def get_singleton_document(doc_type):
 
 def save_document(document_in):
     '''
-    Saves any document
-    Gets doc id from the _id field
-    Has safeguards to avoid changing document type
-    Has safeguards to avoid saving derived properties
+    Saves any document you give it that has a type and valid _id 
+    Strips out dynamically calculated attributes before saving
+    Any further safeguards (altering type on update, etc) should be placed in thermal.services that do that work, then call this
     '''
     if '_id' not in document_in:
          raise DocumentConfigurationError('trying to save the document with no id')
@@ -157,10 +156,6 @@ def save_document(document_in):
     the_id = document_in['_id']
     if 'type' not in document_in:
          raise DocumentConfigurationError('trying to save the document with no value for type: {0}'.format(str(the_id)))
-    if the_id in current_app.db:
-        existing_document = current_app.db[the_id]
-        if existing_document['type'] != document_in['type']:
-            raise DocumentConfigurationError('attempting to change the document type for document {0}'.format(str(the_id)))
     for dca in dynamically_calculated_attributes:  # remove these properties, they are generated on the fly every retrieve
         if dca in document_in:
             del document_in[dca]

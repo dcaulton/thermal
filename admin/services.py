@@ -7,11 +7,10 @@ from flask import current_app, url_for
 from flask.ext.mail import Message
 
 from picture.services import (build_picture_path,
-                              build_picture_name,
-                              update_picture_document)
+                              build_picture_name)
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.services import search_generic
+from thermal.services import search_generic, update_generic
 from thermal.utils import (get_documents_from_criteria,
                            get_document,
                            get_singleton_document,
@@ -177,7 +176,7 @@ def upload_files_to_s3(snap_id, group_id):
                 destination.make_public()
                 pic_gallery_url = destination.generate_url(expires_in=0, query_auth=False)
                 pictures[pic_id]['gallery_url'] = pic_gallery_url
-                update_picture_document(pictures[pic_id])
+                update_generic(pictures[pic_id], 'picture')
 
 
 # TODO add tests related to image_sources_to_delete
@@ -198,7 +197,7 @@ def clean_up_files(snap_id, group_id):
         else:
             shutil.move(pictures[pic_id]['uri'], current_app.config['PICTURE_SAVE_DIRECTORY'])
             pictures[pic_id]['uri'] = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], pictures[pic_id]['filename'])
-        update_picture_document(pictures[pic_id])
+        update_generic(pictures[pic_id], 'picture')
     os.rmdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
 
 
