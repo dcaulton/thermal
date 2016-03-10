@@ -10,9 +10,6 @@ class TestViewsUnit(object):
     @patch('picture.views.generic_get_view')
     def test_get_picture_calls_generic_get_view(self,
                                                 pv_generic_get_view):
-        pv_generic_get_view.return_value = {'6767': {'_id': '6767'},
-                                            '7878': {'_id': '7878'}}
-    
         resp_object = pv.get_picture('hooha')
 
         pv_generic_get_view.assert_called_once_with(item_id='hooha', document_type='picture')

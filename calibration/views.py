@@ -7,7 +7,7 @@ from calibration.services import (get_calibration_session_document,
                                   get_distortion_pair_document,
                                   get_distortion_set_document)
 from thermal.utils import get_url_base
-from thermal.views import generic_list_view
+from thermal.views import generic_get_view, generic_list_view
 
 calibration = Blueprint('calibration', __name__)
 
@@ -37,11 +37,10 @@ def list_distortion_sets():
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['GET'])
 def get_distortion_set(distortion_set_id):
-    try:
-        distortion_set_dict = get_distortion_set_document(distortion_set_id)
-        return Response(json.dumps(distortion_set_dict), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    '''
+    Fetches an individual distortion set
+    '''
+    generic_get_view(item_id=distortion_set_id, document_type='distortion_set')
 
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['PUT'])
@@ -71,11 +70,10 @@ def list_distortion_pairs():
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['GET'])
 def get_distortion_pair(distortion_pair_id):
-    try:
-        distortion_pair_dict = get_distortion_pair_document(distortion_pair_id)
-        return Response(json.dumps(distortion_pair_dict), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    '''
+    Fetches an individual distortion pair
+    '''
+    generic_get_view(item_id=distortion_pair_id, document_type='distortion_pair')
 
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['PUT'])
@@ -104,12 +102,11 @@ def list_calibration_sessions():
 
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['GET'])
-def get_calibration_sessions(calibration_session_id):
-    try:
-        calibration_session_dict = get_calibration_session_document(calibration_session_id)
-        return Response(json.dumps(calibration_session_dict), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+def get_calibration_session(calibration_session_id):
+    '''
+    Fetches an individual calibration session
+    '''
+    generic_get_view(item_id=calibration_session_id, document_type='calibration_session')
 
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['PUT'])

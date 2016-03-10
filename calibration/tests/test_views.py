@@ -36,3 +36,26 @@ class TestViewsUnit(object):
         resp_object = cv.list_calibration_sessions()
 
         cv_generic_list_view.assert_called_once_with(document_type='calibration_session')
+
+    @patch('calibration.views.generic_get_view')
+    def test_get_distortion_set_calls_generic_get_view(self,
+                                                       cv_generic_get_view):
+        resp_object = cv.get_distortion_set('hooha')
+
+        cv_generic_get_view.assert_called_once_with(item_id='hooha', document_type='distortion_set')
+
+    @patch('calibration.views.generic_get_view')
+    def test_get_distortion_pair_calls_generic_get_view(self,
+                                                        cv_generic_get_view):
+        resp_object = cv.get_distortion_pair('hooha')
+
+        cv_generic_get_view.assert_called_once_with(item_id='hooha', document_type='distortion_pair')
+
+    @patch('calibration.views.generic_get_view')
+    def test_get_calibration_session_calls_generic_get_view(self,
+                                                            cv_generic_get_view):
+        resp_object = cv.get_calibration_session('hooha')
+
+        cv_generic_get_view.assert_called_once_with(item_id='hooha', document_type='calibration_session')
+
+
