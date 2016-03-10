@@ -26,10 +26,10 @@ def search_generic(document_type='', args_dict={}):
 
 
 def get_generic(item_id, document_type):
-    if not item_exists(item_id, document_tupe):
+    if not item_exists(item_id, document_type):
         raise NotFoundError("{0} not found for id {1}".format(document_type, item_id))
     item_dict = get_document(item_id)
-    return item_doct
+    return item_dict
 
 
 def update_generic(document_in, document_type):

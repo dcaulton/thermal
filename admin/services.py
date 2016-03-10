@@ -10,13 +10,12 @@ from picture.services import (build_picture_path,
                               build_picture_name)
 from thermal.appmodule import mail
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
-from thermal.services import search_generic, update_generic
+from thermal.services import save_generic, search_generic, update_generic
 from thermal.utils import (get_documents_from_criteria,
                            get_document,
                            get_singleton_document,
                            get_url_base, 
-                           item_exists,
-                           save_document)
+                           item_exists)
 
 
 
@@ -147,8 +146,8 @@ def create_default_settings_and_group_documents():
     '''
     group_dict = default_group_dict()
     settings_dict = default_settings_dict(group_dict['_id'])
-    save_document(settings_dict)
-    save_document(group_dict)
+    save_generic(settings_dict)
+    save_generic(group_dict)
     return settings_dict
 
 

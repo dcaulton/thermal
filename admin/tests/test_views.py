@@ -44,11 +44,11 @@ class TestViewsUnit(object):
         assert resp_object.data == '"blowing every time you move your teeth"' 
         assert resp_object.status_code == 400
 
-    @patch('admin.views.save_document')
+    @patch('admin.views.save_generic')
     @patch('admin.views.get_settings_document')
     def test_update_settings_fails_when_bad_content_type(self,
                                                          av_get_settings_document,
-                                                         av_save_document):
+                                                         av_save_generic):
         av_get_settings_document.return_value = {'starfish': 'patrick'}
         with current_app.test_client() as c:
             resp_object = c.put('/api/v1/admin/settings',content_type='spongey')
@@ -56,13 +56,13 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 409
 
 
-    @patch('admin.views.save_document')
+    @patch('admin.views.save_generic')
     @patch('admin.views.doc_attribute_can_be_set')
     @patch('admin.views.get_settings_document')
     def test_update_settings_sets_allowed_values(self,
                                                  av_get_settings_document,
                                                  av_doc_attribute_can_be_set,
-                                                 av_save_document):
+                                                 av_save_generic):
         av_get_settings_document.return_value = {'starfish': 'patrick'}
         av_doc_attribute_can_be_set.return_value = True
         with current_app.test_client() as c:
@@ -72,7 +72,7 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 200
             av_get_settings_document.assert_called_once_with()
             av_doc_attribute_can_be_set.assert_called_once_with('ali')
-            av_save_document.assert_called_once_with({'starfish': 'patrick', 'ali': 'g'})
+            av_save_generic.assert_called_once_with({'starfish': 'patrick', 'ali': 'g'})
 
     @patch('admin.views.get_settings_document')
     def test_update_settings_catches_exceptions(self,
@@ -85,13 +85,13 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 400
 
 
-    @patch('admin.views.save_document')
+    @patch('admin.views.save_generic')
     @patch('admin.views.doc_attribute_can_be_set')
     @patch('admin.views.get_group_document')
     def test_update_group_sets_allowed_values(self,
                                               av_get_group_document,
                                               av_doc_attribute_can_be_set,
-                                              av_save_document):
+                                              av_save_generic):
         av_get_group_document.return_value = {'eeny': 'meeny', 'teensy': 'weensy'}
         av_doc_attribute_can_be_set.return_value = True
         with current_app.test_client() as c:
@@ -101,14 +101,14 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 200
             av_get_group_document.assert_called_once_with('876')
             av_doc_attribute_can_be_set.assert_called_once_with('eeny')
-            av_save_document.assert_called_once_with({'eeny': 'moe', 'teensy': 'weensy'})
+            av_save_generic.assert_called_once_with({'eeny': 'moe', 'teensy': 'weensy'})
 
 
-    @patch('admin.views.save_document')
+    @patch('admin.views.save_generic')
     @patch('admin.views.get_group_document')
     def test_update_group_doesnt_set_disallowed_values(self,
                                                        av_get_group_document,
-                                                       av_save_document):
+                                                       av_save_generic):
         av_get_group_document.return_value = {'eeny': 'meeny', 'teensy': 'weensy'}
         with current_app.test_client() as c:
             resp_object = c.put('/api/v1/admin/groups/876',
@@ -116,7 +116,7 @@ class TestViewsUnit(object):
                                 data='{"type":"unfortunate"}')
             assert resp_object.status_code == 200
             av_get_group_document.assert_called_once_with('876')
-            av_save_document.assert_called_once_with({'eeny': 'meeny', 'teensy': 'weensy'})
+            av_save_generic.assert_called_once_with({'eeny': 'meeny', 'teensy': 'weensy'})
 
     @patch('admin.views.get_group_document')
     def test_update_group_catches_exceptions(self,
@@ -259,13 +259,13 @@ class TestViewsUnit(object):
                                                      args_dict={'group_id': '456',
                                                                 'gallery_url_not_null': True})
 
-    @patch('admin.views.save_document')
+    @patch('admin.views.save_generic')
     @patch('admin.views.doc_attribute_can_be_set')
     @patch('admin.views.get_settings_document')
     def test_add_group_adds_a_group(self,
                                     av_get_settings_document,
                                     av_doc_attribute_can_be_set,
-                                    av_save_document):
+                                    av_save_generic):
         av_get_settings_document.return_value = {'bread': 'pudding'}
         
         av_doc_attribute_can_be_set.return_value = True
@@ -286,7 +286,7 @@ class TestViewsUnit(object):
 
             group_save_call = call(group_dict_for_call)
             settings_save_call = call({'bread': 'pudding', 'current_group_id': group_id})
-            av_save_document.assert_has_calls([group_save_call, settings_save_call])
+            av_save_generic.assert_has_calls([group_save_call, settings_save_call])
 
     @patch('admin.views.get_url_base')
     def test_index_shows_links(self, av_get_url_base):

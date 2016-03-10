@@ -350,3 +350,26 @@ class TestUtilsIntegration(object):
         the_dict = tu.get_document(doc_id)
 
         assert not the_dict
+
+    def test_get_document_with_exception_throws_exception_when_document_of_specified_type_doesnt_exist(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id,
+                   'type': 'twix'}
+        tu.save_document(dict_in)
+        with pytest.raises(NotFoundError) as exception_info:
+            tu.get_document_with_exception(doc_id, document_type='skittles')
+
+        error_string = 'No document of type skittles found for id {0}'.format(str(doc_id))
+        assert error_string in str(exception_info.value)
+
+    def test_get_document_with_exception_throws_exception_when_no_document_of_any_type_exists_for_requested_id(self):
+        doc_id = uuid.uuid4()
+        dict_in = {'_id': doc_id,
+                   'type': 'twix'}
+        tu.save_document(dict_in)
+        second_doc_id = uuid.uuid4()
+        with pytest.raises(NotFoundError) as exception_info:
+            tu.get_document_with_exception(second_doc_id)
+
+        error_string = 'No document of type any found for id {0}'.format(str(second_doc_id))
+        assert error_string in str(exception_info.value)

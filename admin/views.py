@@ -5,9 +5,8 @@ from admin.services import (default_group_dict,
                             get_settings_document,
                             get_group_document,
                             get_group_document_with_child_links,
-                            get_group_document_with_child_objects,
-                            save_document)
-from thermal.services import search_generic
+                            get_group_document_with_child_objects)
+from thermal.services import save_generic, search_generic
 from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_url_base,
@@ -56,7 +55,7 @@ def update_settings():
             for k in request.json.keys():
                 if doc_attribute_can_be_set(k):
                     settings[k] = request.json[k]
-            save_document(settings)
+            save_generic(settings)
             return Response(json.dumps(settings), status=200, mimetype='application/json')
         err_msg = 'no valid settings parameters supplied'
         return Response(json.dumps(err_msg), status=409, mimetype='application/json')
@@ -131,7 +130,7 @@ def update_group(group_id):
             for k in request.json.keys():
                 if doc_attribute_can_be_set(k):
                     group_dict[k] = request.json[k]
-            save_document(group_dict)
+            save_generic(group_dict)
             return Response(json.dumps(group_dict), status=200, mimetype='application/json')
         return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
     except Exception as e:
@@ -150,9 +149,9 @@ def save_group():
             for k in request.json.keys():
                 if doc_attribute_can_be_set(k):
                     group_dict[k] = request.json[k]
-            save_document(group_dict)
+            save_generic(group_dict)
             settings['current_group_id'] = group_dict['_id']
-            save_document(settings)
+            save_generic(settings)
             return Response(json.dumps(group_dict), status=200, mimetype='application/json')
         return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
     except Exception as e:
