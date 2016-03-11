@@ -7,7 +7,9 @@ from calibration.services import (get_calibration_session_document,
                                   get_distortion_pair_document,
                                   get_distortion_set_document)
 from thermal.utils import get_url_base
-from thermal.views import generic_get_view, generic_list_view
+from thermal.views import (generic_get_view,
+                           generic_list_view,
+                           generic_save_view)
 
 calibration = Blueprint('calibration', __name__)
 
@@ -51,12 +53,9 @@ def update_distortion_set(distortion_set_id):
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
-@calibration.route('/distortion_sets/<distortion_set_id>', methods=['POST'])
-def create_distortion_set(distortion_set_id):
-    try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+@calibration.route('/distortion_sets', methods=['POST'])
+def create_distortion_set():
+    return generic_save_view(document_type='distortion_set')
 
 
 @calibration.route('/distortion_pairs')
@@ -84,12 +83,9 @@ def update_distortion_pairs(distortion_pair_id):
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
-@calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['POST'])
-def create_distortion_pair(distortion_pair_id):
-    try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+@calibration.route('/distortion_pairs', methods=['POST'])
+def create_distortion_pair():
+    return generic_save_view(document_type='distortion_pair')
 
 
 @calibration.route('/calibration_sessions')
@@ -117,9 +113,6 @@ def update_calibration_session(calibration_session_id):
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
-@calibration.route('/calibration_sessions/<calibration_session_id>', methods=['POST'])
-def create_calibration_session(calibration_session_id):
-    try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+@calibration.route('/calibration_sessions', methods=['POST'])
+def create_calibration_session():
+    return generic_save_view(document_type='calibration_session')

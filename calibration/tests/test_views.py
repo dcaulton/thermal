@@ -58,4 +58,23 @@ class TestViewsUnit(object):
 
         cv_generic_get_view.assert_called_once_with(item_id='hooha', document_type='calibration_session')
 
+    @patch('calibration.views.generic_save_view')
+    def test_create_distortion_set_calls_generic_save_view(self,
+                                                       cv_generic_save_view):
+        resp_object = cv.create_distortion_set()
 
+        cv_generic_save_view.assert_called_once_with(document_type='distortion_set')
+
+    @patch('calibration.views.generic_save_view')
+    def test_get_distortion_pair_calls_generic_get_view(self,
+                                                        cv_generic_save_view):
+        resp_object = cv.create_distortion_pair()
+
+        cv_generic_save_view.assert_called_once_with(document_type='distortion_pair')
+
+    @patch('calibration.views.generic_save_view')
+    def test_get_calibration_session_calls_generic_get_view(self,
+                                                            cv_generic_save_view):
+        resp_object = cv.create_calibration_session()
+
+        cv_generic_save_view.assert_called_once_with(document_type='calibration_session')
