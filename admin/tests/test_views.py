@@ -128,17 +128,6 @@ class TestViewsUnit(object):
         assert resp_object.data == '"Blowing through the curtains in your room"'
         assert resp_object.status_code == 400
 
-    @patch('admin.views.get_settings_document')
-    def test_save_group_catches_exceptions(self,
-                                           av_get_settings_document):
-
-        av_get_settings_document.side_effect = ThermalBaseError('You tamed the lion in my cage')
-
-        resp_object = av.save_group()
-        assert resp_object.data == '"You tamed the lion in my cage"'
-        assert resp_object.status_code == 400
-
-
     @patch('admin.views.get_group_document_with_child_objects')
     @patch('admin.views.get_group_document_with_child_links')
     @patch('admin.views.get_group_document')
@@ -258,35 +247,6 @@ class TestViewsUnit(object):
         av_generic_list_view.assert_called_once_with(document_type='picture',
                                                      args_dict={'group_id': '456',
                                                                 'gallery_url_not_null': True})
-
-    @patch('admin.views.save_generic')
-    @patch('admin.views.doc_attribute_can_be_set')
-    @patch('admin.views.get_settings_document')
-    def test_add_group_adds_a_group(self,
-                                    av_get_settings_document,
-                                    av_doc_attribute_can_be_set,
-                                    av_save_generic):
-        av_get_settings_document.return_value = {'bread': 'pudding'}
-        
-        av_doc_attribute_can_be_set.return_value = True
-        with current_app.test_client() as c:
-            resp_object = c.post('/api/v1/admin/groups',
-                                 data='{"dog":"food"}',
-                                 headers={'Content-Type':'application/json'})
-            assert resp_object.status_code == 200
-
-            resp_data_dict = json.loads(resp_object.data)
-            group_id = resp_data_dict['_id']
-            group_dict_for_call = av.default_group_dict()
-            group_dict_for_call['dog'] = 'food'
-            group_dict_for_call['_id'] = group_id
-
-            av_get_settings_document.assert_called_once_with()
-            av_doc_attribute_can_be_set.assert_called_once_with('dog')
-
-            group_save_call = call(group_dict_for_call, 'group')
-            settings_save_call = call({'bread': 'pudding', 'current_group_id': group_id}, 'settings')
-            av_save_generic.assert_has_calls([group_save_call, settings_save_call])
 
     @patch('admin.views.get_url_base')
     def test_index_shows_links(self, av_get_url_base):

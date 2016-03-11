@@ -2,8 +2,10 @@ import json
 
 from flask import Blueprint, request, Response, url_for
 
-from thermal.services import search_generic
-from thermal.utils import get_document_with_exception, get_url_base
+from thermal.services import save_generic, search_generic
+from thermal.utils import (doc_attribute_can_be_set,
+                           get_document_with_exception,
+                           get_url_base)
 
 
 thermal = Blueprint('thermal', __name__)
@@ -43,4 +45,23 @@ def generic_get_view(item_id='', document_type=''):
         item_dict = get_document_with_exception(item_id, document_type)
         return Response(json.dumps(item_dict), status=200, mimetype='application/json')
     except Exception as e:  # TODO add tests, bad paging info or strings that kill the map string could cause abends
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+
+def generic_save_view(args_dict={}, document_type=''):
+    '''
+    Takes what's in request.args, adds it to what's in args dict and saves it.
+    Also will guarantee that the type of document that's saved is of type document_type
+    Returns a response object
+    '''
+    try:
+        if request.headers['Content-Type'] == 'application/json':
+            for k in request.json.keys():
+                if doc_attribute_can_be_set(k):
+                    args_dict[k] = request.json[k]
+            save_generic(args_dict, document_type)
+            return Response(json.dumps(args_dict), status=200, mimetype='application/json')
+        else:
+            error_msg = 'problem with saving {0}: content type is not application/json'.format(document_type)
+            return Response(json.dumps(error_msg), status=409, mimetype='application/json')
+    except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')

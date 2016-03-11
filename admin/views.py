@@ -11,7 +11,7 @@ from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_url_base,
                            dynamically_calculated_attributes)
-from thermal.views import generic_list_view
+from thermal.views import generic_list_view, generic_save_view
 
 
 admin = Blueprint('admin', __name__)
@@ -143,19 +143,18 @@ def update_group(group_id):
 def save_group():
     '''
     Creates a new group record, saves it as the new current group in the settings document
+    Won't let you specify _id, _rev or type
+    Automatically sets settings.current_group_id to the groups id as well
     '''
-    try:
-        settings = get_settings_document()
-        group_dict = default_group_dict()
-        if request.headers['Content-Type'] == 'application/json':
-            for k in request.json.keys():
-                if doc_attribute_can_be_set(k):
-                    group_dict[k] = request.json[k]
-            save_generic(group_dict, 'group')
-            settings['current_group_id'] = group_dict['_id']
-            # TODO change this to update_generic
+    return_value = generic_save_view(args_dict=default_group_dict(), document_type='group')
+    if return_value.status_code == 200:
+        try:
+            group_id = json.loads(return_value.data)['_id']
+            settings = get_settings_document()
+            settings['current_group_id'] = group_id
             save_generic(settings, 'settings')
-            return Response(json.dumps(group_dict), status=200, mimetype='application/json')
-        return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+            return return_value
+        except Exception as e:
+            return Response(json.dumps('error saving settings: '+e.message), status=e.status_code, mimetype='application/json')
+    else:
+        return return_value
