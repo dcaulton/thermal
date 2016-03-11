@@ -1,9 +1,11 @@
 import json
+import uuid
 
 from flask import Blueprint, request, Response, url_for
 
 from thermal.services import save_generic, search_generic
-from thermal.utils import (doc_attribute_can_be_set,
+from thermal.utils import (cast_uuid_to_string,
+                           doc_attribute_can_be_set,
                            get_document_with_exception,
                            get_url_base)
 
@@ -56,8 +58,11 @@ def generic_save_view(args_dict={}, document_type=''):
     try:
         if request.headers['Content-Type'] == 'application/json':
             for k in request.json.keys():
-                if doc_attribute_can_be_set(k):
-                    args_dict[k] = request.json[k]
+                args_dict[k] = request.json[k]
+            if '_id' not in args_dict:
+                args_dict['_id'] = cast_uuid_to_string(uuid.uuid4())
+            if 'type' not in args_dict:
+                args_dict['type'] = document_type
             save_generic(args_dict, document_type)
             return Response(json.dumps(args_dict), status=200, mimetype='application/json')
         else:

@@ -2,7 +2,10 @@ import json
 from mock import ANY, call, Mock, patch
 import pytest
 
+from flask import current_app
+
 import calibration.views as cv
+from thermal.utils import get_document
 
 
 class TestViewsUnit(object):
@@ -78,3 +81,16 @@ class TestViewsUnit(object):
         resp_object = cv.create_calibration_session()
 
         cv_generic_save_view.assert_called_once_with(document_type='calibration_session')
+
+class TestViewsIntegration(object):
+
+    def test_generic_save_view_gets_args_from_create_distortion_pair_request_data(self):
+        with current_app.test_client() as c:
+            resp_object = c.post('/api/v1/calibration/distortion_pairs',
+                                 headers={'Content-Type':'application/json'},
+                                 data='{"thermo":"plastic"}')
+            assert resp_object.status_code == 200
+
+            doc_id = json.loads(resp_object.data)['_id']
+            distortion_pair_document = get_document(doc_id)
+            assert 'thermo' in distortion_pair_document

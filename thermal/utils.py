@@ -151,11 +151,11 @@ def save_document(document_in):
     Any further safeguards (altering type on update, etc) should be placed in thermal.services that do that work, then call this
     '''
     if '_id' not in document_in:
-         raise DocumentConfigurationError('trying to save the document with no id')
+        raise DocumentConfigurationError('trying to save the document with no id')
     document_in['_id'] = cast_uuid_to_string(document_in['_id'])  # cast id to string if it's a uuid, couchdb needs that
     the_id = document_in['_id']
     if 'type' not in document_in:
-         raise DocumentConfigurationError('trying to save the document with no value for type: {0}'.format(str(the_id)))
+        raise DocumentConfigurationError('trying to save the document with no value for type: {0}'.format(str(the_id)))
     for dca in dynamically_calculated_attributes:  # remove these properties, they are generated on the fly every retrieve
         if dca in document_in:
             del document_in[dca]

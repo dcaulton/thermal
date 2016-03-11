@@ -33,6 +33,9 @@ def get_generic(item_id, document_type):
 
 
 def update_generic(document_in, document_type):
+    '''
+    requires document to have at least _id and type
+    '''
     if '_id' in document_in:
         the_id = cast_uuid_to_string(document_in['_id'])
         if not item_exists(the_id, 'any'):
@@ -44,8 +47,14 @@ def update_generic(document_in, document_type):
          raise DocumentConfigurationError('trying to update a document with no id')
 
 def save_generic(document_in, document_type):  # a wrapper function just to have consistent naming and function location
-    if 'type' not in document_in:
-         raise DocumentConfigurationError('trying to save the document with no value for type')
-    if document_in['type'] != document_type:
-         raise DocumentConfigurationError('trying to save the document that is not of type {0}'.format(str(document_type)))
-    save_document(document_in)
+    '''
+    requires document to have at least _id and type
+    '''
+    if '_id' in document_in:
+        if 'type' not in document_in:
+             raise DocumentConfigurationError('trying to save the document with no value for type')
+        if document_in['type'] != document_type:
+             raise DocumentConfigurationError('trying to save the document that is not of type {0}'.format(str(document_type)))
+        save_document(document_in)
+    else:
+         raise DocumentConfigurationError('trying to save a document with no id')

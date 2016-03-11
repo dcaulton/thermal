@@ -82,6 +82,7 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 404
         assert resp_object.data == '"no picture there, friend"'
 
+
 class TestViewsIntegration(object):
     pass
 # TODO test_generic_list_view_does_paging    
