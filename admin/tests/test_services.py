@@ -169,7 +169,7 @@ class TestSettingsIntegration(object):
                 'source': 'whatever',
                 'type': 'picture'
             }
-            save_generic(the_doc)
+            save_generic(the_doc, 'picture')
             pic_ids.append(pic_id)
             # touch the picture file in the temp directory
             with open(picture_path, 'a'):

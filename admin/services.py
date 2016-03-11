@@ -146,8 +146,8 @@ def create_default_settings_and_group_documents():
     '''
     group_dict = default_group_dict()
     settings_dict = default_settings_dict(group_dict['_id'])
-    save_generic(settings_dict)
-    save_generic(group_dict)
+    save_generic(settings_dict, 'settings')
+    save_generic(group_dict, 'group')
     return settings_dict
 
 

@@ -61,7 +61,7 @@ class TestServicesUnit(object):
         MockImage.resize.assert_called_once_with((image_width, image_height), Image.BICUBIC)
         ImageOps.colorize.assert_called_once_with(the_mock_image, 1.1, 2.2)
         MockImage.save.assert_called_once_with(pic_path_out)
-        ans.save_generic.assert_called_once_with(test_img_dict_out)
+        ans.save_generic.assert_called_once_with(test_img_dict_out, 'picture')
 
 # test scale image with no colorize
 # test scale image with bilinear

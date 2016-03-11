@@ -66,4 +66,4 @@ class TestServicesUnit(object):
         MockImage.convert.assert_has_calls(convert_calls)
         ImageChops.canine.assert_called_once_with(the_mock_image, the_mock_image)
         MockImage.save.assert_called_once_with(pic_path_out)
-        ms.save_generic.assert_called_once_with(test_img_dict_out)
+        ms.save_generic.assert_called_once_with(test_img_dict_out, 'picture')

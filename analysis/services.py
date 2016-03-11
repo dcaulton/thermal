@@ -58,7 +58,7 @@ def edge_detect_auto(img_id_in, alternate_img_id_in, auto_id):
                                            group_id=pic_dict_in['group_id'],
                                            source_pic_id=img_id_in,
                                            edge_detect_type='auto')
-    save_generic(auto_dict_out)
+    save_generic(auto_dict_out, 'picture')
 
 def edge_detect_wide(img_id_in, alternate_img_id_in, wide_id):
     blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
@@ -74,7 +74,7 @@ def edge_detect_wide(img_id_in, alternate_img_id_in, wide_id):
                                            group_id=pic_dict_in['group_id'],
                                            source_pic_id=img_id_in,
                                            edge_detect_type='wide')
-    save_generic(wide_dict_out)
+    save_generic(wide_dict_out, 'picture')
 
 def edge_detect_tight(img_id_in, alternate_img_id_in, tight_id):
     blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
@@ -90,7 +90,7 @@ def edge_detect_tight(img_id_in, alternate_img_id_in, tight_id):
                                             group_id=pic_dict_in['group_id'],
                                             source_pic_id=img_id_in,
                                             edge_detect_type='tight')
-    save_generic(tight_dict_out)
+    save_generic(tight_dict_out, 'picture')
 
 def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
     edge_detect_auto(img_id_in, alternate_img_id_in, auto_id)
@@ -174,7 +174,7 @@ def scale_image(img_id_in, img_id_out, group_id, **kwargs):
         'uri': pic_path_out,
         'created': str(datetime.datetime.now())
     }
-    save_generic(img_dict_out)
+    save_generic(img_dict_out, 'picture')
 
 def blur_image(scale_type, image):
     # TODO: below is terribly inefficient.  After I look at PIL internals I should be able to do better
@@ -234,4 +234,4 @@ def distort_image_shepards_fixed(img_id_in, img_id_out, group_id, **kwargs):
         'uri': pic_path_out,
         'created': str(datetime.datetime.now())
     }
-    save_generic(img_dict_out)
+    save_generic(img_dict_out, 'picture')

@@ -72,7 +72,7 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 200
             av_get_settings_document.assert_called_once_with()
             av_doc_attribute_can_be_set.assert_called_once_with('ali')
-            av_save_generic.assert_called_once_with({'starfish': 'patrick', 'ali': 'g'})
+            av_save_generic.assert_called_once_with({'starfish': 'patrick', 'ali': 'g'}, 'settings')
 
     @patch('admin.views.get_settings_document')
     def test_update_settings_catches_exceptions(self,
@@ -101,7 +101,7 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 200
             av_get_group_document.assert_called_once_with('876')
             av_doc_attribute_can_be_set.assert_called_once_with('eeny')
-            av_save_generic.assert_called_once_with({'eeny': 'moe', 'teensy': 'weensy'})
+            av_save_generic.assert_called_once_with({'eeny': 'moe', 'teensy': 'weensy'}, 'group')
 
 
     @patch('admin.views.save_generic')
@@ -116,7 +116,7 @@ class TestViewsUnit(object):
                                 data='{"type":"unfortunate"}')
             assert resp_object.status_code == 200
             av_get_group_document.assert_called_once_with('876')
-            av_save_generic.assert_called_once_with({'eeny': 'meeny', 'teensy': 'weensy'})
+            av_save_generic.assert_called_once_with({'eeny': 'meeny', 'teensy': 'weensy'}, 'group')
 
     @patch('admin.views.get_group_document')
     def test_update_group_catches_exceptions(self,
@@ -284,8 +284,8 @@ class TestViewsUnit(object):
             av_get_settings_document.assert_called_once_with()
             av_doc_attribute_can_be_set.assert_called_once_with('dog')
 
-            group_save_call = call(group_dict_for_call)
-            settings_save_call = call({'bread': 'pudding', 'current_group_id': group_id})
+            group_save_call = call(group_dict_for_call, 'group')
+            settings_save_call = call({'bread': 'pudding', 'current_group_id': group_id}, 'settings')
             av_save_generic.assert_has_calls([group_save_call, settings_save_call])
 
     @patch('admin.views.get_url_base')

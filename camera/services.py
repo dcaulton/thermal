@@ -131,4 +131,4 @@ def take_thermal_still(snap_id, group_id, pic_id):
 
 # this should go away soon, it's a shim for when I didn't get something with mock.
 def save_picture(pic_dict):
-    save_generic(pic_dict)
+    save_generic(pic_dict, 'picture')

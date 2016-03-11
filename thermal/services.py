@@ -43,5 +43,9 @@ def update_generic(document_in, document_type):
     else:
          raise DocumentConfigurationError('trying to update a document with no id')
 
-def save_generic(document_in):  # a wrapper function just to have consistent naming and function location
+def save_generic(document_in, document_type):  # a wrapper function just to have consistent naming and function location
+    if 'type' not in document_in:
+         raise DocumentConfigurationError('trying to save the document with no value for type')
+    if document_in['type'] != document_type:
+         raise DocumentConfigurationError('trying to save the document that is not of type {0}'.format(str(document_type)))
     save_document(document_in)

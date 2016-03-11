@@ -69,4 +69,4 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
         'uri': pic_path_out,
         'created': str(datetime.datetime.now())
     }
-    save_generic(img_dict_out)
+    save_generic(img_dict_out, 'picture')

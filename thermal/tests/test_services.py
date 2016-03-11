@@ -59,7 +59,7 @@ class TestServiceUnit(object):
     @patch('thermal.services.save_document')   
     def test_save_generic_calls_expected_functions(self,
                                                    ts_save_document):
-        ret_val = ts.save_generic({'a': 'b'})
+        ret_val = ts.save_generic({'a': 'b', 'type': 'whatever'}, 'whatever')
         assert ts_save_document.called_once_with({'a': 'b'})
 
     @patch('thermal.services.cast_uuid_to_string')   
