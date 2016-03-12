@@ -19,6 +19,6 @@ thermal/appmodule.py         55      7    87%   43-49, 78-79
 thermal/exceptions.py         6      0   100%   
 thermal/services.py          33      3    91%   55, 57, 60
 thermal/utils.py            140      4    97%   37-38, 65, 122
-thermal/views.py             37     14    62%   58-72
+thermal/views.py             37      4    89%   69-72
 -------------------------------------------------------
-TOTAL                      1028    270    74%   
+TOTAL                      1028    260    75%   

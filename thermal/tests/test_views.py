@@ -82,6 +82,40 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 404
         assert resp_object.data == '"no picture there, friend"'
 
+#    def test_generic_save_view_generates_missing_id_and_type(self):
+#        with current_app.test_request_context('/whatever',
+#                                              headers={'Content-Type':'application/json'}):
+#            resp_object = tv.generic_save_view(args_dict={'feed': 'bag'}, document_type='headache')
+#            assert resp_object.status_code == 200
+#            the_dict = json.loads(resp_object.data) 
+#            assert the_dict == {'_id': ANY,
+#                                'type': 'headache',
+#                                '_rev': ANY,
+#                                'feed': 'bag'}
+#
+#    def test_generic_save_view_leaves_id_if_present_in_dict(self):
+#        with current_app.test_request_context('/whatever',
+#                                              headers={'Content-Type':'application/json'}):
+#            resp_object = tv.generic_save_view(args_dict={'_id': '314159'}, document_type='headache')
+#            assert resp_object.status_code == 200
+#            the_dict = json.loads(resp_object.data) 
+#            assert the_dict == {'_id': '314159',
+#                                'type': 'headache',
+#                                '_rev': ANY}
+#
+    def test_generic_save_view_saves_document_with_args_dict_and_request_args_and_generated_id_and_generated_type(self):
+
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/json'},
+                                              data='{"thermo":"plastic"}'):
+            resp_object = tv.generic_save_view(args_dict={'feed': 'bag'}, document_type='headache')
+            assert resp_object.status_code == 200
+            assert json.loads(resp_object.data) == {'_id': ANY,
+                                                    'type': 'headache',
+                                                    'thermo': 'plastic',
+                                                    '_rev': ANY,
+                                                    'feed': 'bag'}
+
 
 class TestViewsIntegration(object):
     pass
