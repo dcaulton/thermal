@@ -47,11 +47,11 @@ def build_blurred_cv2_image(img_id_in, alternate_img_id_in):
     blurred = cv2.GaussianBlur(gray, (3, 3), 0)
     return blurred
 
-def edge_detect_auto(img_id_in, alternate_img_id_in, auto_id):
+
+def edge_detect_auto(img_id_in, pic_dict_in, alternate_img_id_in, auto_id):
     blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
     # apply Canny edge detection using an automatically determined threshold
     auto = auto_canny(blurred)
-    auto = auto_canny(image_in)  # is this correct?
     auto_filename = build_picture_name(auto_id)
     auto_path_out = build_picture_path(picture_name=auto_filename, snap_id=pic_dict_in['snap_id'])
     cv2.imwrite(auto_path_out, auto)
@@ -64,7 +64,7 @@ def edge_detect_auto(img_id_in, alternate_img_id_in, auto_id):
                                            edge_detect_type='auto')
     save_generic(auto_dict_out, 'picture')
 
-def edge_detect_wide(img_id_in, alternate_img_id_in, wide_id):
+def edge_detect_wide(img_id_in, pic_dict_in, alternate_img_id_in, wide_id):
     blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
     # apply Canny edge detection using a wide threshold
     wide = cv2.Canny(blurred, 10, 200)
@@ -80,7 +80,7 @@ def edge_detect_wide(img_id_in, alternate_img_id_in, wide_id):
                                            edge_detect_type='wide')
     save_generic(wide_dict_out, 'picture')
 
-def edge_detect_tight(img_id_in, alternate_img_id_in, tight_id):
+def edge_detect_tight(img_id_in, pic_dict_in, alternate_img_id_in, tight_id):
     blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
     # apply Canny edge detection using a tight threshold
     tight = cv2.Canny(blurred, 225, 250)
@@ -97,11 +97,12 @@ def edge_detect_tight(img_id_in, alternate_img_id_in, tight_id):
     save_generic(tight_dict_out, 'picture')
 
 def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
-    edge_detect_auto(img_id_in, alternate_img_id_in, auto_id)
+    pic_dict_in = find_picture(img_id_in)
+    edge_detect_auto(img_id_in, pic_dict_in, alternate_img_id_in, auto_id)
     if wide_id:
-        edge_detect_wide(img_id_in, alternate_img_id_in, wide_id)
+        edge_detect_wide(img_id_in, pic_dict_in, alternate_img_id_in, wide_id)
     if tight_id:
-        edge_detect_tight(img_id_in, alternate_img_id_in, tight_id)
+        edge_detect_tight(img_id_in, pic_dict_in, alternate_img_id_in, tight_id)
 
 def auto_canny(image, sigma=0.33):
     # compute the median of the single channel pixel intensities

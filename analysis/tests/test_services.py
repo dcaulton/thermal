@@ -75,7 +75,6 @@ class TestServicesUnit(object):
         as_item_exists.assert_called_once_with('456', 'picture')
         as_get_document_with_exception.assert_called_once_with('123', 'picture')
 
-
     def test_scale_image(self):
         class MockImage(object):
             pass
