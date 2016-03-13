@@ -1,4 +1,5 @@
 from mock import ANY, call, Mock, patch
+import os
 import uuid
 
 from flask import current_app
@@ -7,9 +8,20 @@ import pytest
 
 from admin.services import get_group_document
 import analysis.services as ans
+import camera.tests.test_services
 from picture.services import build_picture_path
 from thermal.appmodule import celery
 from thermal.services import save_generic
+
+
+class TestServicesIntegration(object):
+
+    def test_get_image_mean_pixel_value_gets_correct_value(self):
+        image_path = os.path.join(os.path.dirname(camera.tests.test_services.__file__),
+                                  'fixtures',
+                                  '3f4c4361-9a07-48a3-92a8-fda41f1be93e.jpg')
+        mean_pixel_value = ans.get_image_mean_pixel_value(image_path)
+        assert mean_pixel_value == 111.66625
 
 
 class TestServicesUnit(object):
@@ -62,6 +74,28 @@ class TestServicesUnit(object):
         ImageOps.colorize.assert_called_once_with(the_mock_image, 1.1, 2.2)
         MockImage.save.assert_called_once_with(pic_path_out)
         ans.save_generic.assert_called_once_with(test_img_dict_out, 'picture')
+
+
+    @patch('analysis.services.get_image_mean_pixel_value')
+    def check_if_image_is_too_dark_returns_true_if_image_is_too_dark(self,
+                                                                     as_get_image_mean_pixel_value):
+        as_get_image_mean_pixel_value.return_value = 50.0
+
+        ret_val = ans.check_if_image_is_too_dark('whatever', 51)
+
+        assert ret_val
+        assert as_get_image_mean_pixel_value.called_once_with('whatever')
+
+    @patch('analysis.services.get_image_mean_pixel_value')
+    def check_if_image_is_too_dark_returns_false_if_image_is_not_too_dark(self,
+                                                                          as_get_image_mean_pixel_value):
+        as_get_image_mean_pixel_value.return_value = 50.0
+
+        ret_val = ans.check_if_image_is_too_dark('whatever', 49)
+
+        assert not ret_val
+        assert as_get_image_mean_pixel_value.called_once_with('whatever')
+        
 
 # test scale image with no colorize
 # test scale image with bilinear

@@ -3,7 +3,7 @@ import uuid
 
 from flask import Blueprint, request, Response, url_for
 
-from analysis.services import edge_detect_task, scale_image_task
+import analysis.services as ans
 from thermal.utils import get_document_with_exception, get_url_base, item_exists
 
 analysis = Blueprint('analysis', __name__)
@@ -36,7 +36,7 @@ def call_scale_image(image_id=None):
         return Response(json.dumps(err_msg), status=404, mimetype='application/json')
     else:
         get_document_with_exception(image_id, 'picture')
-        scale_image_task.delay(img_id_in=image_id, img_id_out=result_id, group_id='current')
+        ans.scale_image_task.delay(img_id_in=image_id, img_id_out=result_id, group_id='current')
         resp_json = {
             'scale_image_output_image_id': str(result_id)
         }
@@ -58,7 +58,7 @@ def call_edge_detect(image_id=None):
         auto_id = uuid.uuid4()
         wide_id = uuid.uuid4()
         tight_id = uuid.uuid4()
-        edge_detect_task.delay(img_id_in=image_id, alternate_img_id_in=uuid.uuid4(), auto_id=auto_id, wide_id=wide_id,
+        ans.edge_detect_task.delay(img_id_in=image_id, alternate_img_id_in=uuid.uuid4(), auto_id=auto_id, wide_id=wide_id,
                                tight_id=tight_id)
         resp_json = {
             'auto_id': str(auto_id),

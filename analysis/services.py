@@ -15,10 +15,14 @@ from thermal.services import save_generic
 from thermal.utils import get_document_with_exception, item_exists
 
 
-def check_if_image_is_too_dark(filename, brightness_threshold):
+def get_image_mean_pixel_value(filename):
     image = Image.open(filename).convert('L')
     stat = ImageStat.Stat(image)
     avg_pixel_value = stat.mean[0]
+    return avg_pixel_value
+
+def check_if_image_is_too_dark(filename, brightness_threshold):
+    avg_pixel_value = get_image_mean_pixel_value(filename)
     if avg_pixel_value < brightness_threshold:
         return True
     return False
