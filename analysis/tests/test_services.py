@@ -2,6 +2,7 @@ from mock import ANY, call, Mock, patch
 import os
 import uuid
 
+import cv2
 from flask import current_app
 from PIL import Image, ImageStat, ImageOps
 import pytest
@@ -25,6 +26,55 @@ class TestServicesIntegration(object):
 
 
 class TestServicesUnit(object):
+
+
+    @patch('analysis.services.item_exists')
+    @patch('analysis.services.get_document_with_exception')
+    @patch('cv2.imread')
+    @patch('cv2.cvtColor')
+    @patch('cv2.GaussianBlur')
+    def test_build_blurred_cv2_image_calls_right_methods(self,
+                                                         cv2_gaussianblur,
+                                                         cv2_cvtcolor,
+                                                         cv2_imread,
+                                                         as_get_document_with_exception,
+                                                         as_item_exists):
+
+        as_item_exists.return_value = True
+        as_get_document_with_exception.return_value = {'uri': 'something_awful'}
+        cv2_imread.return_value = 'greg'
+        cv2_cvtcolor.return_value = 'peter' 
+        cv2_gaussianblur.return_value = 'bobby'
+
+        return_value = ans.build_blurred_cv2_image('123', '456')
+
+        as_item_exists.assert_called_once_with('456', 'picture')
+        as_get_document_with_exception.assert_called_once_with('456', 'picture')
+        cv2_imread.assert_called_once_with('something_awful')
+        cv2_cvtcolor.assert_called_once_with('greg', cv2.COLOR_BGR2GRAY)
+        cv2_gaussianblur.assert_called_once_with('peter', (3,3), 0)
+        assert return_value == 'bobby'
+
+    @patch('analysis.services.item_exists')
+    @patch('analysis.services.get_document_with_exception')
+    @patch('cv2.imread')
+    @patch('cv2.cvtColor')
+    @patch('cv2.GaussianBlur')
+    def test_build_blurred_cv2_image_uses_initial_image_when_alternate_doesnt_exist(self,
+                                                                                    cv2_gaussianblur,
+                                                                                    cv2_cvtcolor,
+                                                                                    cv2_imread,
+                                                                                    as_get_document_with_exception,
+                                                                                    as_item_exists):
+
+        as_item_exists.return_value = False
+        as_get_document_with_exception.return_value = {'uri': 'something_awful'}
+
+        return_value = ans.build_blurred_cv2_image('123', '456')
+
+        as_item_exists.assert_called_once_with('456', 'picture')
+        as_get_document_with_exception.assert_called_once_with('123', 'picture')
+
 
     def test_scale_image(self):
         class MockImage(object):
@@ -77,8 +127,8 @@ class TestServicesUnit(object):
 
 
     @patch('analysis.services.get_image_mean_pixel_value')
-    def check_if_image_is_too_dark_returns_true_if_image_is_too_dark(self,
-                                                                     as_get_image_mean_pixel_value):
+    def test_check_if_image_is_too_dark_returns_true_if_image_is_too_dark(self,
+                                                                          as_get_image_mean_pixel_value):
         as_get_image_mean_pixel_value.return_value = 50.0
 
         ret_val = ans.check_if_image_is_too_dark('whatever', 51)
@@ -87,8 +137,8 @@ class TestServicesUnit(object):
         assert as_get_image_mean_pixel_value.called_once_with('whatever')
 
     @patch('analysis.services.get_image_mean_pixel_value')
-    def check_if_image_is_too_dark_returns_false_if_image_is_not_too_dark(self,
-                                                                          as_get_image_mean_pixel_value):
+    def test_check_if_image_is_too_dark_returns_false_if_image_is_not_too_dark(self,
+                                                                               as_get_image_mean_pixel_value):
         as_get_image_mean_pixel_value.return_value = 50.0
 
         ret_val = ans.check_if_image_is_too_dark('whatever', 49)
