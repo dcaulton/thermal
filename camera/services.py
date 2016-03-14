@@ -10,6 +10,8 @@ from admin.services import get_group_document
 from analysis.services import check_if_image_is_too_dark
 from cameras import Lepton, Picam
 from picture.services import build_picture_path, build_picture_name
+from thermal.exceptions import DocumentConfigurationError
+from thermal.utils import item_exists
 from thermal.services import save_generic
 
 
@@ -67,7 +69,7 @@ def get_brightness_threshold(group_document):
     return 5.0
 
 
-def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
+def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files=True):
     '''
     Top level method in the camera service for taking a still image via the picam (regular raspberry pi) camera.
     Also saves a picture record to the db
@@ -91,7 +93,7 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
         'created': str(datetime.datetime.now())
     }
     take_standard_exposure_picam_still(pic_path)
-    save_picture(pic_dict)
+    save_picture(pic_dict, clean_up_files=clean_up_files)
     image_is_too_dark = check_if_image_is_too_dark(pic_path, brightness_threshold)
     if image_is_too_dark and retake_picam_pics_when_dark:
         picture_name = build_picture_name(long_exposure_pic_id)
@@ -103,10 +105,10 @@ def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
         pic_dict2['uri'] = pic_path
         pic_dict2['created'] = str(datetime.datetime.now())
         take_long_exposure_picam_still(pic_path)
-        save_picture(pic_dict2)
+        save_picture(pic_dict2)  # no need to pass clean_up_files, it's been built into the snap record with the standard exp pic
 
 
-def take_thermal_still(snap_id, group_id, pic_id):
+def take_thermal_still(snap_id, group_id, pic_id, clean_up_files=True):
     '''
     Top level method in the camera service for taking a still image via the Lepton camera.
     Also saves a picture record to the db
@@ -126,9 +128,16 @@ def take_thermal_still(snap_id, group_id, pic_id):
         'uri': pic_path,
         'created': str(datetime.datetime.now())
     }
-    save_picture(pic_dict)
+    save_picture(pic_dict, clean_up_files=clean_up_files)
 
 
-# this should go away soon, it's a shim for when I didn't get something with mock.
-def save_picture(pic_dict):
+def save_picture(pic_dict, clean_up_files=True):
+    if 'snap_id' not in pic_dict:
+        raise DocumentConfigurationError('no snap_id specified for id {0}'.format(str(group_id)))
+    if not item_exists(pic_dict['snap_id'], 'snap'):
+        snap_dict = {'_id': uuid.uuid4(),
+                     'type': 'snap',
+                     'clean_up_files': clean_up_files}
+        save_generic(snap_dict, 'snap')
     save_generic(pic_dict, 'picture')
+

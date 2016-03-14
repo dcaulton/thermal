@@ -9,7 +9,7 @@ from flask.ext.mail import Message
 from picture.services import (build_picture_path,
                               build_picture_name)
 from thermal.appmodule import mail
-from thermal.exceptions import DocumentConfigurationError, NotFoundError
+from thermal.exceptions import NotFoundError
 from thermal.services import save_generic, search_generic, update_generic
 from thermal.utils import (get_documents_from_criteria,
                            get_document,

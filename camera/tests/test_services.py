@@ -31,7 +31,7 @@ class TestServicesUnit(object):
                                                  'snap_id': str(snap_id),
                                                  'filename': picture_name,
                                                  'uri': ANY,
-                                                 'created': ANY})
+                                                 'created': ANY}, clean_up_files=True)
 
     def test_thermal_still_calls_lepton_camera_class(self):
         Lepton.take_still = Mock()
@@ -77,7 +77,7 @@ class TestServicesUnit(object):
              'snap_id': str(snap_id),
              'filename': picture_name,
              'uri': ANY,
-             'created': ANY})
+             'created': ANY}, clean_up_files=True)
 
     @patch('camera.services.save_picture')
     def test_picam_still_saves_appropriate_long_exposure_picture_document(self, cs_save_picture):
@@ -106,7 +106,7 @@ class TestServicesUnit(object):
                        'snap_id': ANY,
                        'filename': ANY,
                        'uri': ANY,
-                       'created': ANY})
+                       'created': ANY}, clean_up_files=True)
         call_2 = call({'_id': str(long_exposure_pic_id),
                        'type': 'picture',
                        'source': 'picam',
