@@ -11,7 +11,9 @@ from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_url_base,
                            dynamically_calculated_attributes)
-from thermal.views import generic_list_view, generic_save_view
+from thermal.views import (generic_get_view,
+                           generic_list_view,
+                           generic_save_view)
 
 
 admin = Blueprint('admin', __name__)
@@ -158,3 +160,29 @@ def save_group():
             return Response(json.dumps('error saving settings: '+e.message), status=e.status_code, mimetype='application/json')
     else:
         return return_value
+
+@admin.route('/snaps')
+def list_snaps():
+    '''
+    Lists all snaps
+    Supports paging and filtering on any attribute via get parms
+    '''
+    return generic_list_view(document_type='snap')
+
+
+@admin.route('/snaps/<snap_id>', methods=['GET'])
+def get_snap(snap_id):
+    '''
+    Fetches an individual calibration session
+    '''
+    return generic_get_view(item_id=snap_id, document_type='snap')
+
+
+# snaps are only created implicitly, need for a create here
+@admin.route('/snaps/<snap_id>', methods=['PUT'])
+def update_snap(snap_id):
+    try:
+        # TODO add update_generic logic here when it's ready
+        return Response(json.dumps('x'), status=200, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')

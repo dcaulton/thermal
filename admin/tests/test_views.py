@@ -265,6 +265,29 @@ class TestViewsUnit(object):
             av_get_url_base.assert_called_once_with()
 
 
+
+    @patch('admin.views.generic_list_view')
+    def test_list_snaps_calls_generic_list_view(self,
+                                                av_generic_list_view):
+        av_generic_list_view.return_value = {'6767': {'_id': '6767'},
+                                             '7878': {'_id': '7878'}}
+
+        resp_object = av.list_snaps()
+
+        av_generic_list_view.assert_called_once_with(document_type='snap')
+
+    @patch('admin.views.generic_get_view')
+    def test_get_snap_calls_generic_get_view(self,
+                                             av_generic_get_view):
+        resp_object = av.get_snap('hooha')
+
+        av_generic_get_view.assert_called_once_with(item_id='hooha', document_type='snap')
+
+#    @patch('calibration.views.generic_get_view')
+#    def test_update_snap_calls_generic_update_view(self,
+#                                                   av_generic_update_view):
+
+
 class TestViewsIntegration(object):
     pass
 # TODO this will need an integration test because that gallery_url_not_null is a little special
