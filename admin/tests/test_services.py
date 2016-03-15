@@ -12,7 +12,7 @@ from picture.services import (build_picture_name,
                               build_picture_path)
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 from thermal.services import save_generic
-from thermal.utils import get_document, save_document
+from thermal.utils import get_document, item_exists, save_document
 
 
 class TestSettingsUnit(object):
@@ -174,6 +174,11 @@ class TestSettingsIntegration(object):
             # touch the picture file in the temp directory
             with open(picture_path, 'a'):
                 os.utime(picture_path, None)
+            if not item_exists(snap_id, 'snap'):
+                snap_doc = {'_id': snap_id,
+                            'type': 'snap',
+                            'clean_up_files': True}
+                save_generic(snap_doc, 'snap')
         return pic_ids
 
     def test_clean_up_files_cleans_pictures_from_the_snap(self):

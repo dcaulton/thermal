@@ -10,7 +10,10 @@ from picture.services import (build_picture_path,
                               build_picture_name)
 from thermal.appmodule import mail
 from thermal.exceptions import NotFoundError
-from thermal.services import save_generic, search_generic, update_generic
+from thermal.services import (get_generic,
+                              save_generic,
+                              search_generic,
+                              update_generic)
 from thermal.utils import (get_documents_from_criteria,
                            get_document,
                            get_singleton_document,
@@ -179,28 +182,41 @@ def upload_files_to_s3(snap_id, group_id):
 
 
 # TODO add tests related to image_sources_to_delete
+# TODO to eventually delete files which have snap.clean_up_files=False, first, update the snap record, then send call this
+# method again.  Will need an additional admin.views endpoint to clean up files for a snap 
 def clean_up_files(snap_id, group_id):
     '''
     Deletes all picture files for a given snap if those pictures sources are designated in the group to be deleted after processing
     '''
+
     group_document = get_group_document(group_id)
     if 'image_sources_to_delete' in group_document:
         image_sources_to_delete = group_document['image_sources_to_delete'].split(',')
     pictures = search_generic(document_type='picture',
                               args_dict={'snap_id': str(snap_id)})
-    for pic_id in pictures.keys():
-        if pictures[pic_id]['source'] in image_sources_to_delete:
-            os.remove(pictures[pic_id]['uri'])
-            pictures[pic_id]['uri'] = ''
-            pictures[pic_id]['deleted'] = True
-        else:
-            shutil.move(pictures[pic_id]['uri'], current_app.config['PICTURE_SAVE_DIRECTORY'])
-            pictures[pic_id]['uri'] = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], pictures[pic_id]['filename'])
-        update_generic(pictures[pic_id], 'picture')
-    os.rmdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+
+    clean_up_files = True
+    if len(pictures):
+        snap_document = get_generic(snap_id, 'snap')
+        if snap_document['clean_up_files'] == False:  # TODO make sure this comparison works
+            clean_up_files = False
+
+    if clean_up_files:
+        for pic_id in pictures.keys():
+            if pictures[pic_id]['source'] in image_sources_to_delete:
+                os.remove(pictures[pic_id]['uri'])
+                pictures[pic_id]['uri'] = ''
+                pictures[pic_id]['deleted'] = True
+            else:
+                shutil.move(pictures[pic_id]['uri'], current_app.config['PICTURE_SAVE_DIRECTORY'])
+                pictures[pic_id]['uri'] = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], pictures[pic_id]['filename'])
+            update_generic(pictures[pic_id], 'picture')
+        os.rmdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
 
 
 # TODO add unit tests
+# TODO make sure this works with files that are held up with snap.clean_up_files=False.  So make sure we use the current file
+# path, don't hard code it to /home/pi/snap_id/Pictures
 def send_mail(snap_id, group_id):
     '''
     Sends an email to users specified in the group, with all the images for a supplied snap
