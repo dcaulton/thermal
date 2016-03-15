@@ -28,6 +28,7 @@ def index():
     url_base = get_url_base()
     top_level_links = {
         'settings': url_base + url_for('admin.get_settings'),
+        'snaps': url_base + url_for('admin.list_snaps'),
         'groups': url_base + url_for('admin.list_groups'),
     }
     return Response(json.dumps(top_level_links), status=200, mimetype='application/json')

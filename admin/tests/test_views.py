@@ -259,9 +259,11 @@ class TestViewsUnit(object):
             assert resp_object.status_code == 200
             assert 'settings' in response_data_dict
             assert 'prawn' in response_data_dict['settings']
+            assert 'snaps' in response_data_dict
+            assert 'prawn' in response_data_dict['snaps']
             assert 'groups' in response_data_dict
             assert 'prawn' in response_data_dict['groups']
-            assert len(response_data_dict.keys()) == 2
+            assert len(response_data_dict.keys()) == 3
             av_get_url_base.assert_called_once_with()
 
 
