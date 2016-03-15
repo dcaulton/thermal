@@ -283,9 +283,12 @@ class TestViewsUnit(object):
 
         av_generic_get_view.assert_called_once_with(item_id='hooha', document_type='snap')
 
-#    @patch('calibration.views.generic_get_view')
-#    def test_update_snap_calls_generic_update_view(self,
-#                                                   av_generic_update_view):
+    @patch('admin.views.generic_update_view')
+    def test_update_snap_calls_generic_update_view(self,
+                                                   av_generic_update_view):
+        resp_object = av.update_snap('hooha')
+
+        av_generic_update_view.assert_called_once_with(item_id='hooha', document_type='snap')
 
 
 class TestViewsIntegration(object):

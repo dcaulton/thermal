@@ -49,6 +49,21 @@ def generic_get_view(item_id='', document_type=''):
     except Exception as e:  # TODO add tests, bad paging info or strings that kill the map string could cause abends
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
+def generic_update_view(item_id='', document_type=''):
+    try:
+        item_dict = get_document_with_exception(item_id, document_type)
+        if request.headers['Content-Type'] == 'application/json':
+            for k in request.json.keys():
+                if doc_attribute_can_be_set(k):
+                    item_dict[k] = request.json[k]
+            update_generic(item_dict, document_type)
+            return Response(json.dumps(item_dict), status=200, mimetype='application/json')
+        err_msg = 'no valid settings parameters supplied'
+        return Response(json.dumps(err_msg), status=409, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+
+
 def generic_save_view(args_dict={}, document_type=''):
     '''
     Takes what's in request.args, adds it to what's in args dict and saves it.

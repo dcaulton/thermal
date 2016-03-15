@@ -13,7 +13,8 @@ from thermal.utils import (doc_attribute_can_be_set,
                            dynamically_calculated_attributes)
 from thermal.views import (generic_get_view,
                            generic_list_view,
-                           generic_save_view)
+                           generic_save_view,
+                           generic_update_view)
 
 
 admin = Blueprint('admin', __name__)
@@ -173,7 +174,7 @@ def list_snaps():
 @admin.route('/snaps/<snap_id>', methods=['GET'])
 def get_snap(snap_id):
     '''
-    Fetches an individual calibration session
+    Fetches an individual snap
     '''
     return generic_get_view(item_id=snap_id, document_type='snap')
 
@@ -181,8 +182,7 @@ def get_snap(snap_id):
 # snaps are only created implicitly, need for a create here
 @admin.route('/snaps/<snap_id>', methods=['PUT'])
 def update_snap(snap_id):
-    try:
-        # TODO add update_generic logic here when it's ready
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    '''
+    Updates an individual snap
+    '''
+    return generic_update_view(item_id=snap_id, document_type='snap')
