@@ -135,7 +135,7 @@ def save_picture(pic_dict, clean_up_files=True):
     if 'snap_id' not in pic_dict:
         raise DocumentConfigurationError('no snap_id specified for id {0}'.format(str(group_id)))
     if not item_exists(pic_dict['snap_id'], 'snap'):
-        snap_dict = {'_id': uuid.uuid4(),
+        snap_dict = {'_id': pic_dict['snap_id'],
                      'type': 'snap',
                      'clean_up_files': clean_up_files}
         save_generic(snap_dict, 'snap')

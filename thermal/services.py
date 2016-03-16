@@ -1,6 +1,6 @@
 import os
 
-from flask import current_app
+from flask import current_app, request
 
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 from thermal.utils import (cast_uuid_to_string,
@@ -17,9 +17,10 @@ def search_generic(document_type='', args_dict={}):
     It's just a wrapper around get_documents_from_criteria
     THIS CAN THROW EXCEPTIONS, it needs to run within a try except block
     '''
-    the_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
-    for key in the_dict:
-        args_dict[key] = the_dict[key]
+    if request is not None and 'args' in dir(request): # only gather parms if we have a request context
+        the_dict = gather_and_enforce_request_args(['ANY_SEARCHABLE'])
+        for key in the_dict:
+            args_dict[key] = the_dict[key]
     args_dict['type'] = document_type
     documents_dict = get_documents_from_criteria(args_dict)
     return documents_dict
