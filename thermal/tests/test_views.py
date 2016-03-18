@@ -82,6 +82,19 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 404
         assert resp_object.data == '"no picture there, friend"'
 
+
+    @patch('thermal.views.get_document_with_exception')
+    def test_generic_update_view_fails_when_document_not_present(self,
+                                                                 tv_get_document_with_exception):
+
+        tv_get_document_with_exception.side_effect = NotFoundError('no picture there, friend')
+
+        resp_object = tv.generic_update_view(item_id='4231', document_type='misunderstanding')
+
+        tv_get_document_with_exception.assert_called_once_with('4231', 'misunderstanding')
+        assert resp_object.status_code == 404
+        assert resp_object.data == '"no picture there, friend"'
+
 #    def test_generic_save_view_generates_missing_id_and_type(self):
 #        with current_app.test_request_context('/whatever',
 #                                              headers={'Content-Type':'application/json'}):
