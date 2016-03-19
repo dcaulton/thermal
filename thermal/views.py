@@ -3,7 +3,7 @@ import uuid
 
 from flask import Blueprint, request, Response, url_for
 
-from thermal.services import save_generic, search_generic
+from thermal.services import save_generic, search_generic, update_generic
 from thermal.utils import (cast_uuid_to_string,
                            doc_attribute_can_be_set,
                            get_document_with_exception,

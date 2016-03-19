@@ -95,6 +95,25 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 404
         assert resp_object.data == '"no picture there, friend"'
 
+    @patch('thermal.views.update_generic')
+    @patch('thermal.views.get_document_with_exception')
+    def test_generic_update_view_adds_request_args_parms_to_item(self,
+                                                                 tv_get_document_with_exception,
+                                                                 tv_update_generic):
+        tv_get_document_with_exception.return_value = {'e': 'd', 'thermo': 'set'}
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/json'},
+                                              data='{"thermo":"plastic", "monkey": "chow"}'):
+            resp_object = tv.generic_update_view(item_id='1234', document_type='headache')
+
+            assert resp_object.status_code == 200
+            the_dict = json.loads(resp_object.data) 
+            assert the_dict == {'thermo': 'plastic',
+                                'monkey': 'chow',
+                                'e': 'd'}
+            tv_get_document_with_exception.assert_called_once_with('1234', 'headache')
+            tv_update_generic.assert_called_once_with(the_dict, 'headache')
+
 #    def test_generic_save_view_generates_missing_id_and_type(self):
 #        with current_app.test_request_context('/whatever',
 #                                              headers={'Content-Type':'application/json'}):
