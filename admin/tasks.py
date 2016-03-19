@@ -25,6 +25,10 @@ def file_wrap_up_chained(_, snap_id, group_id):
 
 
 @celery.task
+def clean_up_files_task(snap_id, group_id):
+    admin.services.clean_up_files(snap_id, group_id)
+
+@celery.task
 def clean_up_files_chained(_, snap_id, group_id):
     admin.services.clean_up_files(snap_id, group_id)
 

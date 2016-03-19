@@ -6,9 +6,11 @@ from admin.services import (default_group_dict,
                             get_group_document,
                             get_group_document_with_child_links,
                             get_group_document_with_child_objects)
+from admin.tasks import clean_up_files_task
 from thermal.services import save_generic, search_generic
 from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
+                           get_document_with_exception,
                            get_url_base,
                            dynamically_calculated_attributes)
 from thermal.views import (generic_get_view,
@@ -180,10 +182,24 @@ def get_snap(snap_id):
     return generic_get_view(item_id=snap_id, document_type='snap')
 
 
-# snaps are only created implicitly, need for a create here
+# snaps are only created implicitly, no need for a create here
 @admin.route('/snaps/<snap_id>', methods=['PUT'])
 def update_snap(snap_id):
     '''
     Updates an individual snap
     '''
     return generic_update_view(item_id=snap_id, document_type='snap')
+
+@admin.route('/clean_up_files/<snap_id>', methods=['GET'])
+def clean_up_files(snap_id):
+    '''
+    Cleans up files for the specified snap
+    Defaults to current group (for determining types of files to delete), but can be overridden with a group_id GET parameter
+    '''
+    try:
+        snap_dict = get_document_with_exception(snap_id, document_type='snap')
+        args_dict = gather_and_enforce_request_args([{'name': 'group_id', 'default': 'current'}])
+        clean_up_files_task.delay(snap_id, args_dict['group_id'])
+        return Response(json.dumps(snap_dict), status=202, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')

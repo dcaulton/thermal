@@ -292,6 +292,36 @@ class TestViewsUnit(object):
 
         av_generic_update_view.assert_called_once_with(item_id='hooha', document_type='snap')
 
+    @patch('admin.views.get_document_with_exception')
+    @patch('admin.views.gather_and_enforce_request_args')
+    @patch('admin.views.clean_up_files_task')
+    def test_clean_up_files_calls_appropriate_methods(self,
+                                                      av_clean_up_files_task,
+                                                      av_gather_and_enforce_request_args,
+                                                      av_get_document_with_exception):
+
+        av_clean_up_files_task.delay = Mock()
+        av_gather_and_enforce_request_args.return_value = {'group_id': 'dooda'}
+        av_get_document_with_exception.return_value = {'a': 'b'}
+
+        resp_object = av.clean_up_files('jibba_jabba')
+
+        av_get_document_with_exception.assert_called_once_with('jibba_jabba', document_type='snap')
+        av_gather_and_enforce_request_args.assert_called_once_with([{'name': 'group_id', 'default': 'current'}])
+        av_clean_up_files_task.delay.assert_called_once_with('jibba_jabba', 'dooda')
+
+
+    @patch('admin.views.get_document_with_exception')
+    def test_clean_up_files_catches_exception(self,
+                                              av_get_document_with_exception):
+        av_get_document_with_exception.side_effect = NotFoundError('no snap there, friend')
+
+        resp_object = av.clean_up_files('jibba_jabba')
+
+        av_get_document_with_exception.assert_called_once_with('jibba_jabba', document_type='snap')
+        assert resp_object.status_code == 404
+        assert resp_object.data == '"no snap there, friend"'
+
 
 class TestViewsIntegration(object):
     pass
