@@ -30,15 +30,16 @@ def picam_still():
     '''
     Api endpoint for taking one or a series of Picam stills.
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+    Cleaning up files comes in via a GET parameter, note that empty string is the ONLY thing that will force it to false
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
     try:
         snap_id = uuid.uuid4()
         group_id = get_settings_document()['current_group_id']
-        # TODO dry this out, we gather delay+repeat three times in this view
         args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
-                                                     {'name': 'clean_up_files', 'default': False, 'cast_function': bool},
+                                                     {'name': 'clean_up_files', 'default': True, 'cast_function': bool},
                                                      {'name': 'repeat', 'default': 0, 'cast_function': int}])
+        # TODO specify that is (snap_id, group_id, **args_dict soon)
         ret_dict = take_picam_still(snap_id=snap_id,
                                     group_id=group_id,
                                     delay=args_dict['delay'],
@@ -54,6 +55,7 @@ def thermal_still():
     '''
     Api endpoint for taking one or a series of Lepton stills.
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+    Cleaning up files comes in via a GET parameter, note that empty string is the ONLY thing that will force it to false
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
     try:
@@ -61,11 +63,15 @@ def thermal_still():
         group_id = get_settings_document()['current_group_id']
         args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
                                                      {'name': 'repeat', 'default': 0, 'cast_function': int},
+                                                     {'name': 'clean_up_files', 'default': True, 'cast_function': bool},
                                                      {'name': 'scale_image', 'default': True, 'cast_function': bool}])
-        delay = args_dict['delay']
-        repeat = args_dict['repeat']
-        scale_image = args_dict['scale_image']
-        ret_dict = take_thermal_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat, scale_image=scale_image)
+        # TODO specify that is (snap_id, group_id, **args_dict soon)
+        ret_dict = take_thermal_still(snap_id=snap_id,
+                                      group_id=group_id,
+                                      delay=args_dict['delay'],
+                                      repeat=args_dict['repeat'],
+                                      scale_image=args_dict['scale_image'],
+                                      clean_up_files=args_dict['clean_up_files'])
         return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
@@ -77,22 +83,22 @@ def both_still():
     Api endpoint for taking one or a series of 'both' stills - that is, Picam and Lepton stills which are then post-processed
       and merged into a single image
     The still/stills will run asynchronously as Celery tasks, the scheduling work is delegated to the camera.tasks module
+    Cleaning up files comes in via a GET parameter, note that empty string is the ONLY thing that will force it to false
     Delaying and Repeating info comes in via GET parameters, the rest comes from the current group record.
     '''
     try:
         snap_id = uuid.uuid4()
         group_id = get_settings_document()['current_group_id']
         args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
-                                                     {'name': 'repeat', 'default': 0, 'cast_function': int}])
-        delay = args_dict['delay']
-        repeat = args_dict['repeat']
-
+                                                     {'name': 'repeat', 'default': 0, 'cast_function': int},
+                                                     {'name': 'clean_up_files', 'default': True, 'cast_function': bool}])
+        # TODO specify that is (snap_id, group_id, **args_dict soon)
         both_still_dict = take_both_still(
             snap_id=snap_id,
             group_id=group_id,
-            delay=delay,
-            repeat=repeat
-        )
+            delay=args_dict['delay'],
+            repeat=args_dict['repeat'],
+            clean_up_files=args_dict['clean_up_files'])
 
         return Response(json.dumps(both_still_dict), status=202, mimetype='application/json')
     except Exception as e:

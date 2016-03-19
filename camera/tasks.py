@@ -11,7 +11,7 @@ from thermal.appmodule import celery
 
 
 @celery.task
-def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
+def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files):
     '''
     Wrapper method to handle the celery scheduling of the taking of a single Picam still, with an extra parameter to handle
       how celery chains tasks.
@@ -19,7 +19,7 @@ def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_
     '''
     # don't call picam_still_task here.  It would cause a new celery task to be created, which would be out of
     #  sequence with the original chain of tasks we belong to
-    camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
+    camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
 
 
 def take_picam_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=False):
@@ -71,7 +71,7 @@ def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
 
 
-def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
+def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True, clean_up_files=False):
     '''
     Top level handler for taking Lepton pictures between the camera view and the camera service modules.
     Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.
@@ -80,6 +80,7 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
     pic_ids = []
     scaled_pic_ids = []
     snap_ids = []
+    # TODO I don't like this precedent.  Have scale_image_chained suppress itself based on a parm passed to it
     if scale_image:
         for i in [x * delay for x in range(1, repeat + 2)]:
             pic_id = uuid.uuid4()
@@ -88,7 +89,8 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                 thermal_still_task.s(
                     snap_id=snap_id,
                     group_id=group_id,
-                    pic_id=pic_id
+                    pic_id=pic_id,
+                    clean_up_files=clean_up_files
                 ),
                 scale_image_chained.s(
                     img_id_in=pic_id,
@@ -115,7 +117,8 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
                 thermal_still_task.s(
                     snap_id=snap_id,
                     group_id=group_id,
-                    pic_id=pic_id
+                    pic_id=pic_id,
+                    clean_up_files=clean_up_files
                 ),
                 send_mail_chained.s(
                     snap_id=snap_id,
@@ -138,15 +141,15 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):
 
 
 @celery.task
-def thermal_still_task(snap_id, group_id, pic_id):
+def thermal_still_task(snap_id, group_id, pic_id, clean_up_files):
     '''
     Wrapper method to handle the celery scheduling of the taking of a single Lepton still.
     Calls the synchronous take_thermal_still method.
     '''
-    camera.services.take_thermal_still(snap_id, group_id, pic_id)
+    camera.services.take_thermal_still(snap_id, group_id, pic_id, clean_up_files)
 
 
-def take_both_still(snap_id, group_id, delay=0, repeat=0):
+def take_both_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=False):
     '''
     Wrapper method to handle the celery scheduling of the taking of a 'both' still with standard subtasks.
     A both still and subtasks consists of:
@@ -177,13 +180,15 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0):
             thermal_still_task.s(
                 snap_id=snap_id,
                 group_id=group_id,
-                pic_id=thermal_pic_id
+                pic_id=thermal_pic_id,
+                clean_up_files=clean_up_files
             ),
             take_picam_still_chained.s(
                 snap_id=snap_id,
                 group_id=group_id,
                 normal_exposure_pic_id=normal_exposure_picam_pic_id,
-                long_exposure_pic_id=long_exposure_picam_pic_id
+                long_exposure_pic_id=long_exposure_picam_pic_id,
+                clean_up_files=clean_up_files
             ),
             scale_image_chained.s(
                 img_id_in=thermal_pic_id,
