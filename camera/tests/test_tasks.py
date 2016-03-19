@@ -20,8 +20,8 @@ class TestTasksUnit(object):
     def test_picam_still_calls_all_chained_tasks(self, cs_take_picam_still, as_clean_up_files, as_send_mail):
         snap_id = uuid.uuid4()
         group_id = get_group_document('current')['_id']
-        ct.take_picam_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
-        cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY)
+        ct.take_picam_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0, clean_up_files=True)
+        cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY, True)
         as_clean_up_files.assert_called_once_with(snap_id, group_id)
         as_send_mail.assert_called_once_with(snap_id, group_id)
 
@@ -34,8 +34,10 @@ class TestTasksUnit(object):
                                                                                       as_send_mail):
         snap_id = uuid.uuid4()
         group_id = get_group_document('current')['_id']
-        ct.take_picam_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=2)
-        tps_calls = [call(snap_id, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY)]
+        ct.take_picam_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=2, clean_up_files=False)
+        tps_calls = [call(snap_id, group_id, ANY, ANY, False),
+                     call(ANY, group_id, ANY, ANY, False),
+                     call(ANY, group_id, ANY, ANY, False)]
         ascuf_calls = [call(snap_id, group_id), call(ANY, group_id), call(ANY, group_id)]
         assm_calls = [call(snap_id, group_id), call(ANY, group_id), call(ANY, group_id)]
         cs_take_picam_still.assert_has_calls(tps_calls)
@@ -53,8 +55,8 @@ class TestTasksUnit(object):
                                                         ads_send_mail):
         snap_id = uuid.uuid4()
         group_id = get_group_document('current')['_id']
-        ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
-        cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
+        ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0, clean_up_files=False)
+        cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY, False)
         ans_scale_image.assert_called_once_with(ANY, ANY, group_id)
         ads_clean_up_files.assert_called_once_with(snap_id, group_id)
         ads_send_mail.assert_called_once_with(snap_id, group_id)
@@ -70,8 +72,8 @@ class TestTasksUnit(object):
                                                                                              ads_send_mail):
         snap_id = uuid.uuid4()
         group_id = get_group_document('current')['_id']
-        ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1)
-        cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY), call(ANY, group_id, ANY)])
+        ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1, clean_up_files=True)
+        cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY, True), call(ANY, group_id, ANY, True)])
         ans_scale_image.assert_has_calls([call(ANY, ANY, group_id), call(ANY, ANY, group_id)])
         ads_send_mail.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])
         ads_clean_up_files.assert_has_calls([call(snap_id, group_id), call(ANY, group_id)])
@@ -87,8 +89,8 @@ class TestTasksUnit(object):
                                                                  ads_send_mail):
         snap_id = uuid.uuid4()
         group_id = get_group_document('current')['_id']
-        ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0, scale_image=False)
-        cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
+        ct.take_thermal_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0, scale_image=False, clean_up_files=False)
+        cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY, False)
         ans_scale_image.assert_not_called()
         ads_send_mail.assert_called_once_with(snap_id, group_id)
         ads_clean_up_files.assert_called_once_with(snap_id, group_id)
@@ -110,9 +112,9 @@ class TestTasksUnit(object):
                                                      ads_send_mail):
         snap_id = uuid.uuid4()
         group_id = get_group_document('current')['_id']
-        ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0)
-        cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY)
-        cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY)
+        ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=0, clean_up_files=True)
+        cs_take_thermal_still.assert_called_once_with(snap_id, group_id, ANY, True)
+        cs_take_picam_still.assert_called_once_with(snap_id, group_id, ANY, ANY, True)
         ans_scale_image.assert_called_once_with(ANY, ANY, group_id)
         ans_distort_image_shepards_fixed.assert_called_once_with(ANY, ANY, group_id)
         ms_merge_image.assert_called_once_with(ANY, ANY, ANY, ANY, group_id)
@@ -136,9 +138,9 @@ class TestTasksUnit(object):
                                                                                           ads_send_mail):
         snap_id = uuid.uuid4()
         group_id = get_group_document('current')['_id']
-        ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1)
-        cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY), call(ANY, group_id, ANY)])
-        cs_take_picam_still.assert_has_calls([call(snap_id, group_id, ANY, ANY), call(ANY, group_id, ANY, ANY)])
+        ct.take_both_still(snap_id=snap_id, group_id=group_id, delay=0, repeat=1, clean_up_files=True)
+        cs_take_thermal_still.assert_has_calls([call(snap_id, group_id, ANY, True), call(ANY, group_id, ANY, True)])
+        cs_take_picam_still.assert_has_calls([call(snap_id, group_id, ANY, ANY, True), call(ANY, group_id, ANY, ANY, True)])
         ans_scale_image.assert_has_calls([call(ANY, ANY, group_id), call(ANY, ANY, group_id)])
         ans_distort_image_shepards_fixed.assert_has_calls([call(ANY, ANY, group_id), call(ANY, ANY, group_id)])
         ms_merge_image.assert_has_calls([call(ANY, ANY, ANY, ANY, group_id), call(ANY, ANY, ANY, ANY, group_id)])
