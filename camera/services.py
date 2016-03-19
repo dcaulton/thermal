@@ -69,6 +69,7 @@ def get_brightness_threshold(group_document):
     return 5.0
 
 
+# TODO make these kwargs, not positional args
 def take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files=True):
     '''
     Top level method in the camera service for taking a still image via the picam (regular raspberry pi) camera.
@@ -132,6 +133,10 @@ def take_thermal_still(snap_id, group_id, pic_id, clean_up_files=True):
 
 
 def save_picture(pic_dict, clean_up_files=True):
+    '''
+    Saves the incoming pic_dict as a record of type picture
+    If no snap record exists yet for pic_dict['snap_id'], one is created with the supplied value for clean_up_files
+    '''
     if 'snap_id' not in pic_dict:
         raise DocumentConfigurationError('no snap_id specified for id {0}'.format(str(group_id)))
     if not item_exists(pic_dict['snap_id'], 'snap'):
@@ -140,4 +145,3 @@ def save_picture(pic_dict, clean_up_files=True):
                      'clean_up_files': clean_up_files}
         save_generic(snap_dict, 'snap')
     save_generic(pic_dict, 'picture')
-

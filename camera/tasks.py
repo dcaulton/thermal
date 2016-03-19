@@ -22,7 +22,7 @@ def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_
     camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
 
 
-def take_picam_still(snap_id, group_id, delay=0, repeat=0):
+def take_picam_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=False):
     '''
     Top level handler for taking Picam pictures between the camera view and the camera service modules.
     Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.
@@ -38,7 +38,8 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
                 snap_id=snap_id,
                 group_id=group_id,
                 normal_exposure_pic_id=normal_exposure_pic_id,
-                long_exposure_pic_id=long_exposure_pic_id
+                long_exposure_pic_id=long_exposure_pic_id,
+                clean_up_files=clean_up_files
             ),
             send_mail_chained.s(
                 snap_id=snap_id,
@@ -62,12 +63,12 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0):
 
 
 @celery.task
-def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id):
+def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files):
     '''
     Wrapper method to handle the celery scheduling of the taking of a single Picam still.
     Calls the synchronous take_picam_still method.
     '''
-    camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id)
+    camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
 
 
 def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True):

@@ -37,10 +37,13 @@ def picam_still():
         group_id = get_settings_document()['current_group_id']
         # TODO dry this out, we gather delay+repeat three times in this view
         args_dict = gather_and_enforce_request_args([{'name': 'delay', 'default': 0, 'cast_function': int},
+                                                     {'name': 'clean_up_files', 'default': False, 'cast_function': bool},
                                                      {'name': 'repeat', 'default': 0, 'cast_function': int}])
-        delay = args_dict['delay']
-        repeat = args_dict['repeat']
-        ret_dict = take_picam_still(snap_id=snap_id, group_id=group_id, delay=delay, repeat=repeat)
+        ret_dict = take_picam_still(snap_id=snap_id,
+                                    group_id=group_id,
+                                    delay=args_dict['delay'],
+                                    repeat=args_dict['repeat'],
+                                    clean_up_files=args_dict['clean_up_files'])
         return Response(json.dumps(ret_dict), status=202, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
