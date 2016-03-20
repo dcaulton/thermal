@@ -3,7 +3,7 @@ from mock import ANY, call, Mock, patch
 import pytest
 import uuid
 
-from flask import current_app, request
+from flask import current_app, request, Response
 
 import admin.views as av
 from thermal.exceptions import DocumentConfigurationError, NotFoundError, ThermalBaseError
@@ -118,6 +118,22 @@ class TestViewsUnit(object):
             av_get_group_document.assert_called_once_with('876')
             av_save_generic.assert_called_once_with({'eeny': 'meeny', 'teensy': 'weensy'}, 'group')
 
+
+    @patch('admin.views.save_generic')
+    @patch('admin.views.get_group_document')
+    def test_update_group_handles_non_json_data(self,
+                                                av_get_group_document,
+                                                av_save_generic):
+        av_get_group_document.return_value = {'eeny': 'meeny', 'teensy': 'weensy'}
+        with current_app.test_client() as c:
+            resp_object = c.put('/api/v1/admin/groups/876',
+                                headers={'Content-Type':'application/not_json'},
+                                data='{"type":"unfortunate"}')
+            assert resp_object.status_code == 409
+            assert resp_object.data == '"problem with request data"'
+            av_get_group_document.assert_called_once_with(ANY)
+
+
     @patch('admin.views.get_group_document')
     def test_update_group_catches_exceptions(self,
                                              av_get_group_document):
@@ -127,6 +143,61 @@ class TestViewsUnit(object):
         resp_object = av.update_group('brockman')
         assert resp_object.data == '"Blowing through the curtains in your room"'
         assert resp_object.status_code == 400
+
+
+    @patch('admin.views.generic_save_view')
+    @patch('admin.views.default_group_dict')
+    @patch('admin.views.get_settings_document')
+    @patch('admin.views.save_generic')
+    def test_save_group_calls_expected_methods(self,
+                                               av_save_generic,
+                                               av_get_settings_document,
+                                               av_default_group_dict,
+                                               av_generic_save_view):
+        av_generic_save_view.return_value = Response('{"_id": "bob_loblaw"}', status=200)
+        default_group_dict = {'roger_murtaugh': 'too old for this shiznit'}
+        av_default_group_dict.return_value = default_group_dict
+        av_get_settings_document.return_value = {'_id': 'one', 'current_group_id': 'fred_durst'}
+
+        resp_object = av.save_group()
+
+        av_generic_save_view.assert_called_once_with(args_dict=default_group_dict, document_type='group')
+        av_get_settings_document.assert_called_once_with()
+        av_save_generic.assert_called_once_with({'_id': 'one', 'current_group_id': 'bob_loblaw'}, 'settings')
+        assert resp_object.data == '{"_id": "bob_loblaw"}'
+        assert resp_object.status_code == 200
+
+
+    @patch('admin.views.generic_save_view')
+    def test_save_group_handles_exception_when_saving_group(self,
+                                                            av_generic_save_view):
+        av_generic_save_view.return_value = Response('"just didnt feel like saving a group"', status=409)
+
+        resp_object = av.save_group()
+
+        assert resp_object.data == '"just didnt feel like saving a group"'
+        assert resp_object.status_code == 409
+
+
+    @patch('admin.views.generic_save_view')
+    @patch('admin.views.default_group_dict')
+    @patch('admin.views.get_settings_document')
+    def test_save_group_handles_exception_in_settings_stuff(self,
+                                                            av_get_settings_document,
+                                                            av_default_group_dict,
+                                                            av_generic_save_view):
+        av_generic_save_view.return_value = Response('{"_id": "bob_loblaw"}', status=200)
+        default_group_dict = {'roger_murtaugh': 'too old for this shiznit'}
+        av_default_group_dict.return_value = default_group_dict
+        av_get_settings_document.side_effect = ThermalBaseError('unpleasantness')
+
+        resp_object = av.save_group()
+
+        av_generic_save_view.assert_called_once_with(args_dict=default_group_dict, document_type='group')
+        av_get_settings_document.assert_called_once_with()
+        assert resp_object.data == '"error saving settings: unpleasantness"'
+        assert resp_object.status_code == 400
+
 
     @patch('admin.views.get_group_document_with_child_objects')
     @patch('admin.views.get_group_document_with_child_links')
@@ -145,6 +216,7 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 200
         assert 'v' in response_data_dict
         assert len(response_data_dict.keys()) == 1
+
 
     @patch('admin.views.get_group_document_with_child_objects')
     @patch('admin.views.get_group_document_with_child_links')
