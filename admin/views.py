@@ -7,7 +7,7 @@ from admin.services import (default_group_dict,
                             get_group_document_with_child_links,
                             get_group_document_with_child_objects)
 from admin.tasks import clean_up_files_task
-from thermal.services import save_generic, search_generic
+from thermal.services import save_generic
 from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_document_with_exception,

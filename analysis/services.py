@@ -11,7 +11,7 @@ from admin.services import get_group_document
 from picture.services import (build_picture_path,
                               build_picture_name)
 from thermal.appmodule import celery
-from thermal.services import save_generic
+from thermal.services import save_generic, search_generic
 from thermal.utils import get_document_with_exception, item_exists
 
 
@@ -202,28 +202,68 @@ def colorize_image(scale_type, group_document, image_in):
     else:
         return image_in
 
+
 @celery.task
-def distort_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):
-    distort_image_shepards_fixed(img_id_in, img_id_out, group_id, **kwargs)
+def distort_image_shepards_chained(_, img_id_in, img_id_out):
+    '''
+    For now assume no distortion_set_id for chained distortions.
+    If we need a distortion set we'll get whatever has been associated with the group
+    '''
+    distort_image_shepards(image_id_in=img_id_in, image_id_out=img_id_out, distortion_set_id=None)
+
+@celery.task
+def distort_image_shepards_task(img_id_in, img_id_out, distortion_set_id):
+    distort_image_shepards(image_id_in=img_id_in, image_id_out=img_id_out, distortion_set_id=distortion_set_id)
 
 
-def distort_image_shepards_fixed(img_id_in, img_id_out, group_id, **kwargs):
-    group_document = get_group_document(group_id)
-    group_id = group_document['_id']
-    img_dict_in = get_document_with_exception(str(img_id_in), 'picture')
-    img_filename_out = build_picture_name(img_id_out)
+def build_distortion_pair_strings(distortion_set_id):
+    distortion_pairs = search_generic(document_type='distortion_pair',
+                                      args_dict={'distortion_set_id': distortion_set_id})
+    return_array = []
+    for distortion_pair in distortion_pairs:
+        build_string = '{0},{1},{2},{3}'.format(distortion_pair['start_x'],
+                                                distortion_pair['start_y'],
+                                                distortion_pair['end_x'],
+                                                distortion_pair['end_y'])
+        return_array.append(build_string)
+    return return_array
+    
+
+def build_command_string(distortion_set_id, pic_path_in, pic_path_out):
+    distortion_pair_strings = build_distortion_pair_strings(distortion_set_id)
+    distortion_pair_string = ' '.join(distortion_pair_strings)
+    distortion_pair_string = '300,110 350,140  600,310 650,340'
+    print 'distortion pair string is '+distortion_pair_string
+
+    command_string = "convert {0} -distort Shepards '{1}' {2}".format(pic_path_in,
+                                                                      distortion_pair_string,
+                                                                      pic_path_out)
+    print 'command is '+command_string
+    return command_string
+
+
+def distort_image_shepards(image_id_in=None, image_id_out=None, distortion_set_id=None):
+    '''
+    Distorts an image using all the distortion pairs in a named distortion set
+    It is necessary to call ImageMagick via command line to make this happen, no bindings in Pillow for this functionality :(
+    Uses the Shepards algorithm for distortion
+    '''
+    img_dict_in = get_document_with_exception(image_id_in, 'picture')
+    group_id = img_dict_in['group_id']
+    group_document = get_document_with_exception(group_id, 'group')
+    img_filename_out = build_picture_name(image_id_out)
     pic_path_in = img_dict_in['uri']
     pic_path_out = build_picture_path(picture_name=img_filename_out, snap_id=img_dict_in['snap_id'])
 
-    command = "convert {0} -distort Shepards '300,110 350,140  600,310 650,340' {1}".format(pic_path_in, pic_path_out)
 
-    os.system(command)
+    command_string = build_command_string(distortion_set_id, pic_path_in, pic_path_out)
+    os.system(command_string)
 
     img_dict_out = {
-        '_id': str(img_id_out),
+        '_id': str(image_id_out),
         'type': 'picture',
         'source': 'analysis',
-        'source_image_id': str(img_id_in),
+        'source_image_id': str(image_id_in),
         'analysis_type': 'distort',
         'group_id': group_id,
         'snap_id': img_dict_in['snap_id'],

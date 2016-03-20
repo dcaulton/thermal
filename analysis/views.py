@@ -80,3 +80,27 @@ def call_edge_detect(image_id=None):
         return Response(json.dumps(resp_json), status=202, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+
+@analysis.route('/distort_image')
+@analysis.route('/distort_image/<image_id>')
+def call_distort_image(image_id=None):
+    '''
+    Distorts an image according to the distortion pairs in the specified distortion set
+    '''
+    try:
+        new_image_id = uuid.uuid4()
+        picture_dict = get_document_with_exception(image_id, document_type='picture')
+        args_dict = gather_and_enforce_request_args([{'name': 'distortion_set_id', 'required': True}])
+        distortion_set_dict = get_document_with_exception(distortion_set_id, document_type='distortion_set')
+
+        # TODO call this async via distort_image_shepards_task.delay as soon as it's working
+        ans.distort_image_shepards(image_id_in=image_id,
+                                   image_id_out=new_image_id,
+                                   distortion_set_id=distortion_set_id)
+
+        resp_json = {
+            'distorted_image_id': str(new_image_id)
+        }
+        return Response(json.dumps(resp_json), status=202, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')

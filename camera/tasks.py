@@ -4,7 +4,7 @@ from celery import chain
 
 from admin.services import get_group_document
 from admin.tasks import file_wrap_up_chained, send_mail_chained
-from analysis.services import edge_detect_chained, scale_image_chained, distort_image_chained
+from analysis.services import edge_detect_chained, scale_image_chained, distort_image_shepards_chained
 import camera.services
 from merging.services import merge_images_chained
 from thermal.appmodule import celery
@@ -195,10 +195,9 @@ def take_both_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=False):
                 img_id_out=scaled_for_thermal_merge_pic_id,
                 group_id=group_id
             ),
-            distort_image_chained.s(
+            distort_image_shepards_chained.s(
                 img_id_in=scaled_for_thermal_merge_pic_id,
-                img_id_out=distorted_for_thermal_merge_pic_id,
-                group_id=group_id
+                img_id_out=distorted_for_thermal_merge_pic_id
             ),
             merge_images_chained.s(
                 img1_primary_id_in=normal_exposure_picam_pic_id,
