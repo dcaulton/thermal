@@ -62,46 +62,33 @@ def edge_detect_auto(img_id_in, pic_dict_in, auto_id):
                                            edge_detect_type='auto')
     save_generic(auto_dict_out, 'picture')
 
-def edge_detect_wide(img_id_in, pic_dict_in, wide_id):
+def edge_detect_with_canny_limits(img_id_in, pic_dict_in, new_id, limit_low, limit_high):
     blurred = build_blurred_cv2_image(img_id_in)
-    # apply Canny edge detection using a wide threshold
-    wide = cv2.Canny(blurred, 10, 200)
-    wide_filename = build_picture_name(wide_id)
-    wide_path_out = build_picture_path(picture_name=wide_filename, snap_id=pic_dict_in['snap_id'])
-    cv2.imwrite(wide_path_out, wide)
-    wide_dict_out = make_edge_picture_dict(pic_id=wide_id,
-                                           pic_filename=wide_filename,
-                                           pic_path=wide_path_out,
-                                           snap_id=pic_dict_in['snap_id'],
-                                           group_id=pic_dict_in['group_id'],
-                                           source_pic_id=img_id_in,
-                                           edge_detect_type='wide')
-    save_generic(wide_dict_out, 'picture')
-
-def edge_detect_tight(img_id_in, pic_dict_in, tight_id):
-    blurred = build_blurred_cv2_image(img_id_in)
-    # apply Canny edge detection using a tight threshold
-    tight = cv2.Canny(blurred, 225, 250)
-    tight_filename = build_picture_name(tight_id)
-    tight_path_out = build_picture_path(picture_name=tight_filename, snap_id=pic_dict_in['snap_id'])
-    cv2.imwrite(tight_path_out, tight)
-    tight_dict_out = make_edge_picture_dict(pic_id=tight_id,
-                                            pic_filename=tight_filename,
-                                            pic_path=tight_path_out,
-                                            snap_id=pic_dict_in['snap_id'],
-                                            group_id=pic_dict_in['group_id'],
-                                            source_pic_id=img_id_in,
-                                            edge_detect_type='tight')
-    save_generic(tight_dict_out, 'picture')
+    # apply Canny edge detection using a custom threshold
+    # TODO if limit_low or limit_high aren't positive ints, with high > low throw an error
+    # TODO die if not item_exists(img_id_in, 'picture'), and the physical picture is there (e.g. clean_up_files not yet called)
+    # TODO figure out where to register these errors, this task is asynchronous 
+    new_image = cv2.Canny(blurred, limit_low, limit_high)
+    new_filename = build_picture_name(new_id)
+    new_path_out = build_picture_path(picture_name=new_filename, snap_id=pic_dict_in['snap_id'])
+    cv2.imwrite(new_path_out, new_image)
+    new_dict_out = make_edge_picture_dict(pic_id=new_id,
+                                          pic_filename=new_filename,
+                                          pic_path=new_path_out,
+                                          snap_id=pic_dict_in['snap_id'],
+                                          group_id=pic_dict_in['group_id'],
+                                          source_pic_id=img_id_in,
+                                          edge_detect_type='custom:{0}-{1}'.format(limit_low, limit_high))
+    save_generic(new_dict_out, 'picture')
 
 def edge_detect(img_id_in, detection_threshold='all', auto_id=None, wide_id=None, tight_id=None):
     pic_dict_in = get_document_with_exception(img_id_in, 'picture')
     if detection_threshold in ['all', 'auto']:
         edge_detect_auto(img_id_in, pic_dict_in, auto_id)
     if detection_threshold in ['all', 'wide'] and wide_id:
-        edge_detect_wide(img_id_in, pic_dict_in, wide_id)
+        edge_detect_with_canny_limits(img_id_in, pic_dict_in, wide_id, 10, 200)
     if detection_threshold in ['all', 'tight'] and tight_id:
-        edge_detect_tight(img_id_in, pic_dict_in, tight_id)
+        edge_detect_with_canny_limits(img_id_in, pic_dict_in, tight_id, 225, 250)
 
 def auto_canny(image, sigma=0.33):
     # compute the median of the single channel pixel intensities
