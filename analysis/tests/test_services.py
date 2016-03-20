@@ -161,6 +161,110 @@ class TestServicesUnit(object):
                                                           edge_detect_type='auto')
         as_save_generic.assert_called_once_with('paul_gleason', 'picture')
 
+    @patch('analysis.services.build_blurred_cv2_image')
+    @patch('cv2.Canny')
+    @patch('analysis.services.build_picture_name')
+    @patch('analysis.services.build_picture_path')
+    @patch('cv2.imwrite')
+    @patch('analysis.services.make_edge_picture_dict')
+    @patch('analysis.services.save_generic')
+    def test_edge_detect_with_canny_limits_calls_expected_methods(self,
+                                                                  as_save_generic,
+                                                                  as_make_edge_picture_dict,
+                                                                  cv2_imwrite,
+                                                                  as_build_picture_path,
+                                                                  as_build_picture_name,
+                                                                  as_cv2_canny,
+                                                                  as_build_blurred_cv2_image):
+
+        as_make_edge_picture_dict.return_value = 'paul_gleason'
+        as_build_picture_path.return_value = 'anthony_michael_hall'
+        as_build_picture_name.return_value = 'emilio_estevez'
+        as_cv2_canny.return_value = 'judd_nelson'
+        as_build_blurred_cv2_image.return_value = 'molly_ringwald'
+
+        dict_in = {'snap_id':'6464', 'group_id': '7373'}
+        ans.edge_detect_with_canny_limits('ali_baba', dict_in, 'seven_thieves', 111, 222)
+
+        as_build_blurred_cv2_image.assert_called_once_with('ali_baba')
+        as_cv2_canny.assert_called_once_with('molly_ringwald', 111, 222)
+        as_build_picture_name.assert_called_once_with('seven_thieves')
+        as_build_picture_path.assert_called_once_with(picture_name='emilio_estevez', snap_id='6464')
+        cv2_imwrite.assert_called_once_with('anthony_michael_hall', 'judd_nelson')
+        as_make_edge_picture_dict.assert_called_once_with(pic_id='seven_thieves',
+                                                          pic_filename='emilio_estevez',
+                                                          pic_path='anthony_michael_hall',
+                                                          snap_id='6464',
+                                                          group_id='7373',
+                                                          source_pic_id='ali_baba',
+                                                          edge_detect_type='custom:111-222')
+        as_save_generic.assert_called_once_with('paul_gleason', 'picture')
+
+    @patch('analysis.services.get_document_with_exception')
+    @patch('analysis.services.edge_detect_auto')
+    @patch('analysis.services.edge_detect_with_canny_limits')
+    def test_edge_detect_calls_expected_methods_for_all(self,
+                                                        as_edge_detect_with_canny_limits,
+                                                        as_edge_detect_auto,
+                                                        as_get_document_with_exception):
+        as_get_document_with_exception.return_value = {'some': 'thing'}
+        
+        ans.edge_detect('123', detection_threshold='all')
+
+        as_get_document_with_exception.assert_called_once_with('123', 'picture')
+        as_edge_detect_auto.assert_called_once_with('123', {'some': 'thing'}, ANY)
+        call_one = call('123', {'some': 'thing'}, ANY, 10, 200)
+        call_two = call('123', {'some': 'thing'}, ANY, 225, 250)
+        as_edge_detect_with_canny_limits.assert_has_calls([call_one, call_two])
+
+    @patch('analysis.services.get_document_with_exception')
+    @patch('analysis.services.edge_detect_auto')
+    @patch('analysis.services.edge_detect_with_canny_limits')
+    def test_edge_detect_calls_expected_methods_for_auto(self,
+                                                         as_edge_detect_with_canny_limits,
+                                                         as_edge_detect_auto,
+                                                         as_get_document_with_exception):
+        as_get_document_with_exception.return_value = {'some': 'thing'}
+        
+        ans.edge_detect('123', detection_threshold='auto')
+
+        as_get_document_with_exception.assert_called_once_with('123', 'picture')
+        as_edge_detect_auto.assert_called_once_with('123', {'some': 'thing'}, ANY)
+        as_edge_detect_with_canny_limits.assert_not_called()
+
+    @patch('analysis.services.get_document_with_exception')
+    @patch('analysis.services.edge_detect_auto')
+    @patch('analysis.services.edge_detect_with_canny_limits')
+    def test_edge_detect_calls_expected_methods_for_wide(self,
+                                                         as_edge_detect_with_canny_limits,
+                                                         as_edge_detect_auto,
+                                                         as_get_document_with_exception):
+        as_get_document_with_exception.return_value = {'some': 'thing'}
+        
+        ans.edge_detect('123', detection_threshold='wide')
+
+        as_get_document_with_exception.assert_called_once_with('123', 'picture')
+        as_edge_detect_auto.assert_not_called()
+        call_one = call('123', {'some': 'thing'}, ANY, 10, 200)
+        as_edge_detect_with_canny_limits.assert_has_calls([call_one])
+
+    @patch('analysis.services.get_document_with_exception')
+    @patch('analysis.services.edge_detect_auto')
+    @patch('analysis.services.edge_detect_with_canny_limits')
+    def test_edge_detect_calls_expected_methods_for_tight(self,
+                                                          as_edge_detect_with_canny_limits,
+                                                          as_edge_detect_auto,
+                                                          as_get_document_with_exception):
+        as_get_document_with_exception.return_value = {'some': 'thing'}
+        
+        ans.edge_detect('123', detection_threshold='tight')
+
+        as_get_document_with_exception.assert_called_once_with('123', 'picture')
+        as_edge_detect_auto.assert_not_called()
+        call_one = call('123', {'some': 'thing'}, ANY, 225, 250)
+        as_edge_detect_with_canny_limits.assert_has_calls([call_one])
+
+
 
 # test scale image with no colorize
 # test scale image with bilinear

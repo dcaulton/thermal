@@ -81,7 +81,7 @@ def edge_detect_with_canny_limits(img_id_in, pic_dict_in, new_id, limit_low, lim
                                           edge_detect_type='custom:{0}-{1}'.format(limit_low, limit_high))
     save_generic(new_dict_out, 'picture')
 
-def edge_detect(img_id_in, detection_threshold='all', auto_id=None, wide_id=None, tight_id=None):
+def edge_detect(img_id_in, detection_threshold='all', auto_id=uuid.uuid4(), wide_id=uuid.uuid4(), tight_id=uuid.uuid4()):
     pic_dict_in = get_document_with_exception(img_id_in, 'picture')
     if detection_threshold in ['all', 'auto']:
         edge_detect_auto(img_id_in, pic_dict_in, auto_id)
