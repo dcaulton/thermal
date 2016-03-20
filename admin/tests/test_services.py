@@ -181,7 +181,7 @@ class TestSettingsIntegration(object):
                 save_generic(snap_doc, 'snap')
         return pic_ids
 
-    def test_clean_up_files_cleans_pictures_from_the_snap(self):
+    def test_clean_up_files_cleans_pictures_from_the_snap_and_updates_snap_document(self):
         snap_id = uuid.uuid4()
         group_id = adms.get_group_document('current')['_id']
         pic_ids = self.build_three_pictures(snap_id)
@@ -201,3 +201,6 @@ class TestSettingsIntegration(object):
             assert pic_doc['uri'] == expected_picture_path
             assert os.path.isfile(expected_picture_path)
         assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+        snap_document = get_document(snap_id)
+        assert snap_document['files_have_been_cleaned_up'] == True
+

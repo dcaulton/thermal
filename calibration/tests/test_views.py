@@ -10,6 +10,26 @@ from thermal.utils import get_document
 
 class TestViewsUnit(object):
 
+
+    @patch('calibration.views.get_url_base')
+    def test_index_shows_links(self, av_get_url_base):
+        av_get_url_base.return_value = 'grouper'
+        with current_app.test_client() as c:
+            resp_object = c.get('/api/v1/calibration/')
+
+            response_data_dict = json.loads(resp_object.data)
+
+            assert resp_object.status_code == 200
+            assert 'distortion_sets' in response_data_dict
+            assert 'grouper' in response_data_dict['distortion_sets']
+            assert 'distortion_pairs' in response_data_dict
+            assert 'grouper' in response_data_dict['distortion_pairs']
+            assert 'calibration_sessions' in response_data_dict
+            assert 'grouper' in response_data_dict['calibration_sessions']
+            assert len(response_data_dict.keys()) == 3
+            av_get_url_base.assert_called_once_with()
+
+
     @patch('calibration.views.generic_list_view')
     def test_list_distortion_sets_calls_generic_list_view(self,
                                                           cv_generic_list_view):

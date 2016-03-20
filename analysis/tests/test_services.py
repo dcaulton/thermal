@@ -265,6 +265,38 @@ class TestServicesUnit(object):
         as_edge_detect_with_canny_limits.assert_has_calls([call_one])
 
 
+    def test_make_edge_picture_dict_makes_dict_with_expected_fields(self):
+        the_dict = ans.make_edge_picture_dict(pic_id='a',
+                                              pic_filename='b',
+                                              pic_path='c',
+                                              snap_id='d',
+                                              group_id='e',
+                                              source_pic_id='f',
+                                              edge_detect_type='g')
+        assert '_id' in the_dict
+        assert the_dict['_id'] == 'a'
+        assert 'type' in the_dict
+        assert the_dict['type'] == 'picture'
+        assert 'source' in the_dict
+        assert the_dict['source'] == 'analysis'
+        assert 'source_image_id' in the_dict
+        assert the_dict['source_image_id'] == 'f'
+        assert 'analysis_type' in the_dict
+        assert the_dict['analysis_type'] == 'edge detect'
+        assert 'edge_detect_type' in the_dict
+        assert the_dict['edge_detect_type'] == 'g'
+        assert 'group_id' in the_dict
+        assert the_dict['group_id'] == 'e'
+        assert 'snap_id' in the_dict
+        assert the_dict['snap_id'] == 'd'
+        assert 'filename' in the_dict
+        assert the_dict['filename'] == 'b'
+        assert 'uri' in the_dict
+        assert the_dict['uri'] == 'c'
+        assert 'created' in the_dict
+        assert len(the_dict.keys()) == 11
+
+
 
 # test scale image with no colorize
 # test scale image with bilinear

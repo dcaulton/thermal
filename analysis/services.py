@@ -101,7 +101,13 @@ def auto_canny(image, sigma=0.33):
     return edged
 
 
-def make_edge_picture_dict(pic_id, pic_filename, pic_path, snap_id, group_id, source_pic_id, edge_detect_type):
+def make_edge_picture_dict(pic_id=None,
+                           pic_filename=None,
+                           pic_path=None,
+                           snap_id=None,
+                           group_id=None,
+                           source_pic_id=None,
+                           edge_detect_type=None):
     img_dict_out = {
         '_id': str(pic_id),
         'type': 'picture',

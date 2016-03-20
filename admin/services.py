@@ -56,6 +56,7 @@ def get_group_document_with_child_objects(group_id):
     return group_dict
 
 
+# TODO restructure this.  Snaps are now real objects, it would be useful to know which are cleared
 def get_picture_objects_for_group(group_id):
     '''
     Gets all the pictures belonging to a group, groups them in an array under the snaps they belong to
@@ -184,6 +185,7 @@ def upload_files_to_s3(snap_id, group_id):
 # TODO add tests related to image_sources_to_delete
 # TODO to eventually delete files which have snap.clean_up_files=False, first, update the snap record, then send call this
 # method again.  Will need an additional admin.views endpoint to clean up files for a snap 
+# TODO add a flag to the snap when its files have been cleaned up
 def clean_up_files(snap_id, group_id):
     '''
     Deletes all picture files for a given snap if those pictures sources are designated in the group to be deleted after processing
@@ -212,6 +214,8 @@ def clean_up_files(snap_id, group_id):
                 pictures[pic_id]['uri'] = os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], pictures[pic_id]['filename'])
             update_generic(pictures[pic_id], 'picture')
         os.rmdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
+        snap_document['files_have_been_cleaned_up'] = True
+        update_generic(snap_document, 'snap')
 
 
 # TODO add unit tests
