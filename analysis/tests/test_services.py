@@ -120,7 +120,47 @@ class TestServicesUnit(object):
 
         assert not ret_val
         assert as_get_image_mean_pixel_value.called_once_with('whatever')
+
         
+    @patch('analysis.services.build_blurred_cv2_image')
+    @patch('analysis.services.auto_canny')
+    @patch('analysis.services.build_picture_name')
+    @patch('analysis.services.build_picture_path')
+    @patch('cv2.imwrite')
+    @patch('analysis.services.make_edge_picture_dict')
+    @patch('analysis.services.save_generic')
+    def test_edge_detect_auto_calls_expected_methods(self,
+                                                     as_save_generic,
+                                                     as_make_edge_picture_dict,
+                                                     cv2_imwrite,
+                                                     as_build_picture_path,
+                                                     as_build_picture_name,
+                                                     as_auto_canny,
+                                                     as_build_blurred_cv2_image):
+
+        as_make_edge_picture_dict.return_value = 'paul_gleason'
+        as_build_picture_path.return_value = 'anthony_michael_hall'
+        as_build_picture_name.return_value = 'emilio_estevez'
+        as_auto_canny.return_value = 'judd_nelson'
+        as_build_blurred_cv2_image.return_value = 'molly_ringwald'
+
+        dict_in = {'snap_id':'6464', 'group_id': '7373'}
+        ans.edge_detect_auto('ali_baba', dict_in, 'seven_thieves')
+
+        as_build_blurred_cv2_image.assert_called_once_with('ali_baba')
+        as_auto_canny.assert_called_once_with('molly_ringwald')
+        as_build_picture_name.assert_called_once_with('seven_thieves')
+        as_build_picture_path.assert_called_once_with(picture_name='emilio_estevez', snap_id='6464')
+        cv2_imwrite.assert_called_once_with('anthony_michael_hall', 'judd_nelson')
+        as_make_edge_picture_dict.assert_called_once_with(pic_id='seven_thieves',
+                                                          pic_filename='emilio_estevez',
+                                                          pic_path='anthony_michael_hall',
+                                                          snap_id='6464',
+                                                          group_id='7373',
+                                                          source_pic_id='ali_baba',
+                                                          edge_detect_type='auto')
+        as_save_generic.assert_called_once_with('paul_gleason', 'picture')
+
 
 # test scale image with no colorize
 # test scale image with bilinear
