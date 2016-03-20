@@ -29,18 +29,16 @@ def check_if_image_is_too_dark(filename, brightness_threshold):
 
 
 @celery.task
-def edge_detect_chained(_, img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
-    edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id, tight_id)
+def edge_detect_chained(_, img_id_in, detection_threshold='all', auto_id=None, wide_id=None, tight_id=None):
+    edge_detect(img_id_in, detection_threshold, auto_id, wide_id, tight_id)
 
 
 @celery.task
-def edge_detect_task(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
-    edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id, tight_id)
+def edge_detect_task(img_id_in, detection_threshold='all', auto_id=None, wide_id=None, tight_id=None):
+    edge_detect(img_id_in, detection_threshold, auto_id, wide_id, tight_id)
 
 
-def build_blurred_cv2_image(img_id_in, alternate_img_id_in):
-    if item_exists(alternate_img_id_in, 'picture'):
-        img_id_in = alternate_img_id_in
+def build_blurred_cv2_image(img_id_in):
     pic_dict_in = get_document_with_exception(img_id_in, 'picture')
     image_in = cv2.imread(pic_dict_in['uri'])
     gray = cv2.cvtColor(image_in, cv2.COLOR_BGR2GRAY)
@@ -48,8 +46,8 @@ def build_blurred_cv2_image(img_id_in, alternate_img_id_in):
     return blurred
 
 
-def edge_detect_auto(img_id_in, pic_dict_in, alternate_img_id_in, auto_id):
-    blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
+def edge_detect_auto(img_id_in, pic_dict_in, auto_id):
+    blurred = build_blurred_cv2_image(img_id_in)
     # apply Canny edge detection using an automatically determined threshold
     auto = auto_canny(blurred)
     auto_filename = build_picture_name(auto_id)
@@ -64,8 +62,8 @@ def edge_detect_auto(img_id_in, pic_dict_in, alternate_img_id_in, auto_id):
                                            edge_detect_type='auto')
     save_generic(auto_dict_out, 'picture')
 
-def edge_detect_wide(img_id_in, pic_dict_in, alternate_img_id_in, wide_id):
-    blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
+def edge_detect_wide(img_id_in, pic_dict_in, wide_id):
+    blurred = build_blurred_cv2_image(img_id_in)
     # apply Canny edge detection using a wide threshold
     wide = cv2.Canny(blurred, 10, 200)
     wide_filename = build_picture_name(wide_id)
@@ -80,8 +78,8 @@ def edge_detect_wide(img_id_in, pic_dict_in, alternate_img_id_in, wide_id):
                                            edge_detect_type='wide')
     save_generic(wide_dict_out, 'picture')
 
-def edge_detect_tight(img_id_in, pic_dict_in, alternate_img_id_in, tight_id):
-    blurred = build_blurred_cv2_image(img_id_in, alternate_img_id_in)
+def edge_detect_tight(img_id_in, pic_dict_in, tight_id):
+    blurred = build_blurred_cv2_image(img_id_in)
     # apply Canny edge detection using a tight threshold
     tight = cv2.Canny(blurred, 225, 250)
     tight_filename = build_picture_name(tight_id)
@@ -96,13 +94,14 @@ def edge_detect_tight(img_id_in, pic_dict_in, alternate_img_id_in, tight_id):
                                             edge_detect_type='tight')
     save_generic(tight_dict_out, 'picture')
 
-def edge_detect(img_id_in, alternate_img_id_in, auto_id, wide_id=None, tight_id=None):
-    pic_dict_in = find_picture(img_id_in)
-    edge_detect_auto(img_id_in, pic_dict_in, alternate_img_id_in, auto_id)
-    if wide_id:
-        edge_detect_wide(img_id_in, pic_dict_in, alternate_img_id_in, wide_id)
-    if tight_id:
-        edge_detect_tight(img_id_in, pic_dict_in, alternate_img_id_in, tight_id)
+def edge_detect(img_id_in, detection_threshold='all', auto_id=None, wide_id=None, tight_id=None):
+    pic_dict_in = get_document_with_exception(img_id_in, 'picture')
+    if detection_threshold in ['all', 'auto']:
+        edge_detect_auto(img_id_in, pic_dict_in, auto_id)
+    if detection_threshold in ['all', 'wide'] and wide_id:
+        edge_detect_wide(img_id_in, pic_dict_in, wide_id)
+    if detection_threshold in ['all', 'tight'] and tight_id:
+        edge_detect_tight(img_id_in, pic_dict_in, tight_id)
 
 def auto_canny(image, sigma=0.33):
     # compute the median of the single channel pixel intensities

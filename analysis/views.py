@@ -4,7 +4,10 @@ import uuid
 from flask import Blueprint, request, Response, url_for
 
 import analysis.services as ans
-from thermal.utils import get_document_with_exception, get_url_base, item_exists
+from thermal.utils import (gather_and_enforce_request_args,
+                           get_document_with_exception,
+                           get_url_base,
+                           item_exists)
 
 analysis = Blueprint('analysis', __name__)
 
@@ -48,21 +51,33 @@ def call_scale_image(image_id=None):
 def call_edge_detect(image_id=None):
     '''
     Invokes edge detection for a given image
+    Accepts a GET parameter for detection threshold.  Allowable values are 'all', 'auto', 'wide' and 'tight'
     '''
-    if not item_exists(image_id, 'picture'):  # TODO add testing for no picture id and invalid picture id
-        err_msg = 'Image not found.  A valid image_id must be supplied as the last segment of the url in order to call'\
-                  ' this endpoint'
-        return Response(json.dumps(err_msg), status=404, mimetype='application/json')
-    else:
-        get_document_with_exception(image_id, 'picture')
+    try:
+        picture_dict = get_document_with_exception(image_id, document_type='picture')
         auto_id = uuid.uuid4()
         wide_id = uuid.uuid4()
         tight_id = uuid.uuid4()
-        ans.edge_detect_task.delay(img_id_in=image_id, alternate_img_id_in=uuid.uuid4(), auto_id=auto_id, wide_id=wide_id,
-                               tight_id=tight_id)
-        resp_json = {
-            'auto_id': str(auto_id),
-            'wide_id': str(wide_id),
-            'tight_id': str(tight_id)
-        }
+
+        args_dict = gather_and_enforce_request_args([{'name': 'detection_threshold', 'default': 'all'}])
+        if args_dict['detection_threshold'] not in ['all', 'auto', 'wide', 'tight']:
+            error_msg = 'invalid detection threshold specified.  Allowable are all, auto, wide or tight'
+            return Response(json.dumps(error_msg), status=409, mimetype='application/json')
+
+        ans.edge_detect_task.delay(img_id_in=image_id,
+                                   detection_threshold=args_dict['detection_threshold'],
+                                   auto_id=auto_id,
+                                   wide_id=wide_id,
+                                   tight_id=tight_id)
+
+        resp_json = {}
+        if args_dict['detection_threshold'] in ['all', 'auto']:
+            resp_json['auto_id'] = str(auto_id)
+        if args_dict['detection_threshold'] in ['all', 'wide']:
+            resp_json['wide_id'] = str(wide_id)
+        if args_dict['detection_threshold'] in ['all', 'tight']:
+            resp_json['tight_id'] = str(tight_id)
+
         return Response(json.dumps(resp_json), status=202, mimetype='application/json')
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
