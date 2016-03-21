@@ -6,7 +6,11 @@ from flask import Blueprint, request, Response, url_for
 from calibration.services import (get_calibration_session_document,
                                   get_distortion_pair_document,
                                   get_distortion_set_document)
-from thermal.utils import get_url_base
+from thermal.services import save_generic
+from thermal.utils import (cast_uuid_to_string,
+                           gather_and_enforce_request_args,
+                           get_url_base,
+                           item_exists)
 from thermal.views import (generic_get_view,
                            generic_list_view,
                            generic_save_view)
@@ -85,7 +89,21 @@ def update_distortion_pairs(distortion_pair_id):
 
 @calibration.route('/distortion_pairs', methods=['POST'])
 def create_distortion_pair():
-    return generic_save_view(document_type='distortion_pair')
+    try:
+        if 'distortion_set_id' not in request.json:
+            distortion_set_id = cast_uuid_to_string(uuid.uuid4())
+            request.json['distortion_set_id'] = distortion_set_id
+
+        if not item_exists(distortion_set_id, 'distortion_set'):
+            distortion_set_dict = {'_id': distortion_set_id, 'type': 'distortion_set'}
+            save_generic(distortion_set_dict, 'distortion_set')
+
+        # TODO add a lot more tests to the request json, we need start_x, y, end_x, y and they need to be ints, range tests, etc
+        #  ^^^^^ have this be a validation function which is optionally passed to save_generic
+        return_value = generic_save_view(document_type='distortion_pair')
+        return return_value
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 
 @calibration.route('/calibration_sessions')
