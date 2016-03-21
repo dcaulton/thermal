@@ -13,7 +13,8 @@ from thermal.utils import (cast_uuid_to_string,
                            item_exists)
 from thermal.views import (generic_get_view,
                            generic_list_view,
-                           generic_save_view)
+                           generic_save_view,
+                           generic_update_view)
 
 calibration = Blueprint('calibration', __name__)
 
@@ -51,10 +52,7 @@ def get_distortion_set(distortion_set_id):
 
 @calibration.route('/distortion_sets/<distortion_set_id>', methods=['PUT'])
 def update_distortion_set(distortion_set_id):
-    try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    return generic_update_view(item_id=distortion_set_id, document_type='distortion_set')
 
 
 @calibration.route('/distortion_sets', methods=['POST'])
@@ -80,11 +78,8 @@ def get_distortion_pair(distortion_pair_id):
 
 
 @calibration.route('/distortion_pairs/<distortion_pair_id>', methods=['PUT'])
-def update_distortion_pairs(distortion_pair_id):
-    try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+def update_distortion_pair(distortion_pair_id):
+    return generic_update_view(item_id=distortion_pair_id, document_type='distortion_pair')
 
 
 @calibration.route('/distortion_pairs', methods=['POST'])
@@ -127,10 +122,7 @@ def get_calibration_session(calibration_session_id):
 
 @calibration.route('/calibration_sessions/<calibration_session_id>', methods=['PUT'])
 def update_calibration_session(calibration_session_id):
-    try:
-        return Response(json.dumps('x'), status=200, mimetype='application/json')
-    except Exception as e:
-        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
+    return generic_update_view(item_id=calibration_session_id, document_type='calibration_session')
 
 
 @calibration.route('/calibration_sessions', methods=['POST'])

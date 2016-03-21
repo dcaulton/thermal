@@ -5,6 +5,7 @@ import pytest
 from flask import current_app
 
 import calibration.views as cv
+from thermal.exceptions import ThermalBaseError
 from thermal.utils import get_document
 
 
@@ -140,11 +141,51 @@ class TestViewsUnit(object):
 
 
     @patch('calibration.views.generic_save_view')
+    @patch('calibration.views.save_generic')
+    @patch('calibration.views.item_exists')
+    def test_create_distortion_pair_catches_exception(self,
+                                                      cv_item_exists,
+                                                      cv_save_generic,
+                                                      cv_generic_save_view):
+
+
+        cv_item_exists.side_effect = ThermalBaseError('zaboomafoo')
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/json'},
+                                              data='{"distortion_set_id":"umma_gumma", "start_x": "55"}'):
+            resp_object = cv.create_distortion_pair()
+            cv_item_exists.assert_called_once_with('umma_gumma', 'distortion_set')
+            assert resp_object.data == '"zaboomafoo"'
+            assert resp_object.status_code == 400
+
+
+    @patch('calibration.views.generic_save_view')
     def test_create_calibration_session_calls_generic_save_view(self,
                                                                 cv_generic_save_view):
         resp_object = cv.create_calibration_session()
 
         cv_generic_save_view.assert_called_once_with(document_type='calibration_session')
+
+    @patch('calibration.views.generic_update_view')
+    def test_update_distortion_set_calls_generic_update_view(self,
+                                                             cv_generic_update_view):
+        resp_object = cv.update_distortion_set('hooha')
+
+        cv_generic_update_view.assert_called_once_with(item_id='hooha', document_type='distortion_set')
+
+    @patch('calibration.views.generic_update_view')
+    def test_update_distortion_pair_calls_generic_update_view(self,
+                                                              cv_generic_update_view):
+        resp_object = cv.update_distortion_pair('hooha')
+
+        cv_generic_update_view.assert_called_once_with(item_id='hooha', document_type='distortion_pair')
+
+    @patch('calibration.views.generic_update_view')
+    def test_update_calibration_session_calls_generic_update_view(self,
+                                                                  cv_generic_update_view):
+        resp_object = cv.update_calibration_session('hooha')
+
+        cv_generic_update_view.assert_called_once_with(item_id='hooha', document_type='calibration_session')
 
 
 class TestViewsIntegration(object):
