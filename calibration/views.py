@@ -93,6 +93,8 @@ def create_distortion_pair():
         if 'distortion_set_id' not in request.json:
             distortion_set_id = cast_uuid_to_string(uuid.uuid4())
             request.json['distortion_set_id'] = distortion_set_id
+        else:
+            distortion_set_id = request.json['distortion_set_id']
 
         if not item_exists(distortion_set_id, 'distortion_set'):
             distortion_set_dict = {'_id': distortion_set_id, 'type': 'distortion_set'}

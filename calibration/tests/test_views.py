@@ -89,18 +89,63 @@ class TestViewsUnit(object):
         cv_generic_save_view.assert_called_once_with(document_type='distortion_set')
 
     @patch('calibration.views.generic_save_view')
-    def test_get_distortion_pair_calls_generic_get_view(self,
-                                                        cv_generic_save_view):
-        resp_object = cv.create_distortion_pair()
+    @patch('calibration.views.item_exists')
+    def test_create_distortion_pair_calls_generic_save_view(self,
+                                                           cv_item_exists,
+                                                           cv_generic_save_view):
 
-        cv_generic_save_view.assert_called_once_with(document_type='distortion_pair')
+
+        cv_item_exists.return_value = True
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/json'},
+                                              data='{"distortion_set_id":"umma_gumma", "start_x": "55"}'):
+            resp_object = cv.create_distortion_pair()
+            cv_item_exists.assert_called_once_with('umma_gumma', 'distortion_set')
+            cv_generic_save_view.assert_called_once_with(document_type='distortion_pair')
 
     @patch('calibration.views.generic_save_view')
-    def test_get_calibration_session_calls_generic_get_view(self,
-                                                            cv_generic_save_view):
+    @patch('calibration.views.item_exists')
+    def test_create_distortion_pair_generates_distortion_set_id_if_none_provided(self,
+                                                                                 cv_item_exists,
+                                                                                 cv_generic_save_view):
+
+
+        cv_item_exists.return_value = True
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/json'},
+                                              data='{"start_x": "55"}'):
+            resp_object = cv.create_distortion_pair()
+            cv_item_exists.assert_called_once_with(ANY, 'distortion_set')
+            cv_generic_save_view.assert_called_once_with(document_type='distortion_pair')
+
+
+    @patch('calibration.views.generic_save_view')
+    @patch('calibration.views.save_generic')
+    @patch('calibration.views.item_exists')
+    def test_create_distortion_pair_uses_existing_distortion_set_id_if_none_provided_and_creates_one(self,
+                                                                                                     cv_item_exists,
+                                                                                                     cv_save_generic,
+                                                                                                     cv_generic_save_view):
+
+
+        cv_item_exists.return_value = False
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/json'},
+                                              data='{"distortion_set_id":"umma_gumma", "start_x": "55"}'):
+            resp_object = cv.create_distortion_pair()
+            cv_item_exists.assert_called_once_with('umma_gumma', 'distortion_set')
+            cv_save_generic.assert_called_once_with({'_id': 'umma_gumma', 'type': 'distortion_set'}, 
+                                                    'distortion_set')
+            cv_generic_save_view.assert_called_once_with(document_type='distortion_pair')
+
+
+    @patch('calibration.views.generic_save_view')
+    def test_create_calibration_session_calls_generic_save_view(self,
+                                                                cv_generic_save_view):
         resp_object = cv.create_calibration_session()
 
         cv_generic_save_view.assert_called_once_with(document_type='calibration_session')
+
 
 class TestViewsIntegration(object):
 
