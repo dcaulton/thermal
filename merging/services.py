@@ -26,23 +26,7 @@ def merge_images_task(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_
     merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id)
 
 
-def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id):
-    # TODO deal more elegantly with the fact that different merge methods require different parameters
-    group_document = get_group_document(group_id)
-    group_id = group_document['_id']
-
-    img1_id_in = img1_primary_id_in
-    if item_exists(img1_alternate_id_in, 'picture'):
-        img1_id_in = img1_alternate_id_in
-
-    if 'merge_type' in group_document:
-        merge_type = group_document['merge_type']
-
-    if hasattr(ImageChops, merge_type):
-        merge_method = getattr(ImageChops, merge_type)
-    else:
-        merge_method = getattr(ImageChops, 'screen')
-
+def get_image_paths_and_snap_id(img1_id_in, img2_id_in, img_id_out):
     img1_dict_in = get_document_with_exception(str(img1_id_in), 'picture')
     img1_filename_in = img1_dict_in['filename']
     img2_dict_in = get_document_with_exception(str(img2_id_in), 'picture')
@@ -51,22 +35,59 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
     pic1_path_in = build_picture_path(picture_name=img1_filename_in, snap_id=img1_dict_in['snap_id'])
     pic2_path_in = build_picture_path(picture_name=img2_filename_in, snap_id=img1_dict_in['snap_id'])
     pic_path_out = build_picture_path(picture_name=img_filename_out, snap_id=img1_dict_in['snap_id'])
-    image1_in = Image.open(pic1_path_in)
-    image2_in = Image.open(pic2_path_in)
-    image_out = merge_method(image1_in.convert('RGBA'), image2_in.convert('RGBA'))
-    image_out.save(pic_path_out)
+    return {'img1_path': pic1_path_in,
+            'img2_path': pic2_path_in,
+            'img_out_path': pic_path_out,
+            'img_out_filename': img_filename_out,
+            'snap_id': img1_dict_in['snap_id']}
 
-    img_dict_out = {
-        '_id': str(img_id_out),
-        'type': 'picture',
-        'source': 'merge',
-        'source_image_id_1': str(img1_id_in),
-        'source_image_id_2': str(img2_id_in),
-        'merge_type': merge_type,
-        'group_id': group_id,
-        'snap_id': img1_dict_in['snap_id'],
-        'filename': img_filename_out,
-        'uri': pic_path_out,
-        'created': str(datetime.datetime.now())
-    }
-    save_generic(img_dict_out, 'picture')
+def get_merge_type_and_method(group_document):
+    if 'merge_type' in group_document:
+        merge_type = group_document['merge_type']
+
+    if hasattr(ImageChops, merge_type):
+        merge_method = getattr(ImageChops, merge_type)
+    else:
+        merge_method = getattr(ImageChops, 'screen')
+        merge_type = 'screen'
+    return (merge_type, merge_method)
+
+def do_image_merge(paths_dict, group_document, merge_method):
+    image1_in = Image.open(paths_dict['img1_path'])
+    image2_in = Image.open(paths_dict['img2_path'])
+    image_out = merge_method(image1_in.convert('RGBA'), image2_in.convert('RGBA'))
+    image_out.save(paths_dict['img_out_path'])
+
+def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id):
+    # TODO deal more elegantly with the fact that different merge methods require different parameters
+    # the assumption is that the merged picture will be saved in the directory with the snap of image 1
+    # it also assume that both images have not yet been deleted with clean_up_files
+    try:
+        group_document = get_group_document(group_id)
+
+        img1_id_in = img1_primary_id_in
+        if item_exists(img1_alternate_id_in, 'picture'):
+            img1_id_in = img1_alternate_id_in
+
+        paths_dict = get_image_paths_and_snap_id(img1_id_in, img2_id_in, img_id_out)
+
+        (merge_type, merge_method) = get_merge_type_and_method(group_document)
+        do_image_merge(paths_dict, group_document, merge_method)
+
+        img_dict_out = {
+            '_id': str(img_id_out),
+            'type': 'picture',
+            'source': 'merge',
+            'source_image_id_1': str(img1_id_in),
+            'source_image_id_2': str(img2_id_in),
+            'merge_type': merge_type,
+            'group_id': group_document['_id'],
+            'snap_id': paths_dict['snap_id'],
+            'filename': paths_dict['img_out_filename'],
+            'uri': paths_dict['img_out_path'],
+            'created': str(datetime.datetime.now())
+        }
+        save_generic(img_dict_out, 'picture')
+    except Exception as e:
+        print 'ugh, some kind of exception: '+str(e)
+        # TODO log some kind of error here
