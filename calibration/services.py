@@ -4,7 +4,7 @@ from flask import current_app, url_for
 
 from thermal.exceptions import DocumentConfigurationError, NotFoundError
 from thermal.utils import (get_documents_from_criteria,
-                           get_document,
+                           get_document_with_exception,
                            item_exists,
                            save_document)
 
@@ -14,9 +14,7 @@ def find_distortion_sets(args_dict):
     return distortion_sets_dict
 
 def get_distortion_set_document(distortion_set_id):
-    if not item_exists(distortion_set_id, 'distortion_set'):
-        raise NotFoundError("distortion set not found for id {0}".format(distortion_set_id))
-    distortion_set_dict = get_document(distortion_set_id)
+    distortion_set_dict = get_document_with_exception(distortion_set_id, document_type='distortion_set')
     return distortion_set_dict
 
 def find_distortion_pairs(args_dict):
@@ -25,9 +23,7 @@ def find_distortion_pairs(args_dict):
     return distortion_pairs_dict
 
 def get_distortion_pair_document(distortion_pair_id):
-    if not item_exists(distortion_pair_id, 'distortion_pair'):
-        raise NotFoundError("distortion pair not found for id {0}".format(distortion_pair_id))
-    distortion_pair_dict = get_document(distortion_pair_id)
+    distortion_pair_dict = get_document_with_exception(distortion_pair_id, document_type='distortion_pair')
     return distortion_pair_dict
 
 def find_calibration_sessions(args_dict):
@@ -36,7 +32,5 @@ def find_calibration_sessions(args_dict):
     return calibration_sessions_dict
 
 def get_calibration_session_document(calibration_session_id):
-    if not item_exists(calibration_session_id, 'calibration_session'):
-        raise NotFoundError("calibration session not found for id {0}".format(calibration_session_id))
-    calibration_session_dict = get_document(calibration_session_id)
+    calibration_session_dict = get_document_with_exception(calibration_session_id, document_type='calibration_session')
     return calibration_session_dict
