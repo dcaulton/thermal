@@ -58,8 +58,8 @@ def generic_update_view(item_id='', document_type=''):
                     item_dict[k] = request.json[k]
             update_generic(item_dict, document_type)
             return Response(json.dumps(item_dict), status=200, mimetype='application/json')
-        err_msg = 'no valid settings parameters supplied'
-        return Response(json.dumps(err_msg), status=409, mimetype='application/json')
+        error_msg = 'problem with update: content type is not application/json'
+        return Response(json.dumps(error_msg), status=409, mimetype='application/json')
     except Exception as e:
         return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 

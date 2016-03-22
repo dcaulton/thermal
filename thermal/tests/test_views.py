@@ -114,6 +114,22 @@ class TestViewsUnit(object):
             tv_get_document_with_exception.assert_called_once_with('1234', 'headache')
             tv_update_generic.assert_called_once_with(the_dict, 'headache')
 
+
+    @patch('thermal.views.get_document_with_exception')
+    def test_generic_update_view_handles_non_json_data(self,
+                                                       tv_get_document_with_exception):
+
+        tv_get_document_with_exception.return_value = {'xena': 'warrior_princess'}
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/not_json'},
+                                              data='{"cant_drive": "55"}'):
+            resp_object = tv.generic_update_view(item_id='wango', document_type='tango')
+
+            tv_get_document_with_exception.assert_called_once_with('wango', 'tango')
+
+            assert resp_object.status_code == 409
+            assert resp_object.data == '"problem with update: content type is not application/json"'
+
 #    def test_generic_save_view_generates_missing_id_and_type(self):
 #        with current_app.test_request_context('/whatever',
 #                                              headers={'Content-Type':'application/json'}):
@@ -147,6 +163,27 @@ class TestViewsUnit(object):
                                                     'thermo': 'plastic',
                                                     '_rev': ANY,
                                                     'feed': 'bag'}
+
+    def test_generic_save_view_handles_non_json_data(self):
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/not_json'},
+                                              data='{"cant_drive": "55"}'):
+            resp_object = tv.generic_save_view(args_dict={}, document_type='careless_whisper')
+
+            assert resp_object.status_code == 409
+            assert resp_object.data == '"problem with saving careless_whisper: content type is not application/json"'
+
+
+    @patch('thermal.views.save_generic')
+    def test_generic_save_view_handles_abend(self,
+                                             tv_save_generic):
+        tv_save_generic.side_effect = ThermalBaseError('phenomenon')
+        with current_app.test_request_context('/whatever',
+                                              headers={'Content-Type':'application/json'},
+                                              data='{"thermo":"plastic"}'):
+            resp_object = tv.generic_save_view(args_dict={'feed': 'bag'}, document_type='headache')
+            assert resp_object.status_code == 400
+            assert resp_object.data == '"phenomenon"'
 
 
 class TestViewsIntegration(object):
