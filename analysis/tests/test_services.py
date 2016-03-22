@@ -297,6 +297,59 @@ class TestServicesUnit(object):
         assert len(the_dict.keys()) == 11
 
 
+    @patch('numpy.median')
+    @patch('cv2.Canny')
+    def test_auto_canny_calls_expected_methods(self,
+                                               cv2_canny,
+                                               np_median):
+        np_median.return_value = 0.5
+        cv2_canny.return_value = 'steve'
+        
+        return_value = ans.auto_canny('thing')
+
+        np_median.assert_called_once_with('thing'), .67*5
+        cv2_canny.assert_called_once_with('thing', 0, 0)
+        assert return_value == 'steve'
+  
+
+    @patch('analysis.services.search_generic')
+    def test_build_distortion_pair_strings_calls_expected_methods(self,
+                                                                  as_search_generic):
+        as_search_generic.return_value = [{'start_x': '56', 'start_y': '57', 'end_x': '58', 'end_y': '59'},
+                                          {'start_x': '76', 'start_y': '77', 'end_x': '78', 'end_y': '79'}]
+
+        return_value = ans.build_distortion_pair_strings('taffy')
+
+        as_search_generic.assert_called_once_with(document_type='distortion_pair',
+                                                  args_dict={'distortion_set_id': 'taffy'})
+        assert return_value == ['56,57,58,59', '76,77,78,79']
+
+    @patch('analysis.services.build_distortion_pair_strings')
+    def test_build_command_string_calls_expected_methods(self,
+                                                         as_build_distortion_pair_strings):
+        as_build_distortion_pair_strings.return_value = ['mamasita', 'chile_relleno']
+
+        return_value = ans.build_command_string('a', 'b', 'c')
+
+        as_build_distortion_pair_strings.assert_called_once_with('a')
+
+        # TODO for the moment I have hardcoded it but have this test flag when that hack goes away
+        # assert return_value == "convert b -distort Shepards 'mamasita chile_relleno' c"
+        assert return_value == "convert b -distort Shepards '300,110 350,140  600,310 650,340' c"
+
+#def build_command_string(distortion_set_id, pic_path_in, pic_path_out):
+#    distortion_pair_strings = build_distortion_pair_strings(distortion_set_id)
+#    distortion_pair_string = ' '.join(distortion_pair_strings)
+#    distortion_pair_string = '300,110 350,140  600,310 650,340'
+#    print 'distortion pair string is '+distortion_pair_string
+#
+#    command_string = "convert {0} -distort Shepards '{1}' {2}".format(pic_path_in,
+#                                                                      distortion_pair_string,
+#                                                                      pic_path_out)
+#    print 'command is '+command_string
+#    return command_string
+
+
 
 # test scale image with no colorize
 # test scale image with bilinear

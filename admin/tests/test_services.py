@@ -15,7 +15,7 @@ from thermal.services import save_generic
 from thermal.utils import get_document, item_exists, save_document
 
 
-class TestSettingsUnit(object):
+class TestServicesUnit(object):
     # TODO add test case for upload_to_s3 if we don't have use_gallery in the group doc
 
     @patch('admin.services.update_generic')
@@ -79,7 +79,81 @@ class TestSettingsUnit(object):
         as_update_generic.assert_called_once_with(expected_updated_picture_document, 'picture')
 
 
-class TestSettingsIntegration(object):
+    @patch('admin.services.get_group_document')
+    @patch('os.environ.get')
+    @patch('admin.services.search_generic')
+    @patch('admin.services.build_picture_name')
+    @patch('admin.services.build_picture_path')
+    @patch('admin.services.get_file_contents')
+    @patch('thermal.appmodule.mail.send')
+    def test_send_mail_calls_expected_functions(self,
+                                                mail_send,
+                                                as_get_file_contents,
+                                                as_build_picture_path,
+                                                as_build_picture_name,
+                                                as_search_generic,
+                                                os_environ_get,
+                                                as_get_group_document):
+        class MockObject(object):
+            pass
+        as_get_group_document.return_value = {'email_recipients': 'me,myself,I',
+                                              'send_email_contents': 'pretty,ugly'}
+        os_environ_get.return_value = 'rabbit'
+
+        Message = MockObject()
+        mock_message = MockObject()
+        Message.return_value = mock_message
+        mock_message.body = Mock()
+
+        as_search_generic.return_value = {'1': {'source': 'pretty'},
+                                          '2': {'source': 'fish_sticks'},
+                                          '3': {'source': 'ugly'}}
+
+        as_build_picture_path.return_value = 'mamas_boy_otis'
+        as_build_picture_name.return_value = 'punky_qb'
+        as_get_file_contents.return_value = 'groovy'
+
+        mock_message.attach = Mock()
+    
+        adms.send_mail('some_snap_id', 'some_group_id')
+
+        as_get_group_document.assert_called_once_with('some_group_id')
+#        Message.assert_called_once_with('pictures from snap some_snap_id',
+#                                        sender='rabbit',
+#                                        recipients=['me','myself','I'])
+#        mock_message.body.assert_called_once_with("this is the image for snap id some_snap_id \n\n")
+        as_search_generic.assert_called_once_with(document_type='picture',
+                                                  args_dict={'snap_id': 'some_snap_id'})
+        bpn_calls = [call('1'), call('3')]
+        as_build_picture_name.assert_has_calls(bpn_calls)
+        bpp_calls = [call(picture_name='punky_qb', snap_id='some_snap_id'),
+                     call(picture_name='punky_qb', snap_id='some_snap_id')]
+        as_build_picture_path.assert_has_calls(bpp_calls)
+        as_get_file_contents.assert_has_calls([call('mamas_boy_otis'), call('mamas_boy_otis')])
+        mail_send.assert_called_once_with(ANY)
+
+
+    @patch('admin.services.url_for')
+    @patch('admin.services.get_documents_from_criteria')
+    @patch('admin.services.get_url_base')
+    def test_get_picture_links_for_group_calls_expected_methods(self,
+                                                                as_get_url_base,
+                                                                as_get_documents_from_criteria,
+                                                                as_url_for):
+        as_get_url_base.return_value = 'mandrill-'
+        as_get_documents_from_criteria.return_value = {'cholo': {}, 'payaso': {}}
+        as_url_for.return_value = 'baboon'
+
+        return_value = adms.get_picture_links_for_group('some_group_id')
+
+        as_get_url_base.assert_called_once_with()
+        as_get_documents_from_criteria.assert_called_once_with({'type': 'picture', 'group_id': 'some_group_id'})
+        as_url_for.assert_has_calls([call('picture.get_picture', picture_id='cholo'),
+                                     call('picture.get_picture', picture_id='payaso')])
+        assert return_value == ['mandrill-baboon', 'mandrill-baboon']
+
+
+class TestServicesIntegration(object):
 
     def test_default_settings_dict_has_expected_fields(self):
         the_group_id = uuid.uuid4()

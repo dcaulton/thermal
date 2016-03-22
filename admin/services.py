@@ -218,6 +218,10 @@ def clean_up_files(snap_id, group_id):
         update_generic(snap_document, 'snap')
 
 
+def get_file_contents(pic_path):
+    with current_app.open_resource(pic_path) as fp:
+        return fp.read()
+
 # TODO add unit tests
 # TODO make sure this works with files that are held up with snap.clean_up_files=False.  So make sure we use the current file
 # path, don't hard code it to /home/pi/snap_id/Pictures
@@ -245,8 +249,12 @@ def send_mail(snap_id, group_id):
             if pictures[pic_id]['source'] in picture_types:
                 pic_name = build_picture_name(pic_id)
                 pic_path = build_picture_path(picture_name=pic_name, snap_id=snap_id)
-                with current_app.open_resource(pic_path) as fp:
-                    msg.attach(pic_name, "image/jpeg", fp.read())
-                    pics_have_been_attached = True
+
+                file_contents = get_file_contents(pic_path)
+                msg.attach(pic_name, "image/jpeg", file_contents)
+                pics_have_been_attached = True
+#                with current_app.open_resource(pic_path) as fp:
+#                    msg.attach(pic_name, "image/jpeg", fp.read())
+#                    pics_have_been_attached = True
         if pics_have_been_attached:
             mail.send(msg)
