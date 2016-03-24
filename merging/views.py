@@ -2,8 +2,8 @@ import json
 import uuid
 
 from flask import Blueprint, Response, url_for
-from merging.services import merge_images_task
-from thermal.utils import gather_and_enforce_request_args, get_url_base, item_exists
+from merging.services import merge_images_task, merge_type_is_valid
+from thermal.utils import cast_uuid_to_string, gather_and_enforce_request_args, get_url_base, item_exists
 
 merging = Blueprint('merging', __name__)
 
@@ -24,10 +24,12 @@ def index():
 def call_merge_images():
     '''
     Merges to images into a third one
+    Accepts merge_type as a parameter, see here for valid merge types: http://www.effbot.org/imagingbook/imagechops.htm
     '''
     try:
         args_dict = gather_and_enforce_request_args([{'name': 'img1_id', 'required': True},
-                                                     {'name': 'img1_id', 'required': True}])
+                                                     {'name': 'img2_id', 'required': True},
+                                                     {'name': 'merge_type'}])
         img1_id = args_dict['img1_id']
         img2_id = args_dict['img2_id']
 
@@ -41,15 +43,34 @@ def call_merge_images():
                       'parameter named img2_id in order to call this endpoint'
             return Response(json.dumps(err_msg), status=404, mimetype='application/json')
 
-        result_id = uuid.uuid4()
+        if 'merge_type' in args_dict:
+            if not merge_type_is_valid(args_dict['merge_type']):
+                err_msg = 'invalid merge type specified: '+str(args_dict['merge_type'])
+                return Response(json.dumps(err_msg), status=409, mimetype='application/json')
+            merge_type_is_supplied = True
+        else:
+            merge_type_is_supplied = False
 
-        merge_images_task.delay(
-            img1_primary_id_in=img1_id,
-            img1_alternate_id_in=uuid.uuid4(),
-            img2_id_in=img2_id,
-            img_id_out=result_id,
-            group_id='current'
-        )
+        result_id = cast_uuid_to_string(uuid.uuid4())
+
+
+        if merge_type_is_supplied:
+            merge_images_task.delay(
+                img1_primary_id_in=img1_id,
+                img1_alternate_id_in=uuid.uuid4(),
+                img2_id_in=img2_id,
+                img_id_out=result_id,
+                group_id='current',
+                merge_type=args_dict['merge_type']
+            )
+        else:
+            merge_images_task.delay(
+                img1_primary_id_in=img1_id,
+                img1_alternate_id_in=uuid.uuid4(),
+                img2_id_in=img2_id,
+                img_id_out=result_id,
+                group_id='current'
+            )
         accept_json = {'result_id': result_id}
         return Response(json.dumps(accept_json), status=202, mimetype='application/json')
     except Exception as e:
