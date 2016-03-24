@@ -12,10 +12,6 @@ from thermal.services import save_generic
 from thermal.utils import get_document_with_exception, item_exists
 
 
-def do_stuff():
-    return {'merging stuff': 'just got done'}
-
-
 @celery.task
 def merge_images_chained(_, img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id):
     merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id)
@@ -44,6 +40,8 @@ def get_image_paths_and_snap_id(img1_id_in, img2_id_in, img_id_out):
 def get_merge_type_and_method(group_document):
     if 'merge_type' in group_document:
         merge_type = group_document['merge_type']
+    else:
+        merge_type = 'definitely_not_a_valid_merge_type'
 
     if hasattr(ImageChops, merge_type):
         merge_method = getattr(ImageChops, merge_type)
@@ -57,6 +55,10 @@ def do_image_merge(paths_dict, group_document, merge_method):
     image2_in = Image.open(paths_dict['img2_path'])
     image_out = merge_method(image1_in.convert('RGBA'), image2_in.convert('RGBA'))
     image_out.save(paths_dict['img_out_path'])
+
+# TODO this needs to be hooked up with true logging
+def log_exception(the_exception):
+    print 'ugh, some kind of exception: '+str(the_exception)
 
 def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id):
     # TODO deal more elegantly with the fact that different merge methods require different parameters
@@ -89,5 +91,4 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
         }
         save_generic(img_dict_out, 'picture')
     except Exception as e:
-        print 'ugh, some kind of exception: '+str(e)
-        # TODO log some kind of error here
+        log_exception(str(e))
