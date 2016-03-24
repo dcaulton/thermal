@@ -26,22 +26,45 @@ class TestServicesUnit(object):
         ms.merge_images_task('a', 'b', 'c', 'd', 'e')
         ms_merge_images.assert_called_once_with('a', 'b', 'c', 'd', 'e')
 
-    def test_get_merge_type_and_method_uses_merge_type_from_group_document(self):
-        group_document = {'merge_type': 'difference'}
-        (merge_type, merge_method) = ms.get_merge_type_and_method(group_document)
+    @patch('merging.services.get_group_document')
+    def test_get_merge_type_gets_merge_type_from_group_document(self,
+                                                                ms_get_group_document):
+        ms_get_group_document.return_value = {'merge_type': 'difference'}
+        merge_type = ms.get_merge_type('haha')
+        ms_get_group_document.assert_called_once_with('haha')
         assert merge_type == 'difference'
-        assert merge_method.__name__ == 'difference'
-
-    def test_get_merge_type_and_method_uses_screen_for_default(self):
-        group_document = {}
-        (merge_type, merge_method) = ms.get_merge_type_and_method(group_document)
-        assert merge_type == 'screen'
-        assert merge_method.__name__ == 'screen'
-
 
     @patch('merging.services.get_group_document')
+    def test_get_merge_type_uses_screen_for_default(self,
+                                                    ms_get_group_document):
+        ms_get_group_document.return_value = {}
+        merge_type = ms.get_merge_type('lala')
+        assert merge_type == 'screen'
+
+
+# TODO figure out how to mock out getattr
+#    @patch('merging.services.merge_type_is_valid')
+#    @patch('__builtins__.getattr')
+#    def test_get_merge_method_fetches_valid_method(self,
+#                                                   ms_getattr,
+#                                                   ms_merge_type_is_valid):
+#        ms_merge_type_is_valid.return_value = True
+#        ms.get_merge_method('haha')
+#        ms_getattr.assert_called_once_with(ImageChops, 'haha')
+#
+#    @patch('merging.services.merge_type_is_valid')
+#    @patch('__builtins__.getattr')
+#    def test_get_merge_method_uses_screen_for_default(self,
+#                                                      ms_getattr,
+#                                                      ms_merge_type_is_valid):
+#        ms_merge_type_is_valid.return_value = False
+#        ms.get_merge_method('haha')
+#        ms_getattr.assert_called_once_with(ImageChops, 'screen')
+#
+
     @patch('merging.services.get_image_paths_and_snap_id')
-    @patch('merging.services.get_merge_type_and_method')
+    @patch('merging.services.get_merge_type')
+    @patch('merging.services.get_merge_method')
     @patch('merging.services.do_image_merge')
     @patch('merging.services.item_exists')
     @patch('merging.services.save_generic')
@@ -49,31 +72,31 @@ class TestServicesUnit(object):
                                                  ms_save_generic,
                                                  ms_item_exists,
                                                  ms_do_image_merge,
-                                                 ms_get_merge_type_and_method,
-                                                 ms_get_image_paths_and_snap_id,
-                                                 ms_get_group_document):
-        ms_get_group_document.return_value = {'_id': 'fozzy'}
+                                                 ms_get_merge_method,
+                                                 ms_get_merge_type,
+                                                 ms_get_image_paths_and_snap_id):
         ms_item_exists.return_value = False
         the_paths_dict = {'snap_id': 'x',
                           'img_out_filename': 'y',
                           'img_out_path': 'z'}
         ms_get_image_paths_and_snap_id.return_value = the_paths_dict
-        ms_get_merge_type_and_method.return_value = ('waldorf', int)
+        ms_get_merge_type.return_value = 'waldorf'
+        ms_get_merge_method.return_value = int
 
         ms.merge_images('a', 'b', 'c', 'd', 'e')
 
-        ms_get_group_document.assert_called_once_with('e')
         ms_item_exists.assert_called_once_with('b', 'picture')
         ms_get_image_paths_and_snap_id.assert_called_once_with('a', 'c', 'd')
-        ms_get_merge_type_and_method.assert_called_once_with({'_id': 'fozzy'})
-        ms_do_image_merge.assert_called_once_with(the_paths_dict, {'_id': 'fozzy'}, int)
+        ms_get_merge_type.assert_called_once_with('e')
+        ms_get_merge_method.assert_called_once_with('waldorf')
+        ms_do_image_merge.assert_called_once_with(the_paths_dict, int)
         ms_save_generic.assert_called_once_with({'_id': 'd',
                                                  'type': 'picture',
                                                  'source': 'merge',
                                                  'source_image_id_1': 'a',
                                                  'source_image_id_2': 'c',
                                                  'merge_type': 'waldorf',
-                                                 'group_id': 'fozzy',
+                                                 'group_id': 'e',
                                                  'snap_id': 'x',
                                                  'filename': 'y',
                                                  'uri': 'z',
@@ -81,9 +104,9 @@ class TestServicesUnit(object):
                                                 'picture')
 
 
-    @patch('merging.services.get_group_document')
     @patch('merging.services.get_image_paths_and_snap_id')
-    @patch('merging.services.get_merge_type_and_method')
+    @patch('merging.services.get_merge_type')
+    @patch('merging.services.get_merge_method')
     @patch('merging.services.do_image_merge')
     @patch('merging.services.item_exists')
     @patch('merging.services.save_generic')
@@ -91,16 +114,16 @@ class TestServicesUnit(object):
                                                           ms_save_generic,
                                                           ms_item_exists,
                                                           ms_do_image_merge,
-                                                          ms_get_merge_type_and_method,
-                                                          ms_get_image_paths_and_snap_id,
-                                                          ms_get_group_document):
-        ms_get_group_document.return_value = {'_id': 'fozzy'}
+                                                          ms_get_merge_method,
+                                                          ms_get_merge_type,
+                                                          ms_get_image_paths_and_snap_id):
         ms_item_exists.return_value = True
         the_paths_dict = {'snap_id': 'x',
                           'img_out_filename': 'y',
                           'img_out_path': 'z'}
         ms_get_image_paths_and_snap_id.return_value = the_paths_dict
-        ms_get_merge_type_and_method.return_value = ('waldorf', int)
+        ms_get_merge_type.return_value = 'waldorf'
+        ms_get_merge_method.return_value = int
 
         ms.merge_images('a', 'b', 'c', 'd', 'e')
 
@@ -111,12 +134,12 @@ class TestServicesUnit(object):
                                                  'source_image_id_1': 'b',
                                                  'source_image_id_2': 'c',
                                                  'merge_type': 'waldorf',
-                                                 'group_id': 'fozzy',
+                                                 'group_id': 'e',
                                                  'snap_id': 'x',
                                                  'filename': 'y',
                                                  'uri': 'z',
                                                  'created': ANY},
-                                                'picture')
+                                                 'picture')
 
     @patch('merging.services.get_group_document')
     @patch('merging.services.log_exception')
@@ -168,7 +191,7 @@ class TestServicesUnit(object):
         Image.open = Mock(return_value = the_mock_image)
         the_merge_method = Mock(return_value=the_mock_image)
 
-        ms.do_image_merge({'img1_path': 'a', 'img2_path': 'b', 'img_out_path': 'c'},{}, the_merge_method)
+        ms.do_image_merge({'img1_path': 'a', 'img2_path': 'b', 'img_out_path': 'c'}, the_merge_method)
 
         Image.open.assert_has_calls([call('a'), call('b')])
         the_merge_method.assert_called_once_with('strange', 'strange')
