@@ -12,6 +12,7 @@ import analysis.services as ans
 import camera.tests.test_services
 from picture.services import build_picture_path
 from thermal.appmodule import celery
+from thermal.exceptions import ThermalBaseError
 from thermal.services import save_generic
 
 
@@ -99,6 +100,31 @@ class TestServicesUnit(object):
         ImageOps.colorize.assert_called_once_with(the_mock_image, 1.1, 2.2)
         MockImage.save.assert_called_once_with(pic_path_out)
         ans.save_generic.assert_called_once_with(test_img_dict_out, 'picture')
+
+
+    @patch('analysis.services.get_group_document')
+    @patch('analysis.services.get_document_with_exception')
+    @patch('analysis.services.build_picture_name')
+    @patch('analysis.services.build_picture_path')
+    @patch('analysis.services.scale_image_subtask')
+    def test_scale_image_accepts_scale_type_through_kwargs(self,
+                                                           as_scale_image_subtask,
+                                                           as_build_picture_path,
+                                                           as_build_picture_name,
+                                                           as_get_document_with_exception,
+                                                           as_get_group_document):
+
+        as_get_group_document.return_value = {'_id': 'd1'}
+        as_scale_image_subtask.side_effect = ThermalBaseError('wocka_wocka')
+        Image.open = Mock(return_value='ali_baba')
+        as_build_picture_path.return_value = 'steve_mcnair'
+        as_build_picture_name.return_value = 'mongo_mcmichael'
+        as_get_document_with_exception.return_value = {'filename': 'a1', 'uri': 'b1', 'snap_id': 'c1'}
+
+        with pytest.raises(ThermalBaseError) as exception_info:
+            return_value = ans.scale_image('a', 'b', 'c', scale_type='specified_scale_type')
+            
+        as_scale_image_subtask.assert_called_once_with('specified_scale_type', ANY)
 
 
     @patch('analysis.services.get_image_mean_pixel_value')
