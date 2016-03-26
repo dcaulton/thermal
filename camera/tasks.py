@@ -22,7 +22,7 @@ def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_
     camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
 
 
-def take_picam_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=False):
+def take_picam_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=True):
     '''
     Top level handler for taking Picam pictures between the camera view and the camera service modules.
     Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.
@@ -63,7 +63,7 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=False)
 
 
 @celery.task
-def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files=False):
+def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files=True):
     '''
     Wrapper method to handle the celery scheduling of the taking of a single Picam still.
     Calls the synchronous take_picam_still method.
@@ -71,7 +71,7 @@ def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
 
 
-def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True, clean_up_files=False):
+def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True, clean_up_files=True):
     '''
     Top level handler for taking Lepton pictures between the camera view and the camera service modules.
     Besides group and snap information, it accepts get parameters to schedule delayed or repeating stills.
@@ -80,58 +80,37 @@ def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True, c
     pic_ids = []
     scaled_pic_ids = []
     snap_ids = []
-    # TODO I don't like this precedent.  Have scale_image_chained suppress itself based on a parm passed to it
-    if scale_image:
-        for i in [x * delay for x in range(1, repeat + 2)]:
-            pic_id = uuid.uuid4()
-            scaled_pic_id = uuid.uuid4()
-            chain(
-                thermal_still_task.s(
-                    snap_id=snap_id,
-                    group_id=group_id,
-                    pic_id=pic_id,
-                    clean_up_files=clean_up_files
-                ),
-                scale_image_chained.s(
-                    img_id_in=pic_id,
-                    img_id_out=scaled_pic_id,
-                    group_id=group_id
-                ),
-                send_mail_chained.s(
-                    snap_id=snap_id,
-                    group_id=group_id
-                ),
-                file_wrap_up_chained.s(
-                    snap_id=snap_id,
-                    group_id=group_id
-                )
-            ).apply_async(countdown=i)
-            pic_ids.append(str(pic_id))
-            snap_ids.append(str(snap_id))
+
+    for i in [x * delay for x in range(1, repeat + 2)]:
+        pic_id = uuid.uuid4()
+        scaled_pic_id = uuid.uuid4()
+        chain(
+            thermal_still_task.s(
+                snap_id=snap_id,
+                group_id=group_id,
+                pic_id=pic_id,
+                clean_up_files=clean_up_files
+            ),
+            scale_image_chained.s(
+                img_id_in=pic_id,
+                img_id_out=scaled_pic_id,
+                group_id=group_id,
+                scale_image=scale_image
+            ),
+            send_mail_chained.s(
+                snap_id=snap_id,
+                group_id=group_id
+            ),
+            file_wrap_up_chained.s(
+                snap_id=snap_id,
+                group_id=group_id
+            )
+        ).apply_async(countdown=i)
+        pic_ids.append(str(pic_id))
+        snap_ids.append(str(snap_id))
+        if scale_image:
             scaled_pic_ids.append(str(scaled_pic_id))
-            snap_id = uuid.uuid4()
-    else:
-        for i in [x * delay for x in range(1, repeat + 2)]:
-            pic_id = uuid.uuid4()
-            chain(
-                thermal_still_task.s(
-                    snap_id=snap_id,
-                    group_id=group_id,
-                    pic_id=pic_id,
-                    clean_up_files=clean_up_files
-                ),
-                send_mail_chained.s(
-                    snap_id=snap_id,
-                    group_id=group_id
-                ),
-                file_wrap_up_chained.s(
-                    snap_id=snap_id,
-                    group_id=group_id
-                )
-            ).apply_async(countdown=i)
-            pic_ids.append(str(pic_id))
-            snap_ids.append(str(snap_id))
-            snap_id = uuid.uuid4()
+        snap_id = uuid.uuid4()
     return {
         'pic_ids': pic_ids,
         'scaled_pic_ids': scaled_pic_ids,

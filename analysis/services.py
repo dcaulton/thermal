@@ -126,7 +126,11 @@ def make_edge_picture_dict(pic_id=None,
 
 @celery.task
 def scale_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):
-    scale_image(img_id_in, img_id_out, group_id, **kwargs)
+    if 'scale_image' in kwargs and not kwargs['scale_image']:
+        # allow this functionality to be suppressed by a kwarg for 'scale_image' that evaluates to false
+        pass
+    else:
+        scale_image(img_id_in, img_id_out, group_id, **kwargs)
 
 
 @celery.task
