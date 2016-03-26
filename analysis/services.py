@@ -137,6 +137,7 @@ def scale_image_task(img_id_in, img_id_out, group_id, **kwargs):
 def scale_image(img_id_in, img_id_out, group_id, **kwargs):
     # only works on black and white images for now
     # that should only be a problem for images that aren't of type 'L'.  Add this test
+    # TODO carry scale_type in the group record
     if 'scale_type' in kwargs:
         scale_type = kwargs['scale_type']
     else:

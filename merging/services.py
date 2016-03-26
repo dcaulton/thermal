@@ -14,12 +14,21 @@ from thermal.utils import get_document_with_exception, item_exists
 
 @celery.task
 def merge_images_chained(_, img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id):
-    merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id)
+    merge_images(img1_primary_id_in=img1_primary_id_in,
+                 img1_alternate_id_in=img1_alternate_id_in,
+                 img2_id_in=img2_id_in,
+                 img_id_out=img_id_out,
+                 group_id=group_id)
 
 
 @celery.task
 def merge_images_task(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id, **kwargs):
-    merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id, **kwargs)
+    merge_images(img1_primary_id_in=img1_primary_id_in,
+                 img1_alternate_id_in=img1_alternate_id_in,
+                 img2_id_in=img2_id_in,
+                 img_id_out=img_id_out,
+                 group_id=group_id,
+                 **kwargs)
 
 
 def get_image_paths_and_snap_id(img1_id_in, img2_id_in, img_id_out):
@@ -59,20 +68,23 @@ def log_exception(the_exception):
     print 'ugh, some kind of exception: '+str(the_exception)
 
 def get_merge_type(group_id, **kwargs):
-    if 'merge_type' in kwargs:
+    if 'merge_type' in kwargs and kwargs['merge_type']:
         merge_type = kwargs['merge_type']
+        print 'getting merge type from kwargs: '+merge_type
     else:
         group_document = get_group_document(group_id)
         if 'merge_type' in group_document:
             merge_type = group_document['merge_type']
+            print 'getting merge type from group_doc: '+merge_type
         else:
             merge_type = 'screen'
+            print 'defaulting merge type to screen'
     return merge_type
 
 def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id, **kwargs):
     # TODO deal more elegantly with the fact that different merge methods require different parameters
     # the assumption is that the merged picture will be saved in the directory with the snap of image 1
-    # it also assume that both images have not yet been deleted with clean_up_files
+    # it also assumes that both images have not yet been deleted with clean_up_files
     try:
         merge_type = get_merge_type(group_id, **kwargs)
         merge_method = get_merge_method(merge_type)

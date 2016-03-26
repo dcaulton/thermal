@@ -165,6 +165,7 @@ class TestServicesIntegration(object):
 
     def test_default_group_dict_has_expected_fields(self):
         group_doc = adms.default_group_dict()
+        # TODO assert the values too
         expected_fields = ['_id',
                            'merge_type',
                            'retake_picam_pics_when_dark',

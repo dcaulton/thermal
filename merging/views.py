@@ -41,24 +41,13 @@ def call_merge_images():
         merge_type = check_for_merge_type(args_dict)
         result_id = cast_uuid_to_string(uuid.uuid4())
 
-        # TODO I can probably just pass merge type here and have merge_images_task treat it as optional
-        if merge_type:
-            merge_images_task.delay(
-                img1_primary_id_in=img1_id,
-                img1_alternate_id_in=uuid.uuid4(),
-                img2_id_in=img2_id,
-                img_id_out=result_id,
-                group_id='current',
-                merge_type=merge_type
-            )
-        else:
-            merge_images_task.delay(
-                img1_primary_id_in=img1_id,
-                img1_alternate_id_in=uuid.uuid4(),
-                img2_id_in=img2_id,
-                img_id_out=result_id,
-                group_id='current'
-            )
+        merge_images_task.delay(
+            img1_primary_id_in=img1_id,
+            img1_alternate_id_in=uuid.uuid4(),
+            img2_id_in=img2_id,
+            img_id_out=result_id,
+            group_id='current',
+            merge_type=merge_type)
         accept_json = {'result_id': result_id}
         return Response(json.dumps(accept_json), status=202, mimetype='application/json')
     except Exception as e:

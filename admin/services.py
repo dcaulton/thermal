@@ -115,7 +115,7 @@ def default_group_dict():
     '''
     group_id = uuid.uuid4()
     group_dict = {'_id': str(group_id),
-                  'merge_type': 'colorize_screen',
+                  'merge_type': 'screen',
                   'retake_picam_pics_when_dark': True,
                   'use_gallery': True,
                   'email_recipients': '',

@@ -6,7 +6,8 @@ import uuid
 from flask import current_app, request
 
 import merging.views as mv
-from thermal.exceptions import DocumentConfigurationError, NotFoundError
+import merging.services
+from thermal.exceptions import DocumentConfigurationError, NotFoundError, ThermalBaseError
 
 
 class TestViewsUnit(object):
@@ -62,3 +63,46 @@ class TestViewsUnit(object):
     def test_check_for_merge_type_returns_nothing_when_no_type_supplied(self):
         return_value = mv.check_for_merge_type({})
         assert return_value == None
+
+
+    @patch('merging.views.gather_and_enforce_request_args')
+    @patch('merging.views.test_input_parameters_for_valid_image_ids')
+    @patch('merging.views.check_for_merge_type')
+    @patch('merging.views.cast_uuid_to_string')
+    def test_call_merge_images_calls_expected_methods(self,
+                                                      mv_cast_uuid_to_string,
+                                                      mv_check_for_merge_type,
+                                                      mv_test_input_parameters_for_valid_image_ids,
+                                                      mv_gather_and_enforce_request_args):
+        the_args_dict = {'img1_id': 'professor', 'img2_id': 'mary_ann'}
+        mv_gather_and_enforce_request_args.return_value = the_args_dict
+        mv_check_for_merge_type.return_value = 'gilligan'
+        mv_cast_uuid_to_string.return_value = 'skipper'
+
+        merging.services.merge_images = Mock()
+        resp_object = mv.call_merge_images()
+
+        mv_gather_and_enforce_request_args.assert_called_once_with([{'name': 'img1_id', 'required': True},
+                                                                    {'name': 'img2_id', 'required': True},
+                                                                    {'name': 'merge_type'}])
+        mv_test_input_parameters_for_valid_image_ids.assert_called_once_with(the_args_dict)
+        mv_check_for_merge_type.assert_called_once_with(the_args_dict)
+        mv_cast_uuid_to_string.assert_called_once_with(ANY)
+        merging.services.merge_images.assert_called_once_with(img1_primary_id_in='professor',
+                                                              img1_alternate_id_in=ANY,
+                                                              img2_id_in='mary_ann',
+                                                              img_id_out='skipper',
+                                                              group_id='current',
+                                                              merge_type='gilligan')
+        assert resp_object.status_code == 202
+
+
+    @patch('merging.views.gather_and_enforce_request_args')
+    def test_call_merge_images_handles_exception(self,
+                                                 mv_gather_and_enforce_request_args):
+
+        mv_gather_and_enforce_request_args.side_effect = ThermalBaseError('careless_whisper')
+
+        resp_object = mv.call_merge_images()
+        assert resp_object.data == '"careless_whisper"'
+        assert resp_object.status_code == 400

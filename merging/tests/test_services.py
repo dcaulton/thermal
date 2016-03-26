@@ -18,13 +18,21 @@ class TestServicesUnit(object):
     def test_merge_images_chained_calls_merge_images(self,
                                                      ms_merge_images):
         ms.merge_images_chained('a', 'b', 'c', 'd', 'e', 'f')
-        ms_merge_images.assert_called_once_with('b', 'c', 'd', 'e', 'f')
+        ms_merge_images.assert_called_once_with(img1_primary_id_in='b',
+                                                img1_alternate_id_in='c',
+                                                img2_id_in='d',
+                                                img_id_out='e',
+                                                group_id='f')
 
     @patch('merging.services.merge_images')
     def test_merge_images_task_calls_merge_images(self,
                                                   ms_merge_images):
         ms.merge_images_task('a', 'b', 'c', 'd', 'e')
-        ms_merge_images.assert_called_once_with('a', 'b', 'c', 'd', 'e')
+        ms_merge_images.assert_called_once_with(img1_primary_id_in='a',
+                                                img1_alternate_id_in='b',
+                                                img2_id_in='c',
+                                                img_id_out='d',
+                                                group_id='e')
 
     @patch('merging.services.get_group_document')
     def test_get_merge_type_gets_merge_type_from_group_document(self,
@@ -101,7 +109,7 @@ class TestServicesUnit(object):
                                                  'filename': 'y',
                                                  'uri': 'z',
                                                  'created': ANY},
-                                                'picture')
+                                                 'picture')
 
 
     @patch('merging.services.get_image_paths_and_snap_id')
