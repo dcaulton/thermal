@@ -63,7 +63,7 @@ def take_picam_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=False)
 
 
 @celery.task
-def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files):
+def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files=False):
     '''
     Wrapper method to handle the celery scheduling of the taking of a single Picam still.
     Calls the synchronous take_picam_still method.
