@@ -363,6 +363,85 @@ class TestServicesUnit(object):
         # assert return_value == "convert b -distort Shepards 'mamasita chile_relleno' c"
         assert return_value == "convert b -distort Shepards '300,110 350,140  600,310 650,340' c"
 
+    @patch('analysis.services.log_asynchronous_exception')
+    @patch('analysis.services.edge_detect')
+    def test_edge_detect_chained_catches_exception(self,
+                                                   as_edge_detect,
+                                                   as_log_asynchronous_exception):
+        the_exception = ThermalBaseError('donovan_mcnabb')
+        as_edge_detect.side_effect = the_exception
+
+        ans.edge_detect_chained('a', 'b', detection_threshold='c', auto_id='d', wide_id='e', tight_id='f')
+
+        as_edge_detect.assert_called_once_with('b', 'c', 'd', 'e', 'f')
+        as_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+    @patch('analysis.services.log_asynchronous_exception')
+    @patch('analysis.services.edge_detect')
+    def test_edge_detect_task_catches_exception(self,
+                                                as_edge_detect,
+                                                as_log_asynchronous_exception):
+        the_exception = ThermalBaseError('trent_dilfer')
+        as_edge_detect.side_effect = the_exception
+
+        ans.edge_detect_task('a', detection_threshold='b', auto_id='c', wide_id='d', tight_id='e')
+
+        as_edge_detect.assert_called_once_with('a', 'b', 'c', 'd', 'e')
+        as_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+    @patch('analysis.services.log_asynchronous_exception')
+    @patch('analysis.services.scale_image')
+    def test_scale_image_chained_catches_exception(self,
+                                                   as_scale_image,
+                                                   as_log_asynchronous_exception):
+        the_exception = ThermalBaseError('dante_culpepper')
+        as_scale_image.side_effect = the_exception
+
+        ans.scale_image_chained('a', 'b', 'c', 'd')
+
+        as_scale_image.assert_called_once_with('b', 'c', 'd')
+        as_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+    @patch('analysis.services.log_asynchronous_exception')
+    @patch('analysis.services.scale_image')
+    def test_scale_image_task_catches_exception(self,
+                                                as_scale_image,
+                                                as_log_asynchronous_exception):
+        the_exception = ThermalBaseError('carlton_fisk')
+        as_scale_image.side_effect = the_exception
+
+        ans.scale_image_task('a', 'b', 'c')
+
+        as_scale_image.assert_called_once_with('a', 'b', 'c')
+        as_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+    @patch('analysis.services.log_asynchronous_exception')
+    @patch('analysis.services.distort_image_shepards')
+    def test_distort_image_shepards_chained_catches_exception(self,
+                                                              as_distort_image_shepards,
+                                                              as_log_asynchronous_exception):
+        the_exception = ThermalBaseError('bo_jackson')
+        as_distort_image_shepards.side_effect = the_exception
+
+        ans.distort_image_shepards_chained('a', 'b', 'c')
+
+        as_distort_image_shepards.assert_called_once_with(image_id_in='b', image_id_out='c', distortion_set_id=None)
+        as_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+    @patch('analysis.services.log_asynchronous_exception')
+    @patch('analysis.services.distort_image_shepards')
+    def test_distort_image_shepards_task_catches_exception(self,
+                                                           as_distort_image_shepards,
+                                                           as_log_asynchronous_exception):
+        the_exception = ThermalBaseError('matt_forte')
+        as_distort_image_shepards.side_effect = the_exception
+
+        ans.distort_image_shepards_task('a', 'b', 'c')
+
+        as_distort_image_shepards.assert_called_once_with(image_id_in='a', image_id_out='b', distortion_set_id='c')
+        as_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+#
 #def build_command_string(distortion_set_id, pic_path_in, pic_path_out):
 #    distortion_pair_strings = build_distortion_pair_strings(distortion_set_id)
 #    distortion_pair_string = ' '.join(distortion_pair_strings)

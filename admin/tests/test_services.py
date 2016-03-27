@@ -279,4 +279,3 @@ class TestServicesIntegration(object):
         assert not os.path.isdir(os.path.join(current_app.config['PICTURE_SAVE_DIRECTORY'], str(snap_id)))
         snap_document = get_document(snap_id)
         assert snap_document['files_have_been_cleaned_up'] == True
-
