@@ -11,6 +11,7 @@ import admin.tasks
 import camera.services
 import camera.tasks as ct
 from celery import Celery
+from thermal.exceptions import ThermalBaseError
 
 
 class TestTasksUnit(object):
@@ -143,3 +144,46 @@ class TestTasksUnit(object):
                                 'group_id': 'some_group_id',
                                 'pic_ids': [ANY],
                                 'scaled_pic_ids': []}
+
+
+
+
+
+    @patch('camera.tasks.log_asynchronous_exception')
+    @patch('camera.services.take_picam_still')
+    def test_take_picam_still_chained_catches_exception(self,
+                                                        cs_take_picam_still,
+                                                        ct_log_asynchronous_exception):
+        the_exception = ThermalBaseError('steve_wilkos')
+        cs_take_picam_still.side_effect = the_exception
+
+        ct.take_picam_still_chained('a', 'b', 'c', 'd', 'e', 'f')
+
+        cs_take_picam_still.assert_called_once_with('b', 'c', 'd', 'e', 'f')
+        ct_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+    @patch('camera.tasks.log_asynchronous_exception')
+    @patch('camera.services.take_picam_still')
+    def test_picam_still_task_catches_exception(self,
+                                                cs_take_picam_still,
+                                                ct_log_asynchronous_exception):
+        the_exception = ThermalBaseError('wendy_williams')
+        cs_take_picam_still.side_effect = the_exception
+
+        ct.picam_still_task('a', 'b', 'c', 'd', 'e')
+
+        cs_take_picam_still.assert_called_once_with('a', 'b', 'c', 'd', 'e')
+        ct_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+    @patch('camera.tasks.log_asynchronous_exception')
+    @patch('camera.services.take_thermal_still')
+    def test_thermal_still_task_catches_exception(self,
+                                                  cs_take_thermal_still,
+                                                  ct_log_asynchronous_exception):
+        the_exception = ThermalBaseError('bill_cunningham')
+        cs_take_thermal_still.side_effect = the_exception
+
+        ct.thermal_still_task('a', 'b', 'c', 'd')
+
+        cs_take_thermal_still.assert_called_once_with('a', 'b', 'c', 'd')
+        ct_log_asynchronous_exception.assert_called_once_with(the_exception)
