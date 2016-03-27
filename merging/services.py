@@ -9,26 +9,34 @@ from picture.services import (build_picture_path,
                               build_picture_name)
 from thermal.appmodule import celery
 from thermal.services import save_generic
-from thermal.utils import get_document_with_exception, item_exists
+from thermal.utils import (get_document_with_exception,
+                           item_exists,
+                           log_asynchronous_exception)
 
 
 @celery.task
 def merge_images_chained(_, img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id):
-    merge_images(img1_primary_id_in=img1_primary_id_in,
-                 img1_alternate_id_in=img1_alternate_id_in,
-                 img2_id_in=img2_id_in,
-                 img_id_out=img_id_out,
-                 group_id=group_id)
+    try:
+        merge_images(img1_primary_id_in=img1_primary_id_in,
+                     img1_alternate_id_in=img1_alternate_id_in,
+                     img2_id_in=img2_id_in,
+                     img_id_out=img_id_out,
+                     group_id=group_id)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 @celery.task
 def merge_images_task(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_out, group_id, **kwargs):
-    merge_images(img1_primary_id_in=img1_primary_id_in,
-                 img1_alternate_id_in=img1_alternate_id_in,
-                 img2_id_in=img2_id_in,
-                 img_id_out=img_id_out,
-                 group_id=group_id,
-                 **kwargs)
+    try:
+        merge_images(img1_primary_id_in=img1_primary_id_in,
+                     img1_alternate_id_in=img1_alternate_id_in,
+                     img2_id_in=img2_id_in,
+                     img_id_out=img_id_out,
+                     group_id=group_id,
+                     **kwargs)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 def get_image_paths_and_snap_id(img1_id_in, img2_id_in, img_id_out):
@@ -63,10 +71,6 @@ def do_image_merge(paths_dict, merge_method):
     image_out = merge_method(image1_in.convert('RGBA'), image2_in.convert('RGBA'))
     image_out.save(paths_dict['img_out_path'])
 
-# TODO this needs to be hooked up with true logging
-def log_exception(the_exception):
-    print 'ugh, some kind of exception: '+str(the_exception)
-
 def get_merge_type(group_id, **kwargs):
     if 'merge_type' in kwargs and kwargs['merge_type']:
         merge_type = kwargs['merge_type']
@@ -85,7 +89,6 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
     # TODO deal more elegantly with the fact that different merge methods require different parameters
     # the assumption is that the merged picture will be saved in the directory with the snap of image 1
     # it also assumes that both images have not yet been deleted with clean_up_files
-    try:
         merge_type = get_merge_type(group_id, **kwargs)
         merge_method = get_merge_method(merge_type)
 
@@ -111,5 +114,3 @@ def merge_images(img1_primary_id_in, img1_alternate_id_in, img2_id_in, img_id_ou
             'created': str(datetime.datetime.now())
         }
         save_generic(img_dict_out, 'picture')
-    except Exception as e:
-        log_exception(str(e))

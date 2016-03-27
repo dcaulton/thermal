@@ -12,7 +12,9 @@ from picture.services import (build_picture_path,
                               build_picture_name)
 from thermal.appmodule import celery
 from thermal.services import save_generic, search_generic
-from thermal.utils import get_document_with_exception, item_exists
+from thermal.utils import (get_document_with_exception,
+                           item_exists,
+                           log_asynchronous_exception)
 
 
 def get_image_mean_pixel_value(filename):
@@ -30,12 +32,18 @@ def check_if_image_is_too_dark(filename, brightness_threshold):
 
 @celery.task
 def edge_detect_chained(_, img_id_in, detection_threshold='all', auto_id=None, wide_id=None, tight_id=None):
-    edge_detect(img_id_in, detection_threshold, auto_id, wide_id, tight_id)
+    try:
+        edge_detect(img_id_in, detection_threshold, auto_id, wide_id, tight_id)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 @celery.task
 def edge_detect_task(img_id_in, detection_threshold='all', auto_id=None, wide_id=None, tight_id=None):
-    edge_detect(img_id_in, detection_threshold, auto_id, wide_id, tight_id)
+    try:
+        edge_detect(img_id_in, detection_threshold, auto_id, wide_id, tight_id)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 def build_blurred_cv2_image(img_id_in):
@@ -66,8 +74,6 @@ def edge_detect_with_canny_limits(img_id_in, pic_dict_in, new_id, limit_low, lim
     blurred = build_blurred_cv2_image(img_id_in)
     # apply Canny edge detection using a custom threshold
     # TODO if limit_low or limit_high aren't positive ints, with high > low throw an error
-    # TODO die if not item_exists(img_id_in, 'picture'), and the physical picture is there (e.g. clean_up_files not yet called)
-    # TODO figure out where to register these errors, this task is asynchronous 
     new_image = cv2.Canny(blurred, limit_low, limit_high)
     new_filename = build_picture_name(new_id)
     new_path_out = build_picture_path(picture_name=new_filename, snap_id=pic_dict_in['snap_id'])
@@ -126,28 +132,36 @@ def make_edge_picture_dict(pic_id=None,
 
 @celery.task
 def scale_image_chained(_, img_id_in, img_id_out, group_id, **kwargs):
-    if 'scale_image' in kwargs and not kwargs['scale_image']:
-        # allow this functionality to be suppressed by a kwarg for 'scale_image' that evaluates to false
-        pass
-    else:
-        scale_image(img_id_in, img_id_out, group_id, **kwargs)
+    try:
+        if 'scale_image' in kwargs and not kwargs['scale_image']:
+            # allow this functionality to be suppressed by a kwarg for 'scale_image' that evaluates to false
+            pass
+        else:
+            scale_image(img_id_in, img_id_out, group_id, **kwargs)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 @celery.task
 def scale_image_task(img_id_in, img_id_out, group_id, **kwargs):
-    scale_image(img_id_in, img_id_out, group_id, **kwargs)
+    try:
+        scale_image(img_id_in, img_id_out, group_id, **kwargs)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 def scale_image(img_id_in, img_id_out, group_id, **kwargs):
     # only works on black and white images for now
     # that should only be a problem for images that aren't of type 'L'.  Add this test
-    # TODO carry scale_type in the group record
+    group_document = get_group_document(group_id)
     if 'scale_type' in kwargs:
         scale_type = kwargs['scale_type']
     else:
-        scale_type = 'colorize_bicubic'
+        if 'scale_type' in group_document:
+            scale_type = group_document['scale_type']
+        else:
+            scale_type = 'colorize_bicubic'
 
-    group_document = get_group_document(group_id)
     group_id = group_document['_id']
     img_dict_in = get_document_with_exception(str(img_id_in), 'picture')
     img_filename_in = img_dict_in['filename']
@@ -214,11 +228,17 @@ def distort_image_shepards_chained(_, img_id_in, img_id_out):
     For now assume no distortion_set_id for chained distortions.
     If we need a distortion set we'll get whatever has been associated with the group
     '''
-    distort_image_shepards(image_id_in=img_id_in, image_id_out=img_id_out, distortion_set_id=None)
+    try:
+        distort_image_shepards(image_id_in=img_id_in, image_id_out=img_id_out, distortion_set_id=None)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 @celery.task
 def distort_image_shepards_task(img_id_in, img_id_out, distortion_set_id):
-    distort_image_shepards(image_id_in=img_id_in, image_id_out=img_id_out, distortion_set_id=distortion_set_id)
+    try:
+        distort_image_shepards(image_id_in=img_id_in, image_id_out=img_id_out, distortion_set_id=distortion_set_id)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 def build_distortion_pair_strings(distortion_set_id):

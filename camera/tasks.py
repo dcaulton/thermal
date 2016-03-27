@@ -8,6 +8,7 @@ from analysis.services import edge_detect_chained, scale_image_chained, distort_
 import camera.services
 from merging.services import merge_images_chained
 from thermal.appmodule import celery
+from thermal.utils import log_asynchronous_exception
 
 
 @celery.task
@@ -19,7 +20,10 @@ def take_picam_still_chained(_, snap_id, group_id, normal_exposure_pic_id, long_
     '''
     # don't call picam_still_task here.  It would cause a new celery task to be created, which would be out of
     #  sequence with the original chain of tasks we belong to
-    camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
+    try:
+        camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 def take_picam_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=True):
@@ -68,7 +72,10 @@ def picam_still_task(snap_id, group_id, normal_exposure_pic_id, long_exposure_pi
     Wrapper method to handle the celery scheduling of the taking of a single Picam still.
     Calls the synchronous take_picam_still method.
     '''
-    camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
+    try:
+        camera.services.take_picam_still(snap_id, group_id, normal_exposure_pic_id, long_exposure_pic_id, clean_up_files)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 def take_thermal_still(snap_id, group_id, delay=0, repeat=0, scale_image=True, clean_up_files=True):
@@ -125,7 +132,10 @@ def thermal_still_task(snap_id, group_id, pic_id, clean_up_files):
     Wrapper method to handle the celery scheduling of the taking of a single Lepton still.
     Calls the synchronous take_thermal_still method.
     '''
-    camera.services.take_thermal_still(snap_id, group_id, pic_id, clean_up_files)
+    try:
+        camera.services.take_thermal_still(snap_id, group_id, pic_id, clean_up_files)
+    except Exception as e:
+        log_asynchronous_exception(e)
 
 
 def take_both_still(snap_id, group_id, delay=0, repeat=0, clean_up_files=False):

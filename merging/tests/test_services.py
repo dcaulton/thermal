@@ -149,20 +149,6 @@ class TestServicesUnit(object):
                                                  'created': ANY},
                                                  'picture')
 
-    @patch('merging.services.get_group_document')
-    @patch('merging.services.log_exception')
-    def test_merge_images_catches_exception(self,
-                                            ms_log_exception,
-                                            ms_get_group_document):
-
-              
-        ms_get_group_document.side_effect = ThermalBaseError('unbelievable')
-
-        ms.merge_images('a', 'b', 'c', 'd', 'e')
-
-        ms_log_exception.assert_called_once_with('unbelievable')
-
-
     @patch('merging.services.get_document_with_exception')
     @patch('merging.services.build_picture_name')
     @patch('merging.services.build_picture_path')

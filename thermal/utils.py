@@ -1,5 +1,6 @@
 import __builtin__
 from collections import OrderedDict
+import traceback
 
 from flask import current_app, request
 
@@ -116,6 +117,7 @@ def get_document_with_exception(doc_id, document_type='any'):
     Fetches a document with the supplied id from the database.
     Throws a NotFoundError if a document of that type isn't available.  Accepts 'any' as a wildcard for document type
     '''
+    # TODO add a test here for picture - it should throw FileCleanedUpException if you're trying to access a pic after cleanup
     doc_id = cast_uuid_to_string(doc_id)
     if not item_exists(doc_id, document_type):
         raise NotFoundError("No document of type {0} found for id {1}".format(document_type, doc_id))
@@ -272,3 +274,8 @@ def _get_parameter(parameter_name, default=None, cast_function=None, raise_value
                 else:
                     return_value = default
     return return_value
+
+def log_asynchronous_exception(the_exception):
+    tb = traceback.format_exc()
+    print tb
+    print 'ugh, some kind of exception: '+str(the_exception)

@@ -168,6 +168,7 @@ class TestServicesIntegration(object):
         # TODO assert the values too
         expected_fields = ['_id',
                            'merge_type',
+                           'scale_type',
                            'retake_picam_pics_when_dark',
                            'email_recipients',
                            'send_email_contents',
