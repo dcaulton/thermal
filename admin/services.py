@@ -16,6 +16,7 @@ from thermal.services import (get_generic,
                               update_generic)
 from thermal.utils import (get_documents_from_criteria,
                            get_document,
+                           get_document_with_exception,
                            get_singleton_document,
                            get_url_base, 
                            item_exists)
@@ -40,10 +41,7 @@ def get_group_document(group_id):
     if group_id == 'current':
         settings_dict = get_settings_document()
         group_id = settings_dict['current_group_id']
-    if item_exists(group_id, 'group'):
-        group_dict = get_document(group_id)
-        return group_dict
-    raise NotFoundError('no group document found for id {0}'.format(str(group_id)))
+    return get_document_with_exception(group_id, document_type='group')
 
 
 def get_group_document_with_child_objects(group_id):

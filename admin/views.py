@@ -7,7 +7,7 @@ from admin.services import (default_group_dict,
                             get_group_document_with_child_links,
                             get_group_document_with_child_objects)
 from admin.tasks import clean_up_files_task
-from thermal.services import save_generic
+from thermal.services import save_generic, update_generic
 from thermal.utils import (doc_attribute_can_be_set,
                            gather_and_enforce_request_args,
                            get_document_with_exception,
@@ -61,8 +61,7 @@ def update_settings():
             for k in request.json.keys():
                 if doc_attribute_can_be_set(k):
                     settings[k] = request.json[k]
-            # TODO change this to update_generic
-            save_generic(settings, 'settings')
+            update_generic(settings, 'settings')
             return Response(json.dumps(settings), status=200, mimetype='application/json')
         err_msg = 'no valid settings parameters supplied'
         return Response(json.dumps(err_msg), status=409, mimetype='application/json')
@@ -108,11 +107,13 @@ def get_group_pictures(group_id):
     Fetches pictures for a supplied group id
     Includes paging and searching on any field in the picture document
     '''
-    # TODO in theory get_group_document could throw an exception that turns into a 500
-    group_dict = get_group_document(group_id)
-    group_id = group_dict['_id']
-    return generic_list_view(document_type='picture',
-                             args_dict={'group_id': group_id})
+    try:
+        group_dict = get_group_document(group_id)
+        group_id = group_dict['_id']
+        return generic_list_view(document_type='picture',
+                                 args_dict={'group_id': group_id})
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 @admin.route('/groups/<group_id>/gallery', methods=['GET'])
 def get_group_gallery(group_id):
@@ -120,11 +121,13 @@ def get_group_gallery(group_id):
     Fetches the photo gallery for a supplied group id
     Includes paging and searching on any field in the picture document
     '''
-    # TODO in theory get_group_document could throw an exception that turns into a 500
-    group_dict = get_group_document(group_id)
-    group_id = group_dict['_id']
-    return generic_list_view(document_type='picture',
-                             args_dict={'group_id': group_id, 'gallery_url_not_null': True})
+    try:
+        group_dict = get_group_document(group_id)
+        group_id = group_dict['_id']
+        return generic_list_view(document_type='picture',
+                                 args_dict={'group_id': group_id, 'gallery_url_not_null': True})
+    except Exception as e:
+        return Response(json.dumps(e.message), status=e.status_code, mimetype='application/json')
 
 @admin.route('/groups/<group_id>', methods=['PUT'])
 def update_group(group_id):
@@ -137,8 +140,7 @@ def update_group(group_id):
             for k in request.json.keys():
                 if doc_attribute_can_be_set(k):
                     group_dict[k] = request.json[k]
-            # TODO change this to update_generic
-            save_generic(group_dict, 'group')
+            update_generic(group_dict, 'group')
             return Response(json.dumps(group_dict), status=200, mimetype='application/json')
         return Response(json.dumps('problem with request data'), status=409, mimetype='application/json')
     except Exception as e:
@@ -182,7 +184,7 @@ def get_snap(snap_id):
     return generic_get_view(item_id=snap_id, document_type='snap')
 
 
-# snaps are only created implicitly, no need for a create here
+# snaps are only created implicitly, no need for a create snap view
 @admin.route('/snaps/<snap_id>', methods=['PUT'])
 def update_snap(snap_id):
     '''
