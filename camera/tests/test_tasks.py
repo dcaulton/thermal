@@ -1,6 +1,7 @@
 from mock import ANY, call, Mock, patch
 import uuid
 
+from celery import Celery
 from flask import current_app
 import mock
 import pytest
@@ -10,7 +11,7 @@ import analysis.services
 import admin.tasks
 import camera.services
 import camera.tasks as ct
-from celery import Celery
+import merging.services
 from thermal.exceptions import ThermalBaseError
 
 
@@ -187,3 +188,51 @@ class TestTasksUnit(object):
 
         cs_take_thermal_still.assert_called_once_with('a', 'b', 'c', 'd')
         ct_log_asynchronous_exception.assert_called_once_with(the_exception)
+
+
+    def test_take_both_still_calls_expected_methods(self):
+        camera.services.take_picam_still = Mock()
+        camera.services.take_thermal_still = Mock()
+        analysis.services.scale_image = Mock()
+        analysis.services.distort_image_shepards = Mock()
+        merging.services.merge_images = Mock()
+        admin.services.send_mail = Mock()
+        admin.services.upload_files_to_s3 = Mock()
+        admin.services.clean_up_files = Mock()
+
+        return_value = ct.take_both_still('some_snap_id', 'some_group_id')
+
+        camera.services.take_thermal_still.assert_called_once_with('some_snap_id',
+                                                                   'some_group_id',
+                                                                   ANY,
+                                                                   False)
+        camera.services.take_picam_still.assert_called_once_with('some_snap_id',
+                                                                 'some_group_id',
+                                                                 ANY,
+                                                                 ANY,
+                                                                 False)
+        analysis.services.scale_image.assert_called_once_with(ANY,
+                                                              ANY,
+                                                              'some_group_id')
+        analysis.services.distort_image_shepards.assert_called_once_with(image_id_in=ANY,
+                                                                         image_id_out=ANY,
+                                                                         distortion_set_id=None)
+        merging.services.merge_images.assert_called_once_with(img1_primary_id_in=ANY,
+                                                              img1_alternate_id_in=ANY,
+                                                              img2_id_in=ANY,
+                                                              img_id_out=ANY,
+                                                              group_id='some_group_id')
+        admin.services.send_mail.assert_called_once_with('some_snap_id',
+                                                         'some_group_id')
+        admin.services.upload_files_to_s3.assert_called_once_with('some_snap_id',
+                                                                  'some_group_id')
+        admin.services.clean_up_files.assert_called_once_with('some_snap_id',
+                                                              'some_group_id')
+        assert return_value == {'snap_ids': ['some_snap_id'],
+                                'group_id': 'some_group_id',
+                                'normal_exposure_picam_ids': [ANY],
+                                'long_exposure_picam_ids': [ANY],
+                                'thermal_ids': [ANY],
+                                'scaled_for_thermal_merge_ids': [ANY],
+                                'distorted_for_thermal_merge_ids': [ANY],
+                                'merged_ids': [ANY]}
