@@ -257,6 +257,7 @@ def build_distortion_pair_strings(distortion_set_id):
 def build_command_string(distortion_set_id, pic_path_in, pic_path_out):
     distortion_pair_strings = build_distortion_pair_strings(distortion_set_id)
     distortion_pair_string = ' '.join(distortion_pair_strings)
+    # TODO remove the below hardcoded string as soon as we're ready to proceed with the ui for distortion sets
     distortion_pair_string = '300,110 350,140  600,310 650,340'
     print 'distortion pair string is '+distortion_pair_string
 

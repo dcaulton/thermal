@@ -109,3 +109,36 @@ class TestViewsUnit(object):
         av_get_document_with_exception.assert_called_once_with('5454', document_type='picture')
         assert resp_object.data == '"dale gribble"'
         assert resp_object.status_code == 400
+
+    @patch('analysis.services.distort_image_shepards')
+    @patch('analysis.views.gather_and_enforce_request_args')
+    @patch('analysis.views.get_document_with_exception')
+    def test_call_distort_image_calls_expected_methods(self,
+                                                       av_get_document_with_exception,
+                                                       av_gather_and_enforce_request_args,
+                                                       as_distort_image_shepards):
+
+        av_get_document_with_exception.return_value = {'buffalo': 'loin'}
+        av_gather_and_enforce_request_args.return_value = {'distortion_set_id': 'some_ds_id'}
+
+        response_object = av.call_distort_image(image_id='starting_image_id')
+        resp_object_data = json.loads(response_object.data)
+        assert 'distorted_image_id' in resp_object_data
+        assert len(resp_object_data) == 1
+        assert response_object.status_code == 202
+        av_get_document_with_exception.assert_has_calls([call('starting_image_id', document_type='picture'),
+                                                         call('some_ds_id', document_type='distortion_set')])
+
+        as_distort_image_shepards.assert_called_once_with(image_id_in='starting_image_id',
+                                                          image_id_out=ANY,
+                                                          distortion_set_id='some_ds_id')
+    @patch('analysis.views.get_document_with_exception')
+    def test_call_distort_image_handles_exception(self,
+                                                  av_get_document_with_exception):
+
+        av_get_document_with_exception.side_effect = ThermalBaseError('bill_dauterive')
+
+        resp_object = av.call_distort_image(image_id='starting_image_id')
+
+        assert resp_object.data == '"bill_dauterive"'
+        assert resp_object.status_code == 400

@@ -93,6 +93,7 @@ def call_distort_image(image_id=None):
         new_image_id = uuid.uuid4()
         picture_dict = get_document_with_exception(image_id, document_type='picture')
         args_dict = gather_and_enforce_request_args([{'name': 'distortion_set_id', 'required': True}])
+        distortion_set_id = args_dict['distortion_set_id']
         distortion_set_dict = get_document_with_exception(distortion_set_id, document_type='distortion_set')
 
         # TODO call this async via distort_image_shepards_task.delay as soon as it's working

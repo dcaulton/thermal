@@ -28,6 +28,15 @@ class TestServiceUnit(object):
                                                                 'type': 'cereal'})
         assert ret_val == {'franken': 'berry'}
 
+
+    @patch('thermal.services.get_documents_from_criteria')
+    def test_search_generic_gets_request_args(self,
+                                              ts_get_documents_from_criteria):
+        with current_app.test_request_context('/whatever?the_parameter=66'):
+            ret_val = ts.search_generic(document_type='cereal', args_dict={})
+            assert ts_get_documents_from_criteria.called_once_with({'the_parameter': '66',
+                                                                    'type': 'cereal'})
+
     @patch('thermal.services.item_exists')   
     @patch('thermal.services.get_document')
     def test_get_generic_calls_expected_functions(self,
@@ -61,6 +70,21 @@ class TestServiceUnit(object):
                                                    ts_save_document):
         ret_val = ts.save_generic({'a': 'b', 'type': 'whatever', '_id': '123'}, 'whatever')
         assert ts_save_document.called_once_with({'a': 'b'})
+
+    def test_save_generic_throws_error_if_no_type(self):
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            ret_val = ts.save_generic({'_id': 'flores'}, 'whatever')
+        assert 'trying to save the document with no value for type'  in str(exception_info.value)
+
+    def test_save_generic_throws_error_if_wrong_type(self):
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            ret_val = ts.save_generic({'_id': 'flores', 'type': 'brontosaurus'}, 'tyrannosaurus_rex')
+        assert 'trying to save the document that is not of type tyrannosaurus_rex'  in str(exception_info.value)
+
+    def test_save_generic_throws_error_if_no_id(self):
+        with pytest.raises(DocumentConfigurationError) as exception_info:
+            ret_val = ts.save_generic({}, 'whatever')
+        assert 'trying to save a document with no id'  in str(exception_info.value)
 
     @patch('thermal.services.cast_uuid_to_string')   
     @patch('thermal.services.item_exists')
