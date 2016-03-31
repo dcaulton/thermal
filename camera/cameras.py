@@ -38,6 +38,7 @@ class Picam(Camera):
         )
 
     def take_normal_exposure_still(self, pic_path, image_width, image_height):
+        import pdb; pdb.set_trace()
         with picamera.PiCamera() as camera:
             camera.resolution = (image_width, image_height)
             camera.capture(pic_path)
