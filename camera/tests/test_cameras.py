@@ -21,20 +21,36 @@ class TestCameraUnit(object):
                                                                image_width=123,
                                                                image_height=456)
 
-# TODO gonna have to mock a context manager here.  
-#       THIS MIGHT HELP?  http://stackoverflow.com/questions/1289894/how-do-i-mock-an-open-used-in-a-with-statement-using-the-mock-framework-in-pyth
-#    @patch('picamera.PiCamera')
-#    def test_take_normal_exposure_still_calls_expected_methods(self,
-#                                                               picamera_picamera):
-#        class MockCamera(object):
-#            pass
-#        mock_camera = MockCamera()
-#        mock_camera.capture = Mock()
-#
-#        picamera_picamera.return_value = mock_camera
-#
-#        pc = cc.Picam()
-#        pc.take_normal_exposure_still('the_pic_path', 'the_image_width', 'the_image_height')
-#
-##            camera.resolution = (image_width, image_height)
-#        mock_camera.capture.assert_called_once_with('the_pic_path')
+    @patch('picamera.PiCamera')
+    def test_take_normal_exposure_still_calls_expected_methods(self,
+                                                               picamera_picamera):
+        class MockCamera(object):
+            def __init__(self):
+                self.resolution = 0
+                self.enter_called = False
+                self.exit_called = False
+                self.capture_called = False
+
+            def __enter__(self):
+                self.enter_called = True
+                return self
+
+            def __exit__(self, a, b, c):
+                self.exit_called = True
+
+            def capture(self):
+                pass
+        
+        mock_camera = MockCamera()
+
+        mock_camera.capture = Mock()
+
+        picamera_picamera.return_value = mock_camera
+
+        pc = cc.Picam()
+        pc.take_normal_exposure_still('the_pic_path', 'the_image_width', 'the_image_height')
+
+        mock_camera.capture.assert_called_once_with('the_pic_path')
+        assert mock_camera.resolution == ('the_image_width', 'the_image_height')
+        assert mock_camera.enter_called
+        assert mock_camera.exit_called

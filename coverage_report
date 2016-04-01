@@ -7,7 +7,7 @@ analysis/services.py        165     17    90%   138, 161, 198-199, 205, 207, 222
 analysis/views.py            57      0   100%   
 calibration/services.py      25      0   100%   
 calibration/views.py         47      0   100%   
-camera/cameras.py            41     19    54%   19, 31, 41-44, 47-61, 74-78
+camera/cameras.py            40     15    63%   19, 31, 46-60, 73-77
 camera/services.py           66      5    92%   53, 66-68, 141
 camera/tasks.py              77      0   100%   
 camera/views.py              39      0   100%   
@@ -21,4 +21,4 @@ thermal/services.py          34      0   100%
 thermal/utils.py            145      7    95%   38-39, 66, 124, 279-281
 thermal/views.py             50      0   100%   
 -------------------------------------------------------
-TOTAL                      1187     98    92%   
+TOTAL                      1186     94    92%   
