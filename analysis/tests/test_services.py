@@ -4,7 +4,7 @@ import uuid
 
 import cv2
 from flask import current_app
-from PIL import Image, ImageStat, ImageOps
+from PIL import Image, ImageFilter, ImageStat, ImageOps
 import pytest
 
 from admin.services import get_group_document
@@ -125,6 +125,30 @@ class TestServicesUnit(object):
             return_value = ans.scale_image('a', 'b', 'c', scale_type='specified_scale_type')
             
         as_scale_image_subtask.assert_called_once_with('specified_scale_type', ANY)
+
+    @patch('analysis.services.get_group_document')
+    @patch('analysis.services.get_document_with_exception')
+    @patch('analysis.services.build_picture_name')
+    @patch('analysis.services.build_picture_path')
+    @patch('analysis.services.scale_image_subtask')
+    def test_scale_image_accepts_scale_type_through_group_record(self,
+                                                                 as_scale_image_subtask,
+                                                                 as_build_picture_path,
+                                                                 as_build_picture_name,
+                                                                 as_get_document_with_exception,
+                                                                 as_get_group_document):
+
+        as_get_group_document.return_value = {'_id': 'd1', 'scale_type': 'group_scale_type'}
+        as_scale_image_subtask.side_effect = ThermalBaseError('wocka_wocka')
+        Image.open = Mock(return_value='ali_baba')
+        as_build_picture_path.return_value = 'steve_mcnair'
+        as_build_picture_name.return_value = 'mongo_mcmichael'
+        as_get_document_with_exception.return_value = {'filename': 'a1', 'uri': 'b1', 'snap_id': 'c1'}
+
+        with pytest.raises(ThermalBaseError) as exception_info:
+            return_value = ans.scale_image('a', 'b', 'c')
+            
+        as_scale_image_subtask.assert_called_once_with('group_scale_type', ANY)
 
 
     @patch('analysis.services.get_image_mean_pixel_value')
@@ -402,6 +426,15 @@ class TestServicesUnit(object):
         as_scale_image.assert_called_once_with('b', 'c', 'd')
         as_log_asynchronous_exception.assert_called_once_with(the_exception)
 
+
+    @patch('analysis.services.scale_image')
+    def test_empty_scale_image_kwarg_suppresses_call_in_scale_image_chained(self,
+                                                                            as_scale_image):
+        ans.scale_image_chained('a', 'b', 'c', 'd', scale_image='')
+
+        as_scale_image.assert_not_called()
+
+
     @patch('analysis.services.log_asynchronous_exception')
     @patch('analysis.services.scale_image')
     def test_scale_image_task_catches_exception(self,
@@ -441,25 +474,94 @@ class TestServicesUnit(object):
         as_distort_image_shepards.assert_called_once_with(image_id_in='a', image_id_out='b', distortion_set_id='c')
         as_log_asynchronous_exception.assert_called_once_with(the_exception)
 
-#
-#def build_command_string(distortion_set_id, pic_path_in, pic_path_out):
-#    distortion_pair_strings = build_distortion_pair_strings(distortion_set_id)
-#    distortion_pair_string = ' '.join(distortion_pair_strings)
-#    distortion_pair_string = '300,110 350,140  600,310 650,340'
-#    print 'distortion pair string is '+distortion_pair_string
-#
-#    command_string = "convert {0} -distort Shepards '{1}' {2}".format(pic_path_in,
-#                                                                      distortion_pair_string,
-#                                                                      pic_path_out)
-#    print 'command is '+command_string
-#    return command_string
 
 
+    @patch('analysis.services.get_document_with_exception')
+    @patch('analysis.services.build_picture_name')
+    @patch('analysis.services.build_picture_path')
+    @patch('analysis.services.build_command_string')
+    @patch('os.system')
+    @patch('analysis.services.save_generic')
+    def test_distort_image_shepards_calls_expected_methods(self,
+                                                           as_save_generic,
+                                                           os_system,
+                                                           as_build_command_string,
+                                                           as_build_picture_path,
+                                                           as_build_picture_name,
+                                                           as_get_document_with_exception):
 
-# test scale image with no colorize
-# test scale image with bilinear
-# test scale image with antialias
-# test_scale_image_with_invalid_image_id
-# test edge_detect with invalid image_id
-# test edge_detect with a valid alternate_image_id
-# test edge_detect with just a auto_id, no wide or tight
+        as_get_document_with_exception.return_value = {'group_id': 'some_group_id',
+                                                       'uri': 'the_uri',
+                                                       'snap_id': 'some_snap_id'}
+        as_build_picture_name.return_value = 'some_picture_name'
+        as_build_picture_path.return_value = 'some_picture_path'
+        as_build_command_string.return_value = 'the_command_string'
+
+        ans.distort_image_shepards(image_id_in='img_id_in', image_id_out='img_id_out', distortion_set_id='dist_set_id')
+
+        as_get_document_with_exception.assert_called_once_with('img_id_in', 'picture')
+        as_build_picture_name.assert_called_once_with('img_id_out')
+        as_build_picture_path.assert_called_once_with(picture_name='some_picture_name', snap_id='some_snap_id')
+        as_build_command_string.assert_called_once_with('dist_set_id', 'the_uri', 'some_picture_path')
+        os_system.assert_called_once_with('the_command_string')
+        as_save_generic.assert_called_once_with({'_id': 'img_id_out',
+                                                 'type': 'picture',
+                                                 'source': 'analysis',
+                                                 'source_image_id': 'img_id_in',
+                                                 'analysis_type': 'distort',
+                                                 'group_id': 'some_group_id',
+                                                 'snap_id': 'some_snap_id',
+                                                 'filename': 'some_picture_name',
+                                                 'uri': 'some_picture_path',
+                                                 'created': ANY}, 'picture')
+
+
+    def test_scale_image_subtask_gets_right_value_for_bilinear(self):
+        class MockImage(object):
+            pass
+        mock_image = MockImage()
+        mock_image.resize = Mock(return_value = 'hey_ya')
+
+        return_value = ans.scale_image_subtask('bilinear_algebra', mock_image)
+
+        current_app_width = current_app.config['STILL_IMAGE_WIDTH']
+        current_app_height = current_app.config['STILL_IMAGE_HEIGHT']
+
+        mock_image.resize.assert_called_once_with((current_app_width, current_app_height), Image.BILINEAR)
+        assert return_value == 'hey_ya'
+
+    def test_scale_image_subtask_gets_right_value_for_antialias(self):
+        class MockImage(object):
+            pass
+        mock_image = MockImage()
+        mock_image.resize = Mock(return_value = 'hey_ya')
+
+        return_value = ans.scale_image_subtask('batman_antialias', mock_image)
+
+        current_app_width = current_app.config['STILL_IMAGE_WIDTH']
+        current_app_height = current_app.config['STILL_IMAGE_HEIGHT']
+
+        mock_image.resize.assert_called_once_with((current_app_width, current_app_height), Image.ANTIALIAS)
+        assert return_value == 'hey_ya'
+
+    def test_colorize_image_returns_image_unchange_when_colorize_not_requested(self):
+        return_value = ans.colorize_image('something_boring', {}, 'some_image')
+        assert return_value == 'some_image'
+
+    def test_blur_image_blurs_image_nine_times(self):
+        class MockImage(object):
+            pass
+        mock_image = MockImage()
+        mock_image.filter = Mock(return_value=mock_image)
+
+        return_value = ans.blur_image('blurry_thing', mock_image)
+
+        mock_image.filter.assert_has_calls([call(ImageFilter.BLUR),
+                                            call(ImageFilter.BLUR),
+                                            call(ImageFilter.BLUR),
+                                            call(ImageFilter.BLUR),
+                                            call(ImageFilter.BLUR),
+                                            call(ImageFilter.BLUR),
+                                            call(ImageFilter.BLUR),
+                                            call(ImageFilter.BLUR),
+                                            call(ImageFilter.BLUR)])

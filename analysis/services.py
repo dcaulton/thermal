@@ -202,9 +202,9 @@ def blur_image(scale_type, image):
 def scale_image_subtask(scale_type, image_in):
     scale_method = Image.BICUBIC
     if scale_type and 'bilinear' in scale_type:
-        scale_method == Image.BILINEAR
+        scale_method = Image.BILINEAR
     if scale_type and 'antialias' in scale_type:
-        scale_method == Image.ANTIALIAS
+        scale_method = Image.ANTIALIAS
     width = current_app.config['STILL_IMAGE_WIDTH']
     height = current_app.config['STILL_IMAGE_HEIGHT']
     image_scaled = image_in.resize((width, height), scale_method)
@@ -276,7 +276,6 @@ def distort_image_shepards(image_id_in=None, image_id_out=None, distortion_set_i
     '''
     img_dict_in = get_document_with_exception(image_id_in, 'picture')
     group_id = img_dict_in['group_id']
-    group_document = get_document_with_exception(group_id, 'group')
     img_filename_out = build_picture_name(image_id_out)
     pic_path_in = img_dict_in['uri']
     pic_path_out = build_picture_path(picture_name=img_filename_out, snap_id=img_dict_in['snap_id'])

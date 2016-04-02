@@ -35,13 +35,29 @@ class TestViewsUnit(object):
         mv_item_exists.assert_has_calls([call('johnny', 'picture'), call('depp', 'picture')])
 
     @patch('merging.views.item_exists')
-    def test_test_input_parameters_for_valid_image_ids_raises_notfounderror(self,
-                                                                            mv_item_exists):
+    def test_test_input_parameters_for_valid_image_ids_raises_notfounderror_for_first(self,
+                                                                                      mv_item_exists):
         mv_item_exists.return_value = False
         with pytest.raises(NotFoundError) as exception_info:
             mv.test_input_parameters_for_valid_image_ids({'img1_id': 'johnny', 'img2_id': 'depp'})
         mv_item_exists.assert_called_once_with('johnny', 'picture')
         assert 'Source image 1 not found.  A valid id for a source image must be supplied' in str(exception_info.value)
+
+    @patch('merging.views.item_exists')
+    def test_test_input_parameters_for_valid_image_ids_raises_notfounderror_for_second(self,
+                                                                                       mv_item_exists):
+        def blueberries_dont_exist(fruit_type, ignore_this_parm):
+            if fruit_type == 'blueberry':
+                return False
+            else:
+                return True
+
+        mv_item_exists.side_effect = blueberries_dont_exist
+        with pytest.raises(NotFoundError) as exception_info:
+            mv.test_input_parameters_for_valid_image_ids({'img1_id': 'strawberry', 'img2_id': 'blueberry'})
+        mv_item_exists.assert_has_calls([call('strawberry', 'picture'), call('blueberry', 'picture')])
+        assert 'Source image 2 not found.  A valid id for a source image must be supplied' in str(exception_info.value)
+
 
     @patch('merging.views.merge_type_is_valid')
     def test_check_for_merge_type_raises_documentconfigurationerror(self,

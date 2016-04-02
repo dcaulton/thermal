@@ -278,4 +278,3 @@ def _get_parameter(parameter_name, default=None, cast_function=None, raise_value
 def log_asynchronous_exception(the_exception):
     tb = traceback.format_exc()
     print tb
-    print 'ugh, some kind of exception: '+str(the_exception)

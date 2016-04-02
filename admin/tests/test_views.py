@@ -394,6 +394,30 @@ class TestViewsUnit(object):
         assert resp_object.status_code == 404
         assert resp_object.data == '"no snap there, friend"'
 
+    @patch('admin.views.get_group_document')
+    def test_get_group_pictures_catches_exception(self,
+                                                  av_get_group_document):
+
+        av_get_group_document.side_effect = NotFoundError('nopers')
+
+        resp_object = av.get_group_pictures('jibba_jabba')
+
+        av_get_group_document.assert_called_once_with('jibba_jabba')
+        assert resp_object.status_code == 404
+        assert resp_object.data == '"nopers"'
+
+    @patch('admin.views.get_group_document')
+    def test_get_group_gallery_catches_exception(self,
+                                                 av_get_group_document):
+
+        av_get_group_document.side_effect = NotFoundError('no_hway')
+
+        resp_object = av.get_group_gallery('jibba_jabba')
+
+        av_get_group_document.assert_called_once_with('jibba_jabba')
+        assert resp_object.status_code == 404
+        assert resp_object.data == '"no_hway"'
+
 
 class TestViewsIntegration(object):
     pass

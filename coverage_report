@@ -2,8 +2,8 @@ Name                      Stmts   Miss  Cover   Missing
 -------------------------------------------------------
 admin/services.py           134     29    78%   52-54, 62-81, 88-90, 203, 208-210, 221-222
 admin/tasks.py               27      0   100%   
-admin/views.py               96      4    96%   115-116, 129-130
-analysis/services.py        165     17    90%   138, 161, 198-199, 205, 207, 222, 277-300
+admin/views.py               96      0   100%   
+analysis/services.py        164      0   100%   
 analysis/views.py            57      0   100%   
 calibration/services.py      25      0   100%   
 calibration/views.py         47      0   100%   
@@ -12,13 +12,13 @@ camera/services.py           66      5    92%   53, 66-68, 141
 camera/tasks.py              77      0   100%   
 camera/views.py              39      0   100%   
 merging/services.py          63      8    87%   58-60, 63-66, 76-77
-merging/views.py             39      2    95%   64-66
+merging/views.py             39      0   100%   
 picture/services.py          10      0   100%   
 picture/views.py              9      0   100%   
 thermal/appmodule.py         57      7    88%   43-49, 80-81
 thermal/exceptions.py         6      0   100%   
 thermal/services.py          34      0   100%   
-thermal/utils.py            145      7    95%   38-39, 66, 124, 279-281
+thermal/utils.py            144      6    96%   38-39, 66, 124, 279-280
 thermal/views.py             50      0   100%   
 -------------------------------------------------------
-TOTAL                      1186     94    92%   
+TOTAL                      1184     70    94%   
